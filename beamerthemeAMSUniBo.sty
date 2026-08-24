@@ -21,7 +21,7 @@
 \newcommand{\stylename}{AMSUniBo Beamer style}
 % version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{0}
+\newcommand{\styleminor}{1}
 % \stylepatch is optional: comment the next line out to release as Major.Minor
 %\newcommand{\stylepatch}{0}
 \ifdefined\stylepatch
@@ -114,14 +114,20 @@
 \setbeamercolor*{abstract}{fg=amsgreymid}
 \setbeamerfont*{abstract}{family=\rmfamily,size=\small}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The paired commands below come in two weights each: the plain one for light
-% surfaces -- the white slide, the pale green fills -- and the doubled one for
-% the dark surfaces, which here are the green-dark block headers, the red
-% alerted headers and the red head line.
+% The paired commands keep the weights AMSBolognaFC gives them, so that a deck
+% moved from that style to this one changes hue and nothing else.
+%
+%   \ccite / \cccite -- BOTH light, because a citation marker's usual home is a
+%       block header, which is dark in both styles.  \cccite is the lighter of
+%       the two, for the loudest surfaces.  In running text they are faint on
+%       purpose, exactly as they are under AMSBolognaFC.
+%   \uurl / \uuurl, \ddoi / \dddoi -- the plain one dark, for light surfaces;
+%       the doubled one light, for dark ones.
+%   \aalert, \sspeaker -- light, for dark surfaces.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Citation
-\newcommand{\ccite}[1]{{\textcolor{amsgreymid}{\textsuperscript{\tiny\cite{#1}}}}}
-\newcommand{\cccite}[1]{{\textcolor{amsgreyline}{\textsuperscript{\tiny\cite{#1}}}}}
+\newcommand{\ccite}[1]{{\textcolor{amsgreyline}{\textsuperscript{\tiny\cite{#1}}}}}
+\newcommand{\cccite}[1]{{\textcolor{amsgreybg}{\textsuperscript{\tiny\cite{#1}}}}}
 % URL
 \newcommand{\uurl}[1]{{\textcolor{amsred}{\scriptsize\url{#1}}}}
 \newcommand{\uuurl}[1]{{\textcolor{amsgreyline}{\tiny\url{#1}}}}

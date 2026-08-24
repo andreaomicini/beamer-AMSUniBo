@@ -65,9 +65,16 @@ Beyond the beamer furniture, the theme defines:
 | `\apicepar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\aalert` | a quieter alternative to `\alert` |
 
-In each pair, the plain command is for light surfaces — the white slide, the pale
-green fills — and the doubled one for the dark surfaces, which here are the
-green-dark block headers, the red alerted headers and the red head line.
+The pairs keep the weights AMSBolognaFC gives them, so that a deck moved from
+that style to this one changes hue and nothing else:
+
+* `\ccite` and `\cccite` are **both light**, because a citation marker's usual
+  home is a block header, which is dark in both styles. `\cccite` is the lighter
+  of the two, for the loudest surfaces. In running text both are faint on
+  purpose — as they are under AMSBolognaFC.
+* `\uurl`/`\uuurl` and `\ddoi`/`\dddoi` go dark-then-light: the plain one for
+  light surfaces, the doubled one for dark.
+* `\aalert` and `\sspeaker` are light, for dark surfaces.
 
 The theme also declares a small-caps substitution for the sans font and
 neutralises `\speaker`, `\sspeaker`, `\translate` and `\\` inside hyperref's
@@ -93,9 +100,9 @@ headings, tabs.
 | `amsgreentint` | `#DDEDEB` | `@ams-green-tint`, `breadcrumb-bg`, `.fieldrow1` | frame title band, block bodies, foot line |
 | `amsgreentint2` | `#CCE4E1` | `@ams-green-tint2`, selected tabs | foot line, frame title right |
 | `amsgrey` | `#464A51` | `@ams-grey` | institute |
-| `amsgreymid` | `#535353` | `@ams-grey-mid`, `breadcrumb-color` | secondary text, footnotes, citations |
-| `amsgreyline` | `#C7C9CB` | `@ams-grey-line`, `table-border-color` | the light half of each command pair |
-| `amsgreybg` | `#F0F1F1` | `@ams-grey-bg` | reserved |
+| `amsgreymid` | `#535353` | `@ams-grey-mid`, `breadcrumb-color` | secondary text, footnotes, subtitle, date |
+| `amsgreyline` | `#C7C9CB` | `@ams-grey-line`, `table-border-color` | `\ccite`, `\uuurl`, `\dddoi`, `\aalert`, `\sspeaker` — the light-on-dark commands |
+| `amsgreybg` | `#F0F1F1` | `@ams-grey-bg` | `\cccite`, the lightest of the pair |
 
 `amsredfill`, `amsredborder`, `amsgreenfill` and `amsgreenborder` are the block
 fills, computed exactly as the web theme's LESS computes its `@state-danger-*`
@@ -107,9 +114,10 @@ pairing the wiki uses for its own success alerts, `amsgreenborder` over
 Two contrast facts inherited from the web theme, and observed here: **white on
 `#56A49A` is 2.93:1 and fails WCAG AA**, so every full-green surface carries dark
 text instead; white on `#BB2E29` is 5.94:1 and passes. Every text-on-fill pair in
-this style is at AA or better, except the deliberately quiet `\cccite`,
-`\uuurl`, `\dddoi`, `\aalert` and `\sspeaker`, which sit at AA-large on their dark
-surfaces by design.
+this style is at AA or better, except the deliberately quiet light-on-dark
+commands — `\ccite` is 3.82:1 on a block header and `\aalert` and `\sspeaker`
+likewise, while `\cccite` reaches 5.61:1. Citations in running text are fainter
+still, which is how AMSBolognaFC renders them too.
 
 The provenance of each value, and the drift between the identity manual's stated
 red and the one the institutional documents actually use, is documented at the
