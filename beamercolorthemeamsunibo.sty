@@ -11,108 +11,57 @@
 % This work has the LPPL maintenance status `maintained'.
 % The Current Maintainer of this work is Andrea Omicini.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The palette of the AMSUniBo Flamingo theme for the APICe wiki, transposed to
-% Beamer.  Every value below is the one used by that theme, and the LESS
-% variable it comes from is named beside it, so the two stay comparable:
-%   https://apice.unibo.it/xwiki/bin/view/FlamingoThemes/AMSUniBo
-%
-% Provenance of the colours themselves:
-%   red, black    "Sistema di identita di Ateneo", I COLORI ISTITUZIONALI
-%                 -- rosso istituzionale, Pantone 1805, C0 M91 Y100 K23
-%   grey #464A51  the same manual, p. 16, "La versione in negativo"
-%   green         "Brochure di Ateneo 2026" -- cover dots and closing page
-%   green light   the official "PPT Unibo 2026" template
-%   body text     the same PPT templates
-%   the remaining values are derived, as noted.
-%
-% Note the drift in the sources: the brochure and the PowerPoint templates use
-% #BC2802 / #BD2B0B, the institutional red as naively converted from its CMYK
-% build.  The manual's own stated HEX, #BB2E29, is the one meant for screen,
-% and is the one used here.
-%
-% The manual's 16 disciplinary-area colours (Ambiti, Dipartimenti, Scuole) are
-% deliberately not used: they identify structures, not the Ateneo.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The palette of the AMSUniBo theme for the APICe wiki. Each name mirrors the
+%% LESS variable beside it. Provenance and roles: see README.md.
 
 \mode<presentation>
 
-%%%% Setting base colours -- the @ams-* variables of the web theme
-%% rosso istituzionale                                            @ams-red
-\definecolor{amsred}{HTML}{BB2E29}
-%% red darkened 12%, hover/active and danger                      @ams-red-dark
-\definecolor{amsreddark}{HTML}{8E2320}
-%% nero istituzionale                                             @ams-black
-\definecolor{amsblack}{HTML}{000000}
-%% body text                                                      @ams-text
-\definecolor{amstext}{HTML}{040404}
-%% brochure green                                                 @ams-green
-\definecolor{amsgreen}{HTML}{56A49A}
-%% lighter tint, PPT template                                     @ams-green-light
-\definecolor{amsgreenlight}{HTML}{74BDAD}
-%% green darkened 18% -- green text on white, 6.35:1              @ams-green-dark
-\definecolor{amsgreendark}{HTML}{366861}
-%% green at 20% over white -- quiet fills                         @ams-green-tint
-\definecolor{amsgreentint}{HTML}{DDEDEB}
-%% green at 30% over white -- selected fills                      @ams-green-tint2
-\definecolor{amsgreentint2}{HTML}{CCE4E1}
-%% negative-version grey                                          @ams-grey
-\definecolor{amsgrey}{HTML}{464A51}
-%% secondary text                                                 @ams-grey-mid
-\definecolor{amsgreymid}{HTML}{535353}
-%% neutral borders                                                @ams-grey-line
-\definecolor{amsgreyline}{HTML}{C7C9CB}
-%% neutral fills                                                  @ams-grey-bg
-\definecolor{amsgreybg}{HTML}{F0F1F1}
-%% white
+%% base colours
+\definecolor{amsred}{HTML}{BB2E29}         % @ams-red
+\definecolor{amsreddark}{HTML}{8E2320}     % @ams-red-dark
+\definecolor{amsblack}{HTML}{000000}       % @ams-black
+\definecolor{amstext}{HTML}{040404}        % @ams-text
+\definecolor{amsgreen}{HTML}{56A49A}       % @ams-green
+\definecolor{amsgreenlight}{HTML}{74BDAD}  % @ams-green-light
+\definecolor{amsgreendark}{HTML}{366861}   % @ams-green-dark
+\definecolor{amsgreentint}{HTML}{DDEDEB}   % @ams-green-tint
+\definecolor{amsgreentint2}{HTML}{CCE4E1}  % @ams-green-tint2
+\definecolor{amsgrey}{HTML}{464A51}        % @ams-grey
+\definecolor{amsgreymid}{HTML}{535353}     % @ams-grey-mid
+\definecolor{amsgreyline}{HTML}{C7C9CB}    % @ams-grey-line
+\definecolor{amsgreybg}{HTML}{F0F1F1}      % @ams-grey-bg
 \definecolor{amswhite}{HTML}{FFFFFF}
-%% Base colour for slides
-\definecolor{basecolour}{HTML}{BB2E29} % rosso istituzionale
-%%%%
+\definecolor{basecolour}{HTML}{BB2E29}     % rosso istituzionale
 
-%%%% Derived fills, computed exactly as the web theme's LESS does
-%% lighten(@ams-red, 46%)          @state-danger-bg
-\definecolor{amsredfill}{HTML}{F6D9D8}
-%% lighten(@ams-red, 34%)          @state-danger-border
-\definecolor{amsredborder}{HTML}{EBA8A6}
-%% lighten(@ams-green, 42%)        @state-success-bg
-\definecolor{amsgreenfill}{HTML}{E1EFED}
-%% lighten(@ams-green, 28%)        @state-success-border
-\definecolor{amsgreenborder}{HTML}{B2D7D2}
-%%%%
+%% block fills, as the web theme's LESS computes them
+\definecolor{amsredfill}{HTML}{F6D9D8}     % @state-danger-bg
+\definecolor{amsredborder}{HTML}{EBA8A6}   % @state-danger-border
+\definecolor{amsgreenfill}{HTML}{E1EFED}   % @state-success-bg
+\definecolor{amsgreenborder}{HTML}{B2D7D2} % @state-success-border
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Red is the identity colour: the navbar, links, primary actions.
-% Green is the structural colour: rules, separators, headings, tabs.
-% That division is the web theme's, and it is what the palettes below encode.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% red is the identity colour, green the structural one
 \setbeamercolor{structure}{fg=amsgreendark}
-
 \setbeamercolor{section in toc}{fg=amsgreendark,bg=amswhite}
 \setbeamercolor{alerted text}{fg=amsred}
 
-% The four palettes, light to loud.  quaternary carries the navbar red.
+%% palettes, light to loud; quaternary carries the navbar red
 \setbeamercolor*{palette primary}{fg=amsgreymid,bg=amsgreentint}
 \setbeamercolor*{palette secondary}{fg=amstext,bg=amsgreentint2}
 \setbeamercolor*{palette tertiary}{fg=amswhite,bg=amsgreendark}
 \setbeamercolor*{palette quaternary}{fg=amswhite,bg=amsred}
 
 \setbeamercolor*{sidebar}{fg=amsgreendark,bg=amsgreentint}
-
 \setbeamercolor*{palette sidebar primary}{fg=amstext}
 \setbeamercolor*{palette sidebar secondary}{fg=amsgreymid}
 \setbeamercolor*{palette sidebar tertiary}{fg=amsgreendark}
 \setbeamercolor*{palette sidebar quaternary}{fg=amswhite}
 
+%% title and frame title
 \setbeamercolor{titlelike}{parent=palette primary,fg=amsblack}
-% A pale green title band, the tint the wiki uses for its quiet fills
 \setbeamercolor{frametitle}{fg=amsblack,bg=amsgreentint}
 \setbeamercolor{frametitle right}{bg=amsgreentint2}
 
-% Green is the structural colour, so the rules take it.  (The AMSBolognaFC
-% original points these at an undefined `bolognasilver' -- a typo for
-% `bolognafcsilver' that never surfaces because neither the infolines outer
-% theme nor the rounded inner theme draws a separation line.)
+%% rules
 \setbeamercolor*{separation line}{fg=amsgreen}
 \setbeamercolor*{fine separation line}{fg=amsgreyline}
 

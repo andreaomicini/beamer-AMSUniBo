@@ -76,10 +76,32 @@ that style to this one changes hue and nothing else:
   light surfaces, the doubled one for dark.
 * `\aalert` and `\sspeaker` are light, for dark surfaces.
 
-The theme also declares a small-caps substitution for the sans font and
-neutralises `\speaker`, `\sspeaker`, `\translate` and `\\` inside hyperref's
-PDF strings, so decks build without the font-shape and PDF-string warnings that
-otherwise appear.
+### the workarounds the theme carries
+
+Both are handled in the theme so that no document has to deal with them.
+
+**Commands that cannot survive hyperref's PDF-string expansion.** Without this,
+every deck would have to wrap them in `\texorpdfstring` by hand.
+
+* `\speaker`, `\sspeaker` colour the speaker's name on the title page.
+  `\@firstofone` keeps the name and drops only the colouring, so the author still
+  reaches the PDF `/Author` field.
+* `\translate` is beamer's translator hook. `\refname` is `\translate{References}`,
+  so `\section*{\refname}` warns *Token not allowed in a PDF string*.
+* `\\` — a line break inside `\title` or `\author` is meaningless in a PDF string.
+  hyperref would drop it and run the two sides together, turning
+  `Nobody Else\\someone@unibo.it` into `Nobody Elsesomeone@unibo.it`; mapping it
+  to a space keeps the metadata readable.
+
+**Small caps under the sans font.** Computer Modern Sans has no small-caps shape,
+so every `\textsc` under the default font — `\textsc{Alma Mater Studiorum}` on a
+title page, say — falls back to the *serif* small caps and warns
+`Font shape `T1/cmss/m/sc' in size <n> not available`. Declaring the substitution
+makes it official and silent at every size. `ssub*` is a silent substitution and
+the typeset result is the one LaTeX was already producing, so nothing moves on
+the slides. To get genuine sans small caps instead, load a font family that has
+them (Lato, Fira Sans, Linux Biolinum …) — but that restyles the whole deck, and
+the web theme's own answer, Merriweather Sans, would need LuaLaTeX or XeLaTeX.
 
 ## the palette
 
@@ -119,9 +141,23 @@ commands — `\ccite` is 3.82:1 on a block header and `\aalert` and `\sspeaker`
 likewise, while `\cccite` reaches 5.61:1. Citations in running text are fainter
 still, which is how AMSBolognaFC renders them too.
 
-The provenance of each value, and the drift between the identity manual's stated
-red and the one the institutional documents actually use, is documented at the
-top of `beamercolorthemeamsunibo.sty`.
+### where the colours come from
+
+* **Red and black** — *Sistema di identità di Ateneo*, "I colori istituzionali":
+  rosso istituzionale, Pantone 1805, C0 M91 Y100 K23.
+* **Grey `#464A51`** — the same manual, p. 16, "La versione in negativo".
+* **Green** — *Brochure di Ateneo 2026*, the cover dots and the closing page.
+* **Green light** — the official *PPT Unibo 2026* template.
+* **Body text** — the same PPT templates.
+* The rest are derived, as the table above records.
+
+Note the drift in the sources: the brochure and the PowerPoint templates both
+use `#BC2802` / `#BD2B0B`, which is the institutional red as naively converted
+from its CMYK build. The manual's own stated HEX, `#BB2E29`, is the one meant
+for screen, and is the one used here.
+
+The manual's 16 disciplinary-area colours — for Ambiti, Dipartimenti and Scuole —
+are deliberately **not** used: they identify structures, not the Ateneo.
 
 ## versioning
 
