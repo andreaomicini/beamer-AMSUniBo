@@ -1,0 +1,35 @@
+name: set-version
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute version
+        id: get-version
+        run: |
+          BASE="$(python3 .github/scripts/compute-version.py beamerthemeAMSUniBo.sty)"
+          STAMP="$(date -u +'%Y-%m-%dT%H%M%S')"
+          echo "version=${BASE}" >> "$GITHUB_OUTPUT"
+          echo "tag=${BASE}-${STAMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Zip files to release
+        run: zip style.zip *.sty *.bst *.pdf LICENSE
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.get-version.outputs.tag }}" style.zip \
+            --title "${{ steps.get-version.outputs.tag }}" \
+            --notes "AMSUniBo Beamer style ${{ steps.get-version.outputs.version }}, released from ${GITHUB_SHA}."

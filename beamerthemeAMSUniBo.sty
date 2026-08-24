@@ -1,0 +1,179 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright 2026 by Andrea Omicini <andrea.omicini@unibo.it>
+%
+% This work may be distributed and/or modified under the conditions of the
+% LaTeX Project Public License, either version 1.3c of this license or (at
+% your option) any later version.  The latest version of this license is in
+%   https://www.latex-project.org/lppl.txt
+% and version 1.3c or later is part of all distributions of LaTeX version
+% 2008 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+% The Current Maintainer of this work is Andrea Omicini.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same structure, commands and options as the AMSBolognaFC Beamer style; the
+% colours are those of the AMSUniBo Flamingo theme for the APICe wiki, and each
+% is used in the role its web counterpart has.  Typography is left alone: this
+% is a pdfLaTeX style, and the web theme's Merriweather pairing is not part of
+% it.  See beamercolorthemeamsunibo.sty for the palette and its provenance.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% name
+\newcommand{\stylename}{AMSUniBo Beamer style}
+% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
+\newcommand{\stylemajor}{1}
+\newcommand{\styleminor}{0}
+% \stylepatch is optional: comment the next line out to release as Major.Minor
+%\newcommand{\stylepatch}{0}
+\ifdefined\stylepatch
+  \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
+\else
+  \newcommand{\styleversion}{\stylemajor.\styleminor}
+\fi
+% typeout
+\typeout{}
+\typeout{\stylename-\styleversion}
+% options
+\newif\if@doApice
+\@doApicefalse
+\DeclareOption{apice}{\@doApicetrue}
+\ProcessOptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\mode<presentation>
+%
+% APICe BibTeX field display enabled
+\if@doApice
+\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{\it(APICe)}}}}}
+\else
+\newcommand{\apicepar}[1]{}
+\fi
+%
+\setbeamertemplate{navigation symbols}{}
+%
+\useoutertheme{infolines}
+\useinnertheme[shadow=true]{rounded}
+%%% TO UNCOMMENT FOR LOCAL DIR
+\usecolortheme{amsunibo}
+%% Background -- the Alma Mater seal, as a watermark
+%% The image is the Ateneo's own seal, so it belongs to this identity at least
+%% as squarely as it does to AMSBolognaFC.  It is also perfectly neutral: over
+%% its 4.36M pixels there is not one tinted pixel, only white with #F1F1F1 and
+%% #E5E5E5 -- and #F1F1F1 is within one unit of this palette's own neutral fill,
+%% amsgreybg #F0F1F1.  So it sits under the institutional colours without a cast
+%% of its own, exactly as it does under the Bologna FC ones.
+%% The canvas beneath it is white, as the wiki's is (body-bg,
+%% xwiki-page-content-bg).
+\setbeamercolor{background canvas}{bg=amswhite}
+\pgfdeclareimage[height=.97\paperheight]{bg}{almacesena-background}
+%\pgfdeclareimage[width=\paperwidth]{bg}{img/almacesena-background}
+\setbeamertemplate{background}{\pgfuseimage{bg}}
+% text
+\setbeamercolor{normal text}{fg=amstext}
+\setbeamercolor{alerted text}{fg=amsred}
+\setbeamercolor{quote}{fg=amsgreymid}
+% bullets
+\setbeamercolor*{item}{fg=amsred}
+% front page
+\setbeamercolor{title}{fg=amsblack}
+\setbeamercolor{subtitle}{fg=amsgreymid}
+\setbeamercolor{author}{fg=amsred}
+\setbeamercolor{institute}{fg=amsgrey}
+\setbeamercolor{date}{fg=amsgreymid}
+% head and foot lines -- the wiki's navbar over its breadcrumb band
+\setbeamercolor{section in head/foot}{fg=amswhite,bg=amsred}
+\setbeamercolor{subsection in head/foot}{fg=amstext,bg=amsgreentint2}
+\setbeamercolor{author in head/foot}{fg=amswhite,bg=amsgreendark}
+\setbeamercolor{title in head/foot}{fg=amstext,bg=amsgreentint2}
+\setbeamercolor{date in head/foot}{fg=amsgreymid,bg=amsgreentint}
+% block header -- the wiki's contextual states: neutral, danger, success.
+% block and alerted take a solid header, as the wiki's panels and primary
+% buttons do; example takes the lighter pairing the wiki uses for its own
+% success alerts, @state-success-border over @state-success-bg.  Full-strength
+% green never carries light text: white on #56A49A is 2.93:1.
+\setbeamercolor{block title}{use=structure,fg=amswhite,bg=amsgreendark}
+\setbeamercolor{block title alerted}{use=alerted text,fg=amswhite,bg=amsred}
+\setbeamercolor{block title example}{use=example text,fg=amstext,bg=amsgreenborder}
+% block body
+\setbeamercolor{block body}{parent=normal text,use=block title,bg=amsgreentint}
+\setbeamercolor{block body alerted}{parent=normal text,use=block title alerted,bg=amsredfill}
+\setbeamercolor{block body example}{parent=normal text,use=block title example,bg=amsgreenfill}
+% table of content
+\setbeamercolor{section in toc}{fg=amsgreendark}
+\setbeamercolor{subsection in toc}{fg=amsgreymid}
+% footnote
+\setbeamercolor{footnote mark}{fg=amsred}
+\setbeamercolor{footnote}{fg=amsgreymid}
+% biblio
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+\setbeamercolor{bibliography entry author}{fg=amstext}
+\setbeamercolor{bibliography entry title}{fg=amsred}
+\setbeamercolor{bibliography entry location}{fg=amsgreymid}
+\setbeamercolor{bibliography entry note}{fg=amsgreendark}
+% abstract
+\setbeamercolor*{abstract title}{fg=amsgreendark}
+\setbeamerfont*{abstract title}{family=\sffamily}
+\setbeamercolor*{abstract}{fg=amsgreymid}
+\setbeamerfont*{abstract}{family=\rmfamily,size=\small}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The paired commands below come in two weights each: the plain one for light
+% surfaces -- the white slide, the pale green fills -- and the doubled one for
+% the dark surfaces, which here are the green-dark block headers, the red
+% alerted headers and the red head line.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Citation
+\newcommand{\ccite}[1]{{\textcolor{amsgreymid}{\textsuperscript{\tiny\cite{#1}}}}}
+\newcommand{\cccite}[1]{{\textcolor{amsgreyline}{\textsuperscript{\tiny\cite{#1}}}}}
+% URL
+\newcommand{\uurl}[1]{{\textcolor{amsred}{\scriptsize\url{#1}}}}
+\newcommand{\uuurl}[1]{{\textcolor{amsgreyline}{\tiny\url{#1}}}}
+% DOI
+\newcommand{\ddoi}[1]{{\textcolor{amsred}{\scriptsize\href{http://dx.doi.org/#1}{DOI:#1}}}}
+\newcommand{\dddoi}[1]{{\textcolor{amsgreyline}{\tiny\href{http://dx.doi.org/#1}{DOI:#1}}}}
+% emph
+\renewcommand{\emph}[1]{\textcolor{amsgreendark}{\textit{#1}}}
+% alert
+%\renewcommand{\alert}[1]{\textcolor{amsred}{#1}}
+\newcommand{\aalert}[1]{\textcolor{amsgreyline}{\it#1}}
+% speaker
+\newcommand{\speaker}[1]{\textcolor{amsred}{#1}}
+\newcommand{\sspeaker}[1]{\textcolor{amsgreyline}{\it#1}}
+%
+\usepackage[T1]{fontenc}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% workarounds -- handled here so that no document has to deal with them
+%
+% Commands that cannot survive hyperref's PDF-string expansion.  Without this,
+% every deck would have to wrap them in \texorpdfstring by hand.
+%   \speaker, \sspeaker -- colour the speaker's name on the title page.
+%               \@firstofone keeps the name and drops only the colouring, so the
+%               author still reaches the PDF /Author field.
+%   \translate -- beamer's translator hook.  \refname is \translate{References},
+%               so \section*{\refname} warns "Token not allowed in a PDF
+%               string".  \@firstofone keeps the argument, drops the command.
+%   \\ -- a line break inside \title or \author, meaningless in a PDF string.
+%               hyperref would drop it and run the two sides together, turning
+%               "Nobody Else\\someone@unibo.it" into "Nobody Elsesomeone@unibo.it";
+%               mapping it to a space keeps the metadata readable.
+\ifdefined\pdfstringdefDisableCommands
+  \pdfstringdefDisableCommands{%
+    \let\speaker\@firstofone
+    \let\sspeaker\@firstofone
+    \let\translate\@firstofone
+    \let\\\space
+  }
+\fi
+%
+% Computer Modern Sans has no small-caps shape, so every \textsc under the
+% default font -- \textsc{Alma Mater Studiorum} on a title page, say -- falls
+% back to the SERIF small caps and warns "Font shape `T1/cmss/m/sc' in size <n>
+% not available".  Declaring the substitution makes it official and silent at
+% every size.  ssub* is a silent substitution and the typeset result is the one
+% LaTeX was already producing, so nothing moves on the slides.
+%
+% To get genuine SANS small caps instead, load a font family that has them
+% (Lato, Fira Sans, Linux Biolinum ...) -- but that restyles the whole deck.
+% The web theme's own answer, Merriweather Sans, would need LuaLaTeX or
+% XeLaTeX; this style stays on pdfLaTeX, so the substitution stands.
+\DeclareFontShape{T1}{cmss}{m}{sc}{<->ssub*cmr/m/sc}{}
+%
+\mode
+<all>
