@@ -11,15 +11,16 @@
 % This work has the LPPL maintenance status `maintained'.
 % The Current Maintainer of this work is Andrea Omicini.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The AMSBolognaFC Beamer style in the colours of the AMSUniBo theme for the
-%% APICe wiki. Palette: beamercolorthemeamsunibo.sty. Everything else: README.md.
+%% The AMSBolognaFC Beamer style in the colours and the faces of the AMSUniBo
+%% theme for the APICe wiki. Palette: beamercolorthemeamsunibo.sty. Everything
+%% else, reasoning included: README.md.
 %% name
 \newcommand{\stylename}{AMSUniBo Beamer style}
 %% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{1}
+\newcommand{\styleminor}{2}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{1}
+%\newcommand{\stylepatch}{0}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -111,11 +112,43 @@
 %% alert -- light, for dark surfaces
 %\renewcommand{\alert}[1]{\textcolor{amsred}{#1}}
 \newcommand{\aalert}[1]{\textcolor{amsgreyline}{\it#1}}
-%% speaker
-\newcommand{\speaker}[1]{\textcolor{amsred}{#1}}
-\newcommand{\sspeaker}[1]{\textcolor{amsgreyline}{\it#1}}
+%% speaker -- both bold: the point is to stand out, and colour alone could not do it.
+%% \speaker keeps amsred for the title page; \sspeaker inherits its surface's colour,
+%% so it works white-on-green in the footline and dark on a light surface alike
+\newcommand{\speaker}[1]{\textcolor{amsred}{\textbf{#1}}}
+\newcommand{\sspeaker}[1]{\textbf{#1}}
 %
 \usepackage[T1]{fontenc}
+%% typography -- the web theme's own faces, all Type 1 under pdfLaTeX; README.md
+%% text: Merriweather Sans body, Merriweather serif headings, as the web theme's h1/h2
+%% scaled: Merriweather's x-height runs large, so 0.92 matches the old apparent size
+\usepackage[rm,sfdefault,sflight,type1,scaled=0.92]{merriweather}
+\setbeamerfont{title}{family=\rmfamily}
+\setbeamerfont{subtitle}{family=\rmfamily}
+\setbeamerfont{frametitle}{family=\rmfamily}
+%% body weight 300, as the web theme has it; \seriesdefault is the load-bearing one,
+%% since the package resets it to the serif family's series
+\renewcommand{\mddefault}{light}
+\renewcommand{\seriesdefault}{light}
+%% block titles stay at medium, so a header still outweighs its own contents
+\newcommand{\medseries}{\fontseries{m}\selectfont}
+\setbeamerfont{block title}{series=\medseries}
+\setbeamerfont{block title alerted}{series=\medseries}
+\setbeamerfont{block title example}{series=\medseries}
+%% a light default asks every family for a light series; these two have none, and
+%% both must wait for their .fd to load -- see README.md for adding others
+\AtBeginDocument{%
+  \DeclareFontShape{OT1}{cmss}{light}{n}{<->ssub*cmss/m/n}{}%
+  \@ifpackageloaded{wasysym}{%
+    \input{uwasy.fd}%
+    \DeclareFontShape{U}{wasy}{light}{n}{<->ssub*wasy/m/n}{}%
+  }{}%
+}
+%% code: matches the body weight and is narrower than cmtt; varqu keeps quotes straight
+\usepackage[varqu,varl]{inconsolata}
+%% math: sans, to sit with the sans body; anyfontsize absorbs the 5.5/6.5pt substitutions
+\usepackage{newtxsf}
+\usepackage{anyfontsize}
 %% workarounds, so that no document has to carry them -- see README.md
 %% commands that cannot survive hyperref's PDF-string expansion
 \ifdefined\pdfstringdefDisableCommands
@@ -126,7 +159,8 @@
     \let\\\space
   }
 \fi
-%% Computer Modern Sans has no small-caps shape; declare the substitution
+%% safety net: Computer Modern Sans has no small-caps shape, so a deck that
+%% overrides the family back to it would hit the missing shape again
 \DeclareFontShape{T1}{cmss}{m}{sc}{<->ssub*cmr/m/sc}{}
 %
 \mode
