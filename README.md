@@ -50,7 +50,7 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 | `beamerthemeAMSUniBo.sty` | the theme: the `apice` option, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
 | `beamercolorthemeamsunibo.sty` | the palette alone — the `@ams-*` variables of the web theme, with the source of each — loaded by the theme |
 | `almacesena-background.pdf` | the background image: the Alma Mater seal, as a faint watermark in the lower-right corner |
-| `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst` (see the licence note below) |
+| `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst`, with titles emboldened (see [the references frame](#the-references-frame) and the licence note below) |
 
 Every release attaches a `style.zip` holding all four plus the `LICENSE`. The
 archive is enough to typeset with, given a TeX installation carrying the four
@@ -181,6 +181,31 @@ the *serif* small caps and warned
 real small-caps shape, so this no longer arises. The substitution is still
 declared, as a safety net for a deck that overrides the family back to Computer
 Modern Sans.
+
+## the references frame
+
+An entry's citation key and its title used to read as the same kind of thing,
+because they were the same colour at the same weight. The colour half was not a
+decision: the title is `amsred` deliberately, while the key was `amsred` **by
+inheritance** — beamer parents `bibliography item` on `item`, which this style
+sets to red for bullets, and nothing here had ever named `bibliography item`. It
+is now `amsgreymid`: a key is a pointer, not a bullet.
+
+The weight half is done in the `.bst`, and deliberately not in the theme, which
+was the first thing tried. Beamer parents `bibliography entry author`,
+`location` and `note` on the *title's* font, so
+`\setbeamerfont{bibliography entry title}{series=\bfseries}` bolds the author and
+the location too — it flattens an entry rather than ranking it. Resetting those
+three to `\mdseries` is worse still: with a light body weight that asks every
+family for a light series, which Inconsolata does not have, so the build warns and
+Computer Modern reappears in the PDF.
+
+BibTeX, by contrast, knows which field is a title. `apalike-AMS.bst` therefore
+gains `embolden`, a counterpart to the `emphasize` it already had, applied at the
+two places a title is formatted: `format.title` for articles and `format.btitle`
+for books, the latter keeping its italic and so becoming bold italic. One
+cosmetic consequence, for the record: the full stop appended after a title falls
+outside the bold and stays at body weight.
 
 ## the palette
 

@@ -9,6 +9,10 @@
 % Differences between this style and `alpha' are generally heralded by a `%'.
 % The file btxbst.doc has the documentation for alpha.bst.
 %
+% AMSUniBo: renamed and modified. Titles are emboldened, so that an entry's
+% title outweighs its citation key -- see `embolden' below, and README.md in
+% https://github.com/andreaomicini/beamer-AMSUniBo for why.
+%
 % This style should be used with the `apalike' LaTeX style (apalike.sty).
 % \cite's come out like "(Jones, 1986)" in the text but there are no labels
 % in the bibliography, and something like "(1986)" comes out immediately
@@ -204,6 +208,14 @@ FUNCTION {field.or.null}
   if$
 }
 
+% AMSUniBo: emphasize's counterpart, for titles only
+FUNCTION {embolden}
+{ duplicate$ empty$
+    { pop$ "" }
+    { "{\bfseries " swap$ * "}" * }
+  if$
+}
+
 FUNCTION {emphasize}
 { duplicate$ empty$
     { pop$ "" }
@@ -271,7 +283,7 @@ FUNCTION {format.editors}
 FUNCTION {format.title}
 { title empty$
     { "" }
-    { title "t" change.case$ }
+    { title "t" change.case$ embolden }   % AMSUniBo
   if$
 }
 
@@ -301,7 +313,7 @@ FUNCTION {n.dashify}
 }
 
 FUNCTION {format.btitle}
-{ title emphasize
+{ title emphasize embolden   % AMSUniBo
 }
 
 FUNCTION {tie.or.space.connect}
