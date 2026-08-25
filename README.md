@@ -245,6 +245,16 @@ for books, the latter keeping its italic and so becoming bold italic. One
 cosmetic consequence, for the record: the full stop appended after a title falls
 outside the bold and stays at body weight.
 
+The last line of an entry holds the APICe marker and then the DOI or the URL, and
+those two used to touch. The `.bst` does put two spaces between them, but BibTeX
+wraps the `.bbl` line at exactly that point and the newline collapses them into
+one space — set at `\tiny`, so it is narrower still, and `(APICe)DOI:10.…` reads as
+a single token. The gap therefore belongs to `\apicepar`, which ends in a
+`\mbox{~~~}` of its own; it sits *outside* the `\href`, so the link hotspot stops
+at the word rather than covering the blank. The parentheses went with it: the
+marker is a green sans word among grey monospace URLs and already looks like a
+separate thing.
+
 ## the palette
 
 Every value is the one used by the AMSUniBo theme on APICe, and each is used in

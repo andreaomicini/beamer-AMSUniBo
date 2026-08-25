@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{5}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-%\newcommand{\stylepatch}{0}
+\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -41,9 +41,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \mode<presentation>
 %
-%% the APICe marker; expands to nothing without the apice option
+%% the APICe marker; expands to nothing without the apice option. It carries its
+%% own trailing gap, outside the link so the hotspot stops at the word: the .bst
+%% appends two spaces after \apicepar, but BibTeX wraps the .bbl line there and
+%% the newline collapses them into one \tiny space, which the DOI runs into
 \if@doApice
-\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{(APICe)}}}}}
+\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{APICe}}\mbox{~~~}}}}
 \else
 \newcommand{\apicepar}[1]{}
 \fi
