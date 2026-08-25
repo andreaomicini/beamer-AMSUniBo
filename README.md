@@ -43,9 +43,19 @@ where the Campus is the point, and not here.
 Since 1.4 this style carries **`almabologna-background.pdf`**: the seal of the
 Ateneo, without any Campus lettering, taken from the institutional PowerPoint
 template of the *immagine coordinata* and converted to grey. It sits at **18%**,
-cropped at the lower-right corner in the same geometry as before — a 538 pt disc
-anchored at 924 pt, 449 pt on an A3 canvas — so nothing else in the theme moved.
-Being greyscale it carries no colour cast into the institutional palette.
+cropped at the lower-right corner in the same geometry as before — a 538 bp disc
+anchored at 924 bp, 449 bp from the top-left of an A3 page — so nothing else in the
+theme moved. Being greyscale it carries no colour cast into the institutional
+palette.
+
+To regenerate it, place the artwork with **pdfLaTeX**, not with ImageMagick's own
+PDF writer: `magick … out.pdf` produces an image plus an `SMask` that pdfTeX
+renders as a **solid black rectangle**, and the `-repage` variant writes a page of
+the right size with no content at all. Both compile without a warning, so the
+failure only shows when you look at a slide. A four-line `tikzpicture` with the
+node anchored `south west` at `xshift=924bp, yshift=-145bp` from
+`current page.south west` is reliable. Note the units: `geometry`'s `paperwidth`
+in `pt` gives 1186 bp, not 1191 — use `bp` throughout.
 
 The colours were the first step, not the whole of it: the style now carries the
 web theme's typography as well, and still on **pdfLaTeX** — see
