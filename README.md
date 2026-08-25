@@ -20,6 +20,14 @@ Pass the `apice` option to the document class to enable the APICe BibTeX field:
 \documentclass[presentation,apice]{beamer}\mode<presentation>{\usetheme{AMSUniBo}}
 ```
 
+Pass `cesena` for a deck belonging to the Campus di Cesena, which watermarks the
+slides with the Campus seal instead of the Ateneo one. `bologna` says the default
+out loud and is otherwise the same as omitting it:
+
+```latex
+\documentclass[presentation,cesena]{beamer}\mode<presentation>{\usetheme{AMSUniBo}}
+```
+
 A ready-to-use presentation skeleton is available in
 [beamer-AMSUniBo-template](https://github.com/andreaomicini/beamer-AMSUniBo-template).
 
@@ -48,7 +56,18 @@ anchored at 924 bp, 449 bp from the top-left of an A3 page — so nothing else i
 theme moved. Being greyscale it carries no colour cast into the institutional
 palette.
 
-To regenerate it, place the artwork with **pdfLaTeX**, not with ImageMagick's own
+**Since 1.5 the Campus di Cesena seal is available again, as an option rather than
+the default.** `cesena` selects `almacesena-background.pdf`, the Campus seal given
+the same treatment: grey, 18%, the identical 538 bp disc at the identical anchor.
+The two are deliberately at the same nominal opacity even though Cesena's ring is
+**solid** where the Ateneo's is an **outline** — measured, Cesena carries 2.06× the
+ink, so weighting them equally would have meant setting it near 9%. It is not
+weighted down, because the solid border is itself what identifies the Campus mark
+to anyone in the Ateneo, and thinning it to match would blunt exactly the feature
+that carries the meaning. Note that the crop cuts the lower 27% of the disc, so
+`CESENA` and `A.D. 1088` do not appear; the border does the work.
+
+To regenerate either, place the artwork with **pdfLaTeX**, not with ImageMagick's own
 PDF writer: `magick … out.pdf` produces an image plus an `SMask` that pdfTeX
 renders as a **solid black rectangle**, and the `-repage` variant writes a page of
 the right size with no content at all. Both compile without a warning, so the
@@ -65,9 +84,10 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 
 | file | what it is |
 |---|---|
-| `beamerthemeAMSUniBo.sty` | the theme: the `apice` option, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
+| `beamerthemeAMSUniBo.sty` | the theme: the `apice` and `bologna`/`cesena` options, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
 | `beamercolorthemeamsunibo.sty` | the palette alone — the `@ams-*` variables of the web theme, with the source of each — loaded by the theme |
-| `almabologna-background.pdf` | the background image: the Ateneo seal in grey, as a watermark cropped at the lower-right corner |
+| `almabologna-background.pdf` | the default background: the Ateneo seal in grey, as a watermark cropped at the lower-right corner |
+| `almacesena-background.pdf` | the same, with the Campus di Cesena seal, for the `cesena` option |
 | `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst`, with titles emboldened (see [the references frame](#the-references-frame) and the licence note below) |
 
 Every release attaches a `style.zip` holding all four plus the `LICENSE`. The

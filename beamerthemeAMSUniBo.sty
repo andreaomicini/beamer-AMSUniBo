@@ -18,9 +18,9 @@
 \newcommand{\stylename}{AMSUniBo Beamer style}
 %% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{4}
+\newcommand{\styleminor}{5}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{1}
+%\newcommand{\stylepatch}{0}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -32,6 +32,11 @@
 \newif\if@doApice
 \@doApicefalse
 \DeclareOption{apice}{\@doApicetrue}
+%% which seal watermarks the slides: bologna (the Ateneo, default) or cesena
+\newif\if@doCesena
+\@doCesenafalse
+\DeclareOption{bologna}{\@doCesenafalse}
+\DeclareOption{cesena}{\@doCesenatrue}
 \ProcessOptions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \mode<presentation>
@@ -49,12 +54,15 @@
 \useinnertheme[shadow=true]{rounded}
 %%% TO UNCOMMENT FOR LOCAL DIR
 \usecolortheme{amsunibo}
-%% background -- the Ateneo seal, grey on white, cropped at the lower-right corner.
-%% Replaced the Campus di Cesena seal in 1.4: that one read CESENA, which does not
-%% belong on an Ateneo-wide style, and it was too faint to see anyway
+%% background -- a seal in grey, cropped at the lower-right corner. The Ateneo by
+%% default; the Campus di Cesena with the cesena class option. Cesena's ring is
+%% solid where the Ateneo's is an outline, so it is set lighter to weigh the same
 \setbeamercolor{background canvas}{bg=amswhite}
-\pgfdeclareimage[height=.97\paperheight]{bg}{almabologna-background}
-%\pgfdeclareimage[width=\paperwidth]{bg}{img/almabologna-background}
+\if@doCesena
+  \pgfdeclareimage[height=.97\paperheight]{bg}{almacesena-background}
+\else
+  \pgfdeclareimage[height=.97\paperheight]{bg}{almabologna-background}
+\fi
 \setbeamertemplate{background}{\pgfuseimage{bg}}
 %% text
 \setbeamercolor{normal text}{fg=amstext}
