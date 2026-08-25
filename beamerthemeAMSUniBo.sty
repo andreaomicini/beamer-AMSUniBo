@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{3}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-%\newcommand{\stylepatch}{0}
+\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -107,9 +107,11 @@
 %% URL: plain dark for light surfaces, doubled light for dark ones
 \newcommand{\uurl}[1]{{\textcolor{amsred}{\scriptsize\url{#1}}}}
 \newcommand{\uuurl}[1]{{\textcolor{amsgreyline}{\tiny\url{#1}}}}
-%% DOI: likewise
-\newcommand{\ddoi}[1]{{\textcolor{amsred}{\scriptsize\href{http://dx.doi.org/#1}{DOI:#1}}}}
-\newcommand{\dddoi}[1]{{\textcolor{amsgreyline}{\tiny\href{http://dx.doi.org/#1}{DOI:#1}}}}
+%% DOI: likewise. https://doi.org is the current resolver; dx.doi.org is a
+%% deprecated alias, and the .bst reaches these through \dddoi, so this is the
+%% only place the resolver is named
+\newcommand{\ddoi}[1]{{\textcolor{amsred}{\scriptsize\href{https://doi.org/#1}{DOI:#1}}}}
+\newcommand{\dddoi}[1]{{\textcolor{amsgreyline}{\tiny\href{https://doi.org/#1}{DOI:#1}}}}
 %% emph
 \renewcommand{\emph}[1]{\textcolor{amsgreendark}{\textit{#1}}}
 %% alert -- light, for dark surfaces
