@@ -18,9 +18,9 @@
 \newcommand{\stylename}{AMSUniBo Beamer style}
 %% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{3}
+\newcommand{\styleminor}{4}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{1}
+%\newcommand{\stylepatch}{0}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -38,7 +38,7 @@
 %
 %% the APICe marker; expands to nothing without the apice option
 \if@doApice
-\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{\it(APICe)}}}}}
+\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{(APICe)}}}}}
 \else
 \newcommand{\apicepar}[1]{}
 \fi
@@ -49,10 +49,12 @@
 \useinnertheme[shadow=true]{rounded}
 %%% TO UNCOMMENT FOR LOCAL DIR
 \usecolortheme{amsunibo}
-%% background -- the Alma Mater seal, on white
+%% background -- the Ateneo seal, grey on white, cropped at the lower-right corner.
+%% Replaced the Campus di Cesena seal in 1.4: that one read CESENA, which does not
+%% belong on an Ateneo-wide style, and it was too faint to see anyway
 \setbeamercolor{background canvas}{bg=amswhite}
-\pgfdeclareimage[height=.97\paperheight]{bg}{almacesena-background}
-%\pgfdeclareimage[width=\paperwidth]{bg}{img/almacesena-background}
+\pgfdeclareimage[height=.97\paperheight]{bg}{almabologna-background}
+%\pgfdeclareimage[width=\paperwidth]{bg}{img/almabologna-background}
 \setbeamertemplate{background}{\pgfuseimage{bg}}
 %% text
 \setbeamercolor{normal text}{fg=amstext}

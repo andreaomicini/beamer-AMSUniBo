@@ -28,16 +28,24 @@ A ready-to-use presentation skeleton is available in
 This style began as [beamer-AMSBolognaFC](https://github.com/andreaomicini/beamer-AMSBolognaFC)
 with a different palette. The structure, the commands, the `apice` option, the
 workarounds, the release scheme and the template repository beside it are all the
-same, background image included; what changes is the colour of every element —
-and, since 1.2, the faces they are set in.
+same; what changes is the colour of every element, since 1.2 the faces they are
+set in, and since 1.4 the background image.
 
-The background is the same file, and deliberately so. It is not a Campus
-photograph but the **Alma Mater seal**, which belongs to this identity at least
-as squarely as it does to the AMSBolognaFC one, and it is perfectly neutral:
-across its 4.36M pixels there is not a single tinted one — white, `#F1F1F1` and
-`#E5E5E5` only. `#F1F1F1` is within one unit of this palette's own neutral fill,
-`amsgreybg` `#F0F1F1`. So it carries no colour cast into the institutional
-palette.
+**The background is no longer the same file, and that is a correction.** Both
+styles used to share `almacesena-background.pdf`, which an earlier version of this
+file described as the Alma Mater seal. It is not: extracted from the PDF and read
+at full strength, it is the **Campus di Cesena** seal, with CESENA lettering along
+the bottom. It never showed, because the disc is scaled so that its lower half
+falls off the page and the whole thing sits at about 10% opacity — which is also
+why it was barely visible at all. That file belongs in the AMSBolognaFC style,
+where the Campus is the point, and not here.
+
+Since 1.4 this style carries **`almabologna-background.pdf`**: the seal of the
+Ateneo, without any Campus lettering, taken from the institutional PowerPoint
+template of the *immagine coordinata* and converted to grey. It sits at **18%**,
+cropped at the lower-right corner in the same geometry as before — a 538 pt disc
+anchored at 924 pt, 449 pt on an A3 canvas — so nothing else in the theme moved.
+Being greyscale it carries no colour cast into the institutional palette.
 
 The colours were the first step, not the whole of it: the style now carries the
 web theme's typography as well, and still on **pdfLaTeX** — see
@@ -49,7 +57,7 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 |---|---|
 | `beamerthemeAMSUniBo.sty` | the theme: the `apice` option, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
 | `beamercolorthemeamsunibo.sty` | the palette alone — the `@ams-*` variables of the web theme, with the source of each — loaded by the theme |
-| `almacesena-background.pdf` | the background image: the Alma Mater seal, as a faint watermark in the lower-right corner |
+| `almabologna-background.pdf` | the background image: the Ateneo seal in grey, as a watermark cropped at the lower-right corner |
 | `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst`, with titles emboldened (see [the references frame](#the-references-frame) and the licence note below) |
 
 Every release attaches a `style.zip` holding all four plus the `LICENSE`. The

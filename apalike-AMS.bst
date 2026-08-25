@@ -93,7 +93,10 @@ FUNCTION {output.nonnull}
   output.state mid.sentence =
     { ", " * write$ }
     { output.state after.block =
-        { add.period$ write$
+        % AMSUniBo: no period where a block ends, since the next one starts on a
+        % new line anyway -- the stop only ever trailed a title or a URL. The
+        % add.period$ further down stays: that one separates items on one line
+        { write$
           newline$
           "\newblock " write$
         }
