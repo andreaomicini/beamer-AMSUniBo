@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{6}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-%\newcommand{\stylepatch}{1}
+\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -122,8 +122,14 @@
 \setbeamerfont*{abstract}{family=\rmfamily,size=\small}
 %% paired commands -- the weights are load-bearing, see README.md
 %% citation: both light, for the dark surfaces a marker sits on
-\newcommand{\ccite}[1]{{\textcolor{amsgreyline}{\textsuperscript{\tiny\cite{#1}}}}}
-\newcommand{\cccite}[1]{{\textcolor{amsgreybg}{\textsuperscript{\tiny\cite{#1}}}}}
+%% #1 colour, #2 optional note (-NoValue- when absent), #3 keys.  \cite[]{...}
+%% is not \cite{...} -- it typesets an empty note -- so the test is on the
+%% marker, not on emptiness.  The marker survives being passed down here.
+\newcommand{\ams@cite}[3]{%
+  \textcolor{#1}{\textsuperscript{\tiny\IfNoValueTF{#2}{\cite{#3}}{\cite[#2]{#3}}}}%
+}
+\NewDocumentCommand{\ccite}{o m}{\ams@cite{amsgreyline}{#1}{#2}}
+\NewDocumentCommand{\cccite}{o m}{\ams@cite{amsgreybg}{#1}{#2}}
 %% URL: plain dark for light surfaces, doubled light for dark ones
 \newcommand{\uurl}[1]{{\textcolor{amsred}{\scriptsize\url{#1}}}}
 \newcommand{\uuurl}[1]{{\textcolor{amsgreyline}{\tiny\url{#1}}}}
@@ -175,11 +181,26 @@
 \usepackage{newtxsf}
 \usepackage{anyfontsize}
 %% workarounds, so that no document has to carry them -- see README.md
-%% commands that cannot survive hyperref's PDF-string expansion
+%% commands that cannot survive hyperref's PDF-string expansion.  The two
+%% replacements below are \let into place, so that no parameter token ever
+%% reaches \pdfstringdefDisableCommands, where it would not survive either.
+%% a citation says nothing in a bookmark, and the note has to go with the keys:
+%% only an expandable form is expanded away whole -- \NewDocumentCommand is
+%% unexpandable, so hyperref would drop the name and leave [note]{keys} behind
+\NewExpandableDocumentCommand{\ams@nocite}{o m}{}
+%% the DOI is worth keeping in a bookmark, resolver and colour are not
+\newcommand{\ams@nodoi}[1]{DOI:#1}
 \ifdefined\pdfstringdefDisableCommands
   \pdfstringdefDisableCommands{%
     \let\speaker\@firstofone
     \let\sspeaker\@firstofone
+    \let\ccite\ams@nocite
+    \let\cccite\ams@nocite
+    \let\uurl\@firstofone
+    \let\uuurl\@firstofone
+    \let\ddoi\ams@nodoi
+    \let\dddoi\ams@nodoi
+    \let\apicepar\@gobble
     \let\translate\@firstofone
     \let\\\space
   }

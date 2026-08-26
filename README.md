@@ -109,7 +109,7 @@ Beyond the beamer furniture, the theme defines:
 | command | for |
 | --- | --- |
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
-| `\ccite` `\cccite` | superscript citations, in two weights |
+| `\ccite` `\cccite` | superscript citations, in two weights; both take `\cite`'s optional note, as in `\ccite[p.~42]{key}` |
 | `\uurl` `\uuurl` | URLs, in two sizes |
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes |
 | `\apicepar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
@@ -137,6 +137,15 @@ every deck would have to wrap them in `\texorpdfstring` by hand.
 * `\speaker`, `\sspeaker` mark the speaker's name on the title page.
   `\@firstofone` keeps the name and drops only the markup, so the author still
   reaches the PDF `/Author` field.
+* `\ccite`, `\cccite` say nothing in a bookmark, so they go entirely. Their
+  replacement is expandable: an unexpandable one would have hyperref drop the
+  name alone and leave `[p.~42]{key}` behind as literal text.
+* `\uurl`, `\uuurl` carry `\url`, whose catcode machinery does not survive
+  expansion at all — unhandled, a URL in `\title` turns the PDF `/Title` into
+  mojibake. `\@firstofone` keeps the address and drops the styling.
+* `\ddoi`, `\dddoi` become `DOI:<doi>`: the number is worth having in the
+  metadata, the resolver link is not.
+* `\apicepar` is a decorative marker, so it is dropped, argument and all.
 * `\translate` is beamer's translator hook. `\refname` is `\translate{References}`,
   so `\section*{\refname}` warns *Token not allowed in a PDF string*.
 * `\\` — a line break inside `\title` or `\author` is meaningless in a PDF string.
