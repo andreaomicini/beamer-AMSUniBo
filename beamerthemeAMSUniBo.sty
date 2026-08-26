@@ -18,9 +18,9 @@
 \newcommand{\stylename}{AMSUniBo Beamer style}
 %% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{5}
+\newcommand{\styleminor}{6}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{1}
+%\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -32,11 +32,15 @@
 \newif\if@doApice
 \@doApicefalse
 \DeclareOption{apice}{\@doApicetrue}
-%% which seal watermarks the slides: bologna (the Ateneo, default) or cesena
+%% which seal watermarks the slides -- none unless asked for: bologna (the Ateneo)
+%% or cesena (the Campus). The seals belong to the Alma Mater, so a deck claims
+%% one explicitly; whoever is outside the Alma Mater just leaves the option out
+\newif\if@doSeal
+\@doSealfalse
 \newif\if@doCesena
 \@doCesenafalse
-\DeclareOption{bologna}{\@doCesenafalse}
-\DeclareOption{cesena}{\@doCesenatrue}
+\DeclareOption{bologna}{\@doSealtrue\@doCesenafalse}
+\DeclareOption{cesena}{\@doSealtrue\@doCesenatrue}
 \ProcessOptions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \mode<presentation>
@@ -57,16 +61,19 @@
 \useinnertheme[shadow=true]{rounded}
 %%% TO UNCOMMENT FOR LOCAL DIR
 \usecolortheme{amsunibo}
-%% background -- a seal in grey, cropped at the lower-right corner. The Ateneo by
-%% default; the Campus di Cesena with the cesena class option. Cesena's ring is
-%% solid where the Ateneo's is an outline, so it is set lighter to weigh the same
+%% background -- plain by default; with bologna or cesena, a seal in grey cropped
+%% at the lower-right corner: the Ateneo with the former, the Campus di Cesena
+%% with the latter. Cesena's ring is solid where the Ateneo's is an outline, so
+%% it is set lighter to weigh the same
 \setbeamercolor{background canvas}{bg=amswhite}
-\if@doCesena
-  \pgfdeclareimage[height=.97\paperheight]{bg}{almacesena-background}
-\else
-  \pgfdeclareimage[height=.97\paperheight]{bg}{almabologna-background}
+\if@doSeal
+  \if@doCesena
+    \pgfdeclareimage[height=.97\paperheight]{bg}{almacesena-background}
+  \else
+    \pgfdeclareimage[height=.97\paperheight]{bg}{almabologna-background}
+  \fi
+  \setbeamertemplate{background}{\pgfuseimage{bg}}
 \fi
-\setbeamertemplate{background}{\pgfuseimage{bg}}
 %% text
 \setbeamercolor{normal text}{fg=amstext}
 \setbeamercolor{alerted text}{fg=amsred}

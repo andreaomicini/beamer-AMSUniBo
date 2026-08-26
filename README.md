@@ -20,13 +20,19 @@ Pass the `apice` option to the document class to enable the APICe BibTeX field:
 \documentclass[presentation,apice]{beamer}\mode<presentation>{\usetheme{AMSUniBo}}
 ```
 
-Pass `cesena` for a deck belonging to the Campus di Cesena, which watermarks the
-slides with the Campus seal instead of the Ateneo one. `bologna` says the default
-out loud and is otherwise the same as omitting it:
+**No option, no watermark.** Pass `bologna` for a deck of the Alma Mater, which
+watermarks the slides with the Ateneo seal, or `cesena` for one of the Campus di
+Cesena, which uses the Campus seal instead:
 
 ```latex
+\documentclass[presentation,bologna]{beamer}\mode<presentation>{\usetheme{AMSUniBo}}
 \documentclass[presentation,cesena]{beamer}\mode<presentation>{\usetheme{AMSUniBo}}
 ```
+
+The seals are institutional marks, so a deck has to claim one out loud: leaving
+the option out is what anyone not belonging — or no longer, or not yet
+belonging — to the Alma Mater Studiorum — Università di Bologna should do, and
+the style is theirs to use with no logo on the slides at all.
 
 A ready-to-use presentation skeleton is available in
 [beamer-AMSUniBo-template](https://github.com/andreaomicini/beamer-AMSUniBo-template).
@@ -37,7 +43,8 @@ This style began as [beamer-AMSBolognaFC](https://github.com/andreaomicini/beame
 with a different palette. The structure, the commands, the `apice` option, the
 workarounds, the release scheme and the template repository beside it are all the
 same; what changes is the colour of every element, since 1.2 the faces they are
-set in, and since 1.4 the background image.
+set in, and since 1.4 the background image — which since 1.6 is not there unless
+a deck asks for it.
 
 **The background is no longer the same file, and that is a correction.** Both
 styles used to share `almacesena-background.pdf`, which an earlier version of this
@@ -48,33 +55,36 @@ falls off the page and the whole thing sits at about 10% opacity — which is al
 why it was barely visible at all. That file belongs in the AMSBolognaFC style,
 where the Campus is the point, and not here.
 
-Since 1.4 this style carries **`almabologna-background.pdf`**: the seal of the
+Since 1.4 this style carries **`almabologna-background.pdf`**, since 1.6 under the
+`bologna` option: the seal of the
 Ateneo, without any Campus lettering, taken from the institutional PowerPoint
 template of the *immagine coordinata* and converted to grey. It sits at **18%**,
 cropped at the lower-right corner in the same geometry as before — a 538 bp disc
-anchored at 924 bp, 449 bp from the top-left of an A3 page — so nothing else in the
-theme moved. Being greyscale it carries no colour cast into the institutional
-palette.
+anchored at 924 bp, 449 bp from the top-left of an A3 page — so nothing else in
+the theme moved. Being greyscale it carries no colour cast into the
+institutional palette.
 
 **Since 1.5 the Campus di Cesena seal is available again, as an option rather than
-the default.** `cesena` selects `almacesena-background.pdf`, the Campus seal given
+the default; since 1.6 neither seal is the default.** `cesena` selects
+`almacesena-background.pdf`, the Campus seal given
 the same treatment: grey, 18%, the identical 538 bp disc at the identical anchor.
 The two are deliberately at the same nominal opacity even though Cesena's ring is
-**solid** where the Ateneo's is an **outline** — measured, Cesena carries 2.06× the
-ink, so weighting them equally would have meant setting it near 9%. It is not
-weighted down, because the solid border is itself what identifies the Campus mark
-to anyone in the Ateneo, and thinning it to match would blunt exactly the feature
-that carries the meaning. Note that the crop cuts the lower 27% of the disc, so
-`CESENA` and `A.D. 1088` do not appear; the border does the work.
+**solid** where the Ateneo's is an **outline** — measured, Cesena carries 2.06×
+the ink, so weighting them equally would have meant setting it near 9%. It is
+not weighted down, because the solid border is itself what identifies the Campus
+mark to anyone in the Ateneo, and thinning it to match would blunt exactly the
+feature that carries the meaning. Note that the crop cuts the lower 27% of the
+disc, so `CESENA` and `A.D. 1088` do not appear; the border does the work.
 
-To regenerate either, place the artwork with **pdfLaTeX**, not with ImageMagick's own
-PDF writer: `magick … out.pdf` produces an image plus an `SMask` that pdfTeX
-renders as a **solid black rectangle**, and the `-repage` variant writes a page of
-the right size with no content at all. Both compile without a warning, so the
-failure only shows when you look at a slide. A four-line `tikzpicture` with the
-node anchored `south west` at `xshift=924bp, yshift=-145bp` from
-`current page.south west` is reliable. Note the units: `geometry`'s `paperwidth`
-in `pt` gives 1186 bp, not 1191 — use `bp` throughout.
+To regenerate either, place the artwork with **pdfLaTeX**, not with
+ImageMagick's own PDF writer: `magick … out.pdf` produces an image plus an
+`SMask` that pdfTeX renders as a **solid black rectangle**, and the `-repage`
+variant writes a page of the right size with no content at all. Both compile
+without a warning, so the failure only shows when you look at a slide. A
+four-line `tikzpicture` with the node anchored `south west` at
+`xshift=924bp, yshift=-145bp` from `current page.south west` is reliable. Note
+the units: `geometry`'s `paperwidth` in `pt` gives 1186 bp, not 1191 — use `bp`
+throughout.
 
 The colours were the first step, not the whole of it: the style now carries the
 web theme's typography as well, and still on **pdfLaTeX** — see
@@ -83,10 +93,10 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 ## structure
 
 | file | what it is |
-|---|---|
+| --- | --- |
 | `beamerthemeAMSUniBo.sty` | the theme: the `apice` and `bologna`/`cesena` options, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
 | `beamercolorthemeamsunibo.sty` | the palette alone — the `@ams-*` variables of the web theme, with the source of each — loaded by the theme |
-| `almabologna-background.pdf` | the default background: the Ateneo seal in grey, as a watermark cropped at the lower-right corner |
+| `almabologna-background.pdf` | the background under the `bologna` option: the Ateneo seal in grey, as a watermark cropped at the lower-right corner |
 | `almacesena-background.pdf` | the same, with the Campus di Cesena seal, for the `cesena` option |
 | `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst`, with titles emboldened (see [the references frame](#the-references-frame) and the licence note below) |
 
@@ -97,7 +107,7 @@ font packages listed under [typography](#typography) — it does not bundle font
 Beyond the beamer furniture, the theme defines:
 
 | command | for |
-|---|---|
+| --- | --- |
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
 | `\ccite` `\cccite` | superscript citations, in two weights |
 | `\uurl` `\uuurl` | URLs, in two sizes |
@@ -147,7 +157,7 @@ This is the style's only hard dependency beyond a TeX installation. It needs
 `tlmgr install merriweather inconsolata newtxsf anyfontsize` is enough.
 
 | role | face | how |
-|---|---|---|
+| --- | --- | --- |
 | body, and anything not listed below | Merriweather Sans | `merriweather`, `sfdefault` |
 | title, subtitle, frame titles | Merriweather serif | `merriweather`, `rm`, plus three `\setbeamerfont` |
 | `\texttt` and `verbatim` | Inconsolata | `inconsolata`, `varqu,varl` |
@@ -188,10 +198,10 @@ explicitly, so a block header still outweighs its own contents.
 A light default has one consequence worth understanding: every font family now
 gets asked for a `light` series, and a family that has none warns and falls back.
 Two such families turn up here — `OT1/cmss`, the math sans `newtxsf` installs, and
-`U/wasy`, if the deck loads `wasysym` — and the theme declares the substitution for
-both. Each has to wait for its `.fd` file to load, hence the `\AtBeginDocument`.
-**If a deck adds another symbol font that lacks a light series**, the same one-liner
-handles it:
+`U/wasy`, if the deck loads `wasysym` — and the theme declares the substitution
+for both. Each has to wait for its `.fd` file to load, hence the
+`\AtBeginDocument`. **If a deck adds another symbol font that lacks a light
+series**, the same one-liner handles it:
 
 ```latex
 \AtBeginDocument{\DeclareFontShape{<enc>}{<family>}{light}{n}{<->ssub*<family>/m/n}{}}
@@ -207,15 +217,16 @@ co-authors instead would have recoloured every unmarked author in every deck.
 
 `\sspeaker`, the short form that appears in the footline, had the same fault the
 other way round. It was `amsgreyline` and italic, on a footline whose own text is
-white — so it made the speaker *quieter* than the co-authors beside them, which is
-the opposite of the command's purpose. It is now simply bold, with **no colour of
-its own**: it inherits whatever surface it sits on, so it reads white-on-green in
-the footline and dark on a light surface, and needs no light-and-dark pair.
+white — so it made the speaker *quieter* than the co-authors beside them, which
+is the opposite of the command's purpose. It is now simply bold, with **no
+colour of its own**: it inherits whatever surface it sits on, so it reads
+white-on-green in the footline and dark on a light surface, and needs no
+light-and-dark pair.
 
 **Small caps.** Computer Modern Sans has no small-caps shape, so under it every
 `\textsc` — `\textsc{Alma Mater Studiorum}` on a title page, say — fell back to
 the *serif* small caps and warned
-`Font shape `T1/cmss/m/sc' in size <n> not available`. Merriweather Sans has a
+``Font shape `T1/cmss/m/sc' in size <n> not available``. Merriweather Sans has a
 real small-caps shape, so this no longer arises. The substitution is still
 declared, as a safety net for a deck that overrides the family back to Computer
 Modern Sans.
@@ -248,12 +259,12 @@ outside the bold and stays at body weight.
 The last line of an entry holds the APICe marker and then the DOI or the URL, and
 those two used to touch. The `.bst` does put two spaces between them, but BibTeX
 wraps the `.bbl` line at exactly that point and the newline collapses them into
-one space — set at `\tiny`, so it is narrower still, and `(APICe)DOI:10.…` reads as
-a single token. The gap therefore belongs to `\apicepar`, which ends in a
-`\mbox{~~~}` of its own; it sits *outside* the `\href`, so the link hotspot stops
-at the word rather than covering the blank. The parentheses went with it: the
-marker is a green sans word among grey monospace URLs and already looks like a
-separate thing.
+one space — set at `\tiny`, so it is narrower still, and `(APICe)DOI:10.…` reads
+as a single token. The gap therefore belongs to `\apicepar`, which ends in a
+`\mbox{~~~}` of its own; it sits *outside* the `\href`, so the link hotspot
+stops at the word rather than covering the blank. The parentheses went with it:
+the marker is a green sans word among grey monospace URLs and already looks like
+a separate thing.
 
 ## the palette
 
@@ -263,7 +274,7 @@ links, primary actions. Green is the structural colour — rules, separators,
 headings, tabs.
 
 | colour | value | web theme | where it goes on a slide |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `amsred` | `#BB2E29` | `@ams-red`, `navbar-default-bg`, `link-color` | head line, author, bullets, alerted text, URLs, DOIs, alerted block headers |
 | `amsreddark` | `#8E2320` | `@ams-red-dark`, `navbar-default-link-active-bg` | reserved for active states |
 | `amsblack` | `#000000` | `@ams-black`, `headings-color` | title, frame titles |
@@ -310,8 +321,9 @@ use `#BC2802` / `#BD2B0B`, which is the institutional red as naively converted
 from its CMYK build. The manual's own stated HEX, `#BB2E29`, is the one meant
 for screen, and is the one used here.
 
-The manual's 16 disciplinary-area colours — for Ambiti, Dipartimenti and Scuole —
-are deliberately **not** used: they identify structures, not the Ateneo.
+The manual's 16 disciplinary-area colours — for Ambiti, Dipartimenti and
+Scuole — are deliberately **not** used: they identify structures, not the
+Ateneo.
 
 ## versioning
 
