@@ -110,8 +110,8 @@ Beyond the beamer furniture, the theme defines:
 | --- | --- |
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
 | `\ccite` `\cccite` | superscript citations, in two weights; both take `\cite`'s optional note, as in `\ccite[p.~42]{key}` |
-| `\uurl` `\uuurl` | URLs, in two sizes |
-| `\ddoi` `\dddoi` | DOIs, linked, in two sizes |
+| `\uurl` `\uuurl` | URLs, in two sizes; since 1.6.2 no character in the address needs escaping |
+| `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
 | `\apicepar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\aalert` | a quieter alternative to `\alert` |
 
@@ -126,6 +126,29 @@ that style to this one changes hue and nothing else:
   light surfaces, the doubled one for dark.
 * `\aalert` is light, for dark surfaces. `\sspeaker` used to be, and is not any
   more: see [typography](#typography).
+
+### addresses need no escaping
+
+Since 1.6.2 the four address commands **string their argument before using it**,
+so `\ddoi{10.1007/978-3-032-22940-3_12}` and
+`\ddoi{10.1007/978-3-032-22940-3\_12}` give the same link and the same text.
+Stringing turns every token into an ordinary character, so an `_` no longer
+asks for maths mode; every backslash is then dropped, which is what makes the
+two spellings equivalent, and what a DOI never needs to keep.
+
+It matters most in the bibliography, where nobody gets to escape anything:
+`apalike-AMS.bst` copies the `doi` and `url` fields into the `.bbl` verbatim,
+and a Springer LNCS chapter DOI ends in `_<chapter>`.
+
+The work is done when the command runs, not by reading the argument verbatim as
+`\url` does, and that is forced by beamer: a frame body is tokenised when the
+frame is read, before anything in it runs, so a catcode trick would make every
+frame citing a DOI `fragile`.
+
+A PDF string stays the exception. hyperref expands a `\title` or a `\section`
+before any of this can run, so there a bare `_` is still dropped with *Token not
+allowed in a PDF string* — as it is in plain text — and `\_` is the spelling
+that survives.
 
 ### the workarounds the theme carries
 
@@ -144,7 +167,8 @@ every deck would have to wrap them in `\texorpdfstring` by hand.
   expansion at all — unhandled, a URL in `\title` turns the PDF `/Title` into
   mojibake. `\@firstofone` keeps the address and drops the styling.
 * `\ddoi`, `\dddoi` become `DOI:<doi>`: the number is worth having in the
-  metadata, the resolver link is not.
+  metadata, the resolver link is not. The replacement is expandable, so it
+  cannot string its argument — see above.
 * `\apicepar` is a decorative marker, so it is dropped, argument and all.
 * `\translate` is beamer's translator hook. `\refname` is `\translate{References}`,
   so `\section*{\refname}` warns *Token not allowed in a PDF string*.

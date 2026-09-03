@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{6}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{1}
+\newcommand{\stylepatch}{2}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -130,14 +130,30 @@
 }
 \NewDocumentCommand{\ccite}{o m}{\ams@cite{amsgreyline}{#1}{#2}}
 \NewDocumentCommand{\cccite}{o m}{\ams@cite{amsgreybg}{#1}{#2}}
+%% the address of a URL or a DOI is stringed before it is used, so that a special
+%% character in it needs no escaping: \_ and a bare _ alike give one underscore.
+%% #1 receives #2 as a string with every backslash dropped -- see README.md
+\newcommand{\ams@link@arg}{}
+\ExplSyntaxOn
+\cs_new_protected:Npn \ams_link_string:Nn #1#2
+  {
+    \tl_set:Nx #1 { \tl_to_str:n {#2} }
+    \exp_args:NNo \tl_remove_all:Nn #1 \c_backslash_str
+  }
+\cs_new_eq:NN \ams@link@string \ams_link_string:Nn
+\ExplSyntaxOff
 %% URL: plain dark for light surfaces, doubled light for dark ones
-\newcommand{\uurl}[1]{{\textcolor{amsred}{\scriptsize\url{#1}}}}
-\newcommand{\uuurl}[1]{{\textcolor{amsgreyline}{\tiny\url{#1}}}}
+\newcommand{\uurl}[1]{{\ams@link@string\ams@link@arg{#1}%
+  \textcolor{amsred}{\scriptsize\expandafter\url\expandafter{\ams@link@arg}}}}
+\newcommand{\uuurl}[1]{{\ams@link@string\ams@link@arg{#1}%
+  \textcolor{amsgreyline}{\tiny\expandafter\url\expandafter{\ams@link@arg}}}}
 %% DOI: likewise. https://doi.org is the current resolver; dx.doi.org is a
 %% deprecated alias, and the .bst reaches these through \dddoi, so this is the
 %% only place the resolver is named
-\newcommand{\ddoi}[1]{{\textcolor{amsred}{\scriptsize\href{https://doi.org/#1}{DOI:#1}}}}
-\newcommand{\dddoi}[1]{{\textcolor{amsgreyline}{\tiny\href{https://doi.org/#1}{DOI:#1}}}}
+\newcommand{\ddoi}[1]{{\ams@link@string\ams@link@arg{#1}%
+  \textcolor{amsred}{\scriptsize\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
+\newcommand{\dddoi}[1]{{\ams@link@string\ams@link@arg{#1}%
+  \textcolor{amsgreyline}{\tiny\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
 %% emph
 \renewcommand{\emph}[1]{\textcolor{amsgreendark}{\textit{#1}}}
 %% alert -- light, for dark surfaces
