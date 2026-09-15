@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{6}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{2}
+\newcommand{\stylepatch}{3}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -50,7 +50,7 @@
 %% appends two spaces after \apicepar, but BibTeX wraps the .bbl line there and
 %% the newline collapses them into one \tiny space, which the DOI runs into
 \if@doApice
-\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/xwiki/bin/view/Publication/#1}{\textsf{APICe}}\mbox{~~~}}}}
+\newcommand{\apicepar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/bin/view/Publication/#1}{\textsf{APICe}}\mbox{~~~}}}}
 \else
 \newcommand{\apicepar}[1]{}
 \fi
@@ -182,10 +182,12 @@
 \setbeamerfont{block title}{series=\medseries}
 \setbeamerfont{block title alerted}{series=\medseries}
 \setbeamerfont{block title example}{series=\medseries}
-%% a light default asks every family for a light series; these two have none, and
-%% both must wait for their .fd to load -- see README.md for adding others
+%% a light default asks every family for a light series; these three have none,
+%% and each must wait for its .fd to load -- see README.md for adding others
 \AtBeginDocument{%
   \DeclareFontShape{OT1}{cmss}{light}{n}{<->ssub*cmss/m/n}{}%
+  \makeatletter\input{t1zi4.fd}\makeatother%
+  \DeclareFontShape{T1}{zi4}{light}{n}{<->ssub*zi4/m/n}{}%
   \@ifpackageloaded{wasysym}{%
     \input{uwasy.fd}%
     \DeclareFontShape{U}{wasy}{light}{n}{<->ssub*wasy/m/n}{}%

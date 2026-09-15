@@ -1,7 +1,7 @@
 # beamer-AMSUniBo
 
 > A simple Beamer-LaTeX style for presentations by Alma Mater Studiorum — Università di Bologna,
-> in the colours of the [AMSUniBo](https://apice.unibo.it/xwiki/bin/view/FlamingoThemes/AMSUniBo)
+> in the colours of the [AMSUniBo](https://apice.unibo.it/bin/view/FlamingoThemes/AMSUniBo)
 > theme for the APICe wiki
 
 ## author
@@ -230,15 +230,28 @@ explicitly, so a block header still outweighs its own contents.
 
 A light default has one consequence worth understanding: every font family now
 gets asked for a `light` series, and a family that has none warns and falls back.
-Two such families turn up here — `OT1/cmss`, the math sans `newtxsf` installs, and
-`U/wasy`, if the deck loads `wasysym` — and the theme declares the substitution
-for both. Each has to wait for its `.fd` file to load, hence the
-`\AtBeginDocument`. **If a deck adds another symbol font that lacks a light
-series**, the same one-liner handles it:
+Three such families turn up here — `OT1/cmss`, the math sans `newtxsf` installs,
+`T1/zi4`, the Inconsolata this theme loads for code, and `U/wasy`, if the deck
+loads `wasysym` — and the theme declares the substitution for all three. Each has
+to wait for its `.fd` file to load, hence the `\AtBeginDocument`. **If a deck adds
+another symbol font that lacks a light series**, the same one-liner handles it:
 
 ```latex
 \AtBeginDocument{\DeclareFontShape{<enc>}{<family>}{light}{n}{<->ssub*<family>/m/n}{}}
 ```
+
+Inconsolata was the late addition, in 1.6.3: it has `m`, `b` and `bx` and no
+`light`, but only a deck that typesets *text* in `\ttfamily` ever asks for the
+shape — a `verbatim` or `lstlisting` body, not a `\mathtt` declaration — so the
+warning waited for the first such deck. The fallback was always the right font,
+`T1/zi4/m/n`; what the declaration removes is the noise.
+
+It also brought one trap: `t1zi4.fd` is written in terms of `\zifour@`\* macros,
+and `\AtBeginDocument` runs where `@` is not a letter, so a bare `\input` of it
+fails with *Undefined control sequence* and the build produces no PDF at all.
+NFSS loads an `.fd` inside its own `\makeatletter`; a hand-written `\input` has
+to supply it — `\makeatletter\input{t1zi4.fd}\makeatother`. `uwasy.fd` needs
+none, which is why the `wasysym` line beside it looks simpler.
 
 **`\speaker` is bold, and that is a fix rather than a flourish.** The command
 existed to single out the speaker among the authors, but it set `amsred` on a title
@@ -279,8 +292,9 @@ was the first thing tried. Beamer parents `bibliography entry author`,
 `\setbeamerfont{bibliography entry title}{series=\bfseries}` bolds the author and
 the location too — it flattens an entry rather than ranking it. Resetting those
 three to `\mdseries` is worse still: with a light body weight that asks every
-family for a light series, which Inconsolata does not have, so the build warns and
-Computer Modern reappears in the PDF.
+family for a light series, which Inconsolata does not have, so the build warned
+and the wrong weight reached the PDF. That half of the argument expired in 1.6.3,
+which declares the `T1/zi4` substitution; the flattening is what still rules it out.
 
 BibTeX, by contrast, knows which field is a title. `apalike-AMS.bst` therefore
 gains `embolden`, a counterpart to the `emphasize` it already had, applied at the
