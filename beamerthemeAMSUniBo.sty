@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{6}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{3}
+\newcommand{\stylepatch}{4}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -28,6 +28,17 @@
 \fi
 \typeout{}
 \typeout{\stylename-\styleversion}
+%% the style that built this PDF, recorded in the Info dictionary and nowhere
+%% else: no frame shows it, and it survives the file leaving the repository.
+%% Written with the engine primitive, which merges: hyperref's own pdfinfo key
+%% is claimed by beamer already and refuses a second use.
+\ifdefined\pdfextension
+  \pdfextension info{ /Style (\stylename\space\styleversion) }
+\else
+  \ifdefined\pdfinfo
+    \pdfinfo{ /Style (\stylename\space\styleversion) }
+  \fi
+\fi
 %% options
 \newif\if@doApice
 \@doApicefalse
