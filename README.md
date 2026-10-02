@@ -112,7 +112,7 @@ Beyond the beamer furniture, the theme defines:
 | `\ccite` `\cccite` | superscript citations, in two weights; both take `\cite`'s optional note, as in `\ccite[p.~42]{key}` |
 | `\uurl` `\uuurl` | URLs, in two sizes; since 1.6.2 no character in the address needs escaping |
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
-| `\apicepar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
+| `\apicepubpar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\aalert` | a quieter alternative to `\alert` |
 
 The pairs keep the weights AMSBolognaFC gives them, so that a deck moved from
@@ -169,7 +169,7 @@ every deck would have to wrap them in `\texorpdfstring` by hand.
 * `\ddoi`, `\dddoi` become `DOI:<doi>`: the number is worth having in the
   metadata, the resolver link is not. The replacement is expandable, so it
   cannot string its argument — see above.
-* `\apicepar` is a decorative marker, so it is dropped, argument and all.
+* `\apicepubpar` is a decorative marker, so it is dropped, argument and all.
 * `\translate` is beamer's translator hook. `\refname` is `\translate{References}`,
   so `\section*{\refname}` warns *Token not allowed in a PDF string*.
 * `\\` — a line break inside `\title` or `\author` is meaningless in a PDF string.
@@ -307,7 +307,7 @@ The last line of an entry holds the APICe marker and then the DOI or the URL, an
 those two used to touch. The `.bst` does put two spaces between them, but BibTeX
 wraps the `.bbl` line at exactly that point and the newline collapses them into
 one space — set at `\tiny`, so it is narrower still, and `(APICe)DOI:10.…` reads
-as a single token. The gap therefore belongs to `\apicepar`, which ends in a
+as a single token. The gap therefore belongs to `\apicepubpar`, which ends in a
 `\mbox{~~~}` of its own; it sits *outside* the `\href`, so the link hotspot
 stops at the word rather than covering the blank. The parentheses went with it:
 the marker is a green sans word among grey monospace URLs and already looks like
