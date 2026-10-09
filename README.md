@@ -1,6 +1,7 @@
 # beamer-AMSUniBo
 
-> A simple Beamer-LaTeX style for presentations by Alma Mater Studiorum — Università di Bologna,
+> A simple Beamer-LaTeX style for presentations by Alma Mater Studiorum —
+> Università di Bologna,
 > in the colours of the [AMSUniBo](https://apice.unibo.it/bin/view/FlamingoThemes/AMSUniBo)
 > theme for the APICe wiki
 
@@ -92,6 +93,7 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 
 ## structure
 
+<!-- markdownlint-disable MD013 -->
 | file | what it is |
 | --- | --- |
 | `beamerthemeAMSUniBo.sty` | the theme: the `apice` and `bologna`/`cesena` options, the beamer templates and colour assignments, the commands below, and the workarounds a deck would otherwise have to carry itself |
@@ -100,12 +102,15 @@ web theme's typography as well, and still on **pdfLaTeX** — see
 | `almacesena-background.pdf` | the same, with the Campus di Cesena seal, for the `cesena` option |
 | `apalike-AMS.bst` | the bibliography style, a renamed derivative of `apalike.bst`, with titles emboldened (see [the references frame](#the-references-frame) and the licence note below) |
 
+<!-- markdownlint-enable MD013 -->
+
 Every release attaches a `style.zip` holding all four plus the `LICENSE`. The
 archive is enough to typeset with, given a TeX installation carrying the four
 font packages listed under [typography](#typography) — it does not bundle fonts.
 
 Beyond the beamer furniture, the theme defines:
 
+<!-- markdownlint-disable MD013 -->
 | command | for |
 | --- | --- |
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
@@ -114,6 +119,8 @@ Beyond the beamer furniture, the theme defines:
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
 | `\apicepubpar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\aalert` | a quieter alternative to `\alert` |
+
+<!-- markdownlint-enable MD013 -->
 
 The pairs keep the weights AMSBolognaFC gives them, so that a deck moved from
 that style to this one changes hue and nothing else:
@@ -189,12 +196,15 @@ This is the style's only hard dependency beyond a TeX installation. It needs
 `scheme-full`, but neither is in a minimal install such as BasicTeX. On TeX Live,
 `tlmgr install merriweather inconsolata newtxsf anyfontsize` is enough.
 
+<!-- markdownlint-disable MD013 -->
 | role | face | how |
 | --- | --- | --- |
 | body, and anything not listed below | Merriweather Sans | `merriweather`, `sfdefault` |
 | title, subtitle, frame titles | Merriweather serif | `merriweather`, `rm`, plus three `\setbeamerfont` |
 | `\texttt` and `verbatim` | Inconsolata | `inconsolata`, `varqu,varl` |
 | mathematics | sans math | `newtxsf` |
+
+<!-- markdownlint-enable MD013 -->
 
 **The pairing is the web theme's own** — Merriweather Sans for body text,
 Merriweather serif for `h1`/`h2`. Earlier versions of this file claimed that
@@ -294,7 +304,8 @@ the location too — it flattens an entry rather than ranking it. Resetting thos
 three to `\mdseries` is worse still: with a light body weight that asks every
 family for a light series, which Inconsolata does not have, so the build warned
 and the wrong weight reached the PDF. That half of the argument expired in 1.6.3,
-which declares the `T1/zi4` substitution; the flattening is what still rules it out.
+which declares the `T1/zi4` substitution; the flattening is what still rules
+it out.
 
 BibTeX, by contrast, knows which field is a title. `apalike-AMS.bst` therefore
 gains `embolden`, a counterpart to the `emphasize` it already had, applied at the
@@ -320,6 +331,7 @@ the role its web counterpart has there. Red is the identity colour — the navba
 links, primary actions. Green is the structural colour — rules, separators,
 headings, tabs.
 
+<!-- markdownlint-disable MD013 -->
 | colour | value | web theme | where it goes on a slide |
 | --- | --- | --- | --- |
 | `amsred` | `#BB2E29` | `@ams-red`, `navbar-default-bg`, `link-color` | head line, author, bullets, alerted text, URLs, DOIs, alerted block headers |
@@ -335,6 +347,8 @@ headings, tabs.
 | `amsgreymid` | `#535353` | `@ams-grey-mid`, `breadcrumb-color` | secondary text, footnotes, subtitle, date |
 | `amsgreyline` | `#C7C9CB` | `@ams-grey-line`, `table-border-color` | `\ccite`, `\uuurl`, `\dddoi`, `\aalert` — the light-on-dark commands |
 | `amsgreybg` | `#F0F1F1` | `@ams-grey-bg` | `\cccite`, the lightest of the pair |
+
+<!-- markdownlint-enable MD013 -->
 
 `amsredfill`, `amsredborder`, `amsgreenfill` and `amsgreenborder` are the block
 fills, computed exactly as the web theme's LESS computes its `@state-danger-*`
