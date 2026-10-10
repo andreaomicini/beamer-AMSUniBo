@@ -1,5 +1,7 @@
 # beamer-AMSUniBo
 
+![AMSUniBo Beamer style logo](logo/amsunibo-style-full.svg)
+
 > A simple Beamer-LaTeX style for presentations by Alma Mater Studiorum —
 > Università di Bologna,
 > in the colours of the [AMSUniBo](https://apice.unibo.it/bin/view/FlamingoThemes/AMSUniBo)
