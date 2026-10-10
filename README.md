@@ -120,6 +120,9 @@ Beyond the beamer furniture, the theme defines:
 | `\uurl` `\uuurl` | URLs, in two sizes; since 1.6.2 no character in the address needs escaping |
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
 | `\apicepubpar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
+| `\apice` `\aapice` | an APICe object — publication, talk, course, event — by its kind and its page name, printed as its short address and linked; since 1.7 |
+| `\apicesite` `\aapicesite` | an APICe alias host, such as `andreaomicini.apice.unibo.it`; since 1.7 |
+| `\apicepage` `\aapicepage` | any other APICe page, by its space and page path; since 1.7 |
 | `\aalert` | a quieter alternative to `\alert` |
 
 <!-- markdownlint-enable MD013 -->
@@ -131,15 +134,49 @@ that style to this one changes hue and nothing else:
   home is a block header, which is dark in both styles. `\cccite` is the lighter
   of the two, for the loudest surfaces. In running text both are faint on
   purpose — as they are under AMSBolognaFC.
-* `\uurl`/`\uuurl` and `\ddoi`/`\dddoi` go dark-then-light: the plain one for
-  light surfaces, the doubled one for dark.
+* `\uurl`/`\uuurl`, `\ddoi`/`\dddoi` and the three APICe pairs go
+  dark-then-light: the plain one for light surfaces, the doubled one for dark.
 * `\aalert` is light, for dark surfaces. `\sspeaker` used to be, and is not any
   more: see [typography](#typography).
 
+### APICe addresses
+
+APICe gives every object a short address on a host of its kind, and some pages
+an alias host of their own. The theme writes both for you, so that a deck names
+what it points to and never spells out a host:
+
+<!-- markdownlint-disable MD013 -->
+| command | prints and links |
+| --- | --- |
+| `\apice{pub}{AcltFrocos1996}` | `pubs.apice.unibo.it/AcltFrocos1996` |
+| `\apice{talk}{AgotAixia2026}` | `talks.apice.unibo.it/AgotAixia2026` |
+| `\apice{course}{Iag2627}` | `courses.apice.unibo.it/Iag2627` |
+| `\apice{event}{Aamas2005}` | `events.apice.unibo.it/Aamas2005` |
+| `\apicesite{andreaomicini}` | `andreaomicini.apice.unibo.it` |
+| `\apicepage{Courses/Series/Ise}` | `apice.unibo.it/bin/view/Courses/Series/Ise` |
+
+<!-- markdownlint-enable MD013 -->
+
+* **Objects** are named by kind and page name, never by host: the kinds and
+  their hosts are one table in the theme, so a kind whose short address starts
+  working — theses, journals, projects, products — is one line there, and no
+  deck changes. An unknown kind stops the build with an error that lists the
+  kinds there are.
+* **`\apicesite`** is for the alias hosts: people, products, groups.
+* **`\apicepage`** is for whatever is neither: a series page, a space home.
+* An optional argument prints text instead of the address, linked all the same:
+  `\apice[the AGoT talk]{talk}{AgotAixia2026}`.
+* The address is stringed like the others below, so `A\_b` and `A_b` are one
+  page name; in a bookmark, the command becomes its text, or else its address.
+
+`\apicepubpar`, the marker `apalike-AMS.bst` writes after an entry carrying an
+`apice` field, takes its host from the same table.
+
 ### addresses need no escaping
 
-Since 1.6.2 the four address commands **string their argument before using it**,
-so `\ddoi{10.1007/978-3-032-22940-3_12}` and
+Since 1.6.2 the four address commands **string their argument before using it**
+— and since 1.7 the six APICe ones too — so
+`\ddoi{10.1007/978-3-032-22940-3_12}` and
 `\ddoi{10.1007/978-3-032-22940-3\_12}` give the same link and the same text.
 Stringing turns every token into an ordinary character, so an `_` no longer
 asks for maths mode; every backslash is then dropped, which is what makes the

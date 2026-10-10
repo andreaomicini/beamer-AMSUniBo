@@ -18,9 +18,9 @@
 \newcommand{\stylename}{AMSUniBo Beamer style}
 %% version -- Major.Minor[.Patch]; the release time-stamp is appended by the CI
 \newcommand{\stylemajor}{1}
-\newcommand{\styleminor}{6}
+\newcommand{\styleminor}{7}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{5}
+%\newcommand{\stylepatch}{0}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -61,7 +61,7 @@
 %% appends two spaces after \apicepubpar, but BibTeX wraps the .bbl line there and
 %% the newline collapses them into one \tiny space, which the DOI runs into
 \if@doApice
-\newcommand{\apicepubpar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://pubs.apice.unibo.it/#1}{\textsf{APICe}}\mbox{~~~}}}}
+\newcommand{\apicepubpar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://\ams@apice@host@pub.apice.unibo.it/#1}{\textsf{APICe}}\mbox{~~~}}}}
 \else
 \newcommand{\apicepubpar}[1]{}
 \fi
@@ -165,6 +165,46 @@
   \textcolor{amsred}{\scriptsize\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
 \newcommand{\dddoi}[1]{{\ams@link@string\ams@link@arg{#1}%
   \textcolor{amsgreyline}{\tiny\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
+%% APICe addresses, printed short and linked: \apice{<kind>}{<Name>} for an
+%% object, \apicesite{<alias>} for an alias host, \apicepage{<Space/Page>} for any
+%% other page; [<text>] in front prints the text instead. Doubled: light, for dark
+%% surfaces. The kinds and their short hosts are this one table -- see README.md
+\newcommand{\ams@apice@host@pub}{pubs}
+\newcommand{\ams@apice@host@talk}{talks}
+\newcommand{\ams@apice@host@course}{courses}
+\newcommand{\ams@apice@host@event}{events}
+%% theses, journals, projects, products: a line each, once their short hosts
+%% resolve page by page
+\newcommand{\ams@apice@addr}{}
+\newcommand{\ams@apice@obj}[2]{%
+  \ifcsname ams@apice@host@#1\endcsname
+    \ams@link@string\ams@link@arg{#2}%
+    \edef\ams@apice@addr{\csname ams@apice@host@#1\endcsname.apice.unibo.it/\ams@link@arg}%
+  \else
+    \PackageError{beamerthemeAMSUniBo}{Unknown APICe kind `#1'}%
+      {The kinds are pub, talk, course, event.}%
+    \def\ams@apice@addr{apice.unibo.it}%
+  \fi}
+\newcommand{\ams@apice@show}[1]{\href{https://#1}{\nolinkurl{#1}}}
+\newcommand{\ams@apice@text}[2]{\href{https://#1}{#2}}
+%% #1 colour, #2 size, #3 the optional text or -NoValue-
+\newcommand{\ams@apice@link}[3]{\textcolor{#1}{#2\IfNoValueTF{#3}%
+  {\expandafter\ams@apice@show\expandafter{\ams@apice@addr}}%
+  {\expandafter\ams@apice@text\expandafter{\ams@apice@addr}{#3}}}}
+\NewDocumentCommand{\apice}{o m m}{{\ams@apice@obj{#2}{#3}\ams@apice@link{amsred}{\scriptsize}{#1}}}
+\NewDocumentCommand{\aapice}{o m m}{{\ams@apice@obj{#2}{#3}\ams@apice@link{amsgreyline}{\tiny}{#1}}}
+\NewDocumentCommand{\apicesite}{o m}{{\ams@link@string\ams@link@arg{#2}%
+  \edef\ams@apice@addr{\ams@link@arg.apice.unibo.it}%
+  \ams@apice@link{amsred}{\scriptsize}{#1}}}
+\NewDocumentCommand{\aapicesite}{o m}{{\ams@link@string\ams@link@arg{#2}%
+  \edef\ams@apice@addr{\ams@link@arg.apice.unibo.it}%
+  \ams@apice@link{amsgreyline}{\tiny}{#1}}}
+\NewDocumentCommand{\apicepage}{o m}{{\ams@link@string\ams@link@arg{#2}%
+  \edef\ams@apice@addr{apice.unibo.it/bin/view/\ams@link@arg}%
+  \ams@apice@link{amsred}{\scriptsize}{#1}}}
+\NewDocumentCommand{\aapicepage}{o m}{{\ams@link@string\ams@link@arg{#2}%
+  \edef\ams@apice@addr{apice.unibo.it/bin/view/\ams@link@arg}%
+  \ams@apice@link{amsgreyline}{\tiny}{#1}}}
 %% emph
 \renewcommand{\emph}[1]{\textcolor{amsgreendark}{\textit{#1}}}
 %% alert -- light, for dark surfaces
@@ -219,6 +259,10 @@
 \NewExpandableDocumentCommand{\ams@nocite}{o m}{}
 %% the DOI is worth keeping in a bookmark, resolver and colour are not
 \newcommand{\ams@nodoi}[1]{DOI:#1}
+%% an APICe address in a bookmark: the text if one is given, else the address
+\NewExpandableDocumentCommand{\ams@noapice}{o m m}{\IfNoValueTF{#1}{\csname ams@apice@host@#2\endcsname.apice.unibo.it/#3}{#1}}
+\NewExpandableDocumentCommand{\ams@noapicesite}{o m}{\IfNoValueTF{#1}{#2.apice.unibo.it}{#1}}
+\NewExpandableDocumentCommand{\ams@noapicepage}{o m}{\IfNoValueTF{#1}{apice.unibo.it/bin/view/#2}{#1}}
 \ifdefined\pdfstringdefDisableCommands
   \pdfstringdefDisableCommands{%
     \let\speaker\@firstofone
@@ -230,6 +274,12 @@
     \let\ddoi\ams@nodoi
     \let\dddoi\ams@nodoi
     \let\apicepubpar\@gobble
+    \let\apice\ams@noapice
+    \let\aapice\ams@noapice
+    \let\apicesite\ams@noapicesite
+    \let\aapicesite\ams@noapicesite
+    \let\apicepage\ams@noapicepage
+    \let\aapicepage\ams@noapicepage
     \let\translate\@firstofone
     \let\\\space
   }
