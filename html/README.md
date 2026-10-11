@@ -34,6 +34,7 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 | `\section{X}` | `data-section="X"` on each of its frames; the headline is built from it |
 | `noframenumbering` | `data-noframenumbering` |
 | `\author[short]`, `\institute[short]`, `\title[short]`, `\date[short]` | `data-shortauthor` … `data-shortdate`, and `data-totalframes`, on `<main class="deck">` |
+| the paper size | `data-width` and `data-height` on `<main class="deck">`, the drawing size in px: `1024`/`768` for 4:3, `1024`/`576` for 16:9 |
 | `\frametitle` | `<h2 class="frametitle">`, with ` I`, ` II` … copied from the PDF on `allowframebreaks` pages |
 | frame body | `<div class="body">`, with the size class (`small`, `footnotesize`, `scriptsize`) when the frame sets one |
 | `block`, `alertblock`, `exampleblock` | `<div class="block">`, `block alert`, `block example`, holding `h3.block-title` and `div.block-body` |
@@ -90,14 +91,33 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `pdftoppm` of the PDF at the same size. The target is the same lines within a
   few pixels; a constant offset is the frame's glue, a step is one gap.
 
+* **Embedded, the deck tells its host its shape.** In an `<iframe>`, the deck
+  posts `{type: 'deck-size', width, height}` to its parent, taken from
+  `data-width`/`data-height`. That works inside a sandbox without
+  `allow-same-origin`, which an uploaded file must keep. It re-scales through a
+  `ResizeObserver` on its root, since a frame resized by its host does not
+  reliably fire `resize`. The host side, as APICe has it:
+
+  ```js
+  addEventListener('message', e => {
+    const f = document.getElementById('talkhtml');
+    if (e.source !== f.contentWindow || e.data?.type !== 'deck-size') return;
+    const { width: w, height: h } = e.data;
+    if (w > 0 && h > 0) { f.style.aspectRatio = `${w} / ${h}`; f.style.height = 'auto'; }
+  });
+  ```
+
+  A deck that posts nothing keeps the host's default frame.
+
 ### AMSUniBo
 
 * **Palette**: the `--ams*` custom properties copy `beamercolorthemeamsunibo.sty`
   name for name. Use them by name and never write a hex value elsewhere.
 * **Faces**: Merriweather Sans light, 300, for the body; regular, 400, for block
   titles; bold, 700, for `\textbf`; Merriweather regular for the frame and page
-  titles; Inconsolata for code and addresses, with `ss01` and `ss03` (the `varl`
-  and `varqu` options). Oldstyle figures everywhere, math included:
+  titles, and its italic for an `\emph` in a title; Inconsolata for code and
+  addresses, with `ss01` and `ss03` (the `varl` and `varqu` options). Oldstyle
+  figures everywhere, math included:
   `font-variant-numeric: oldstyle-nums proportional-nums`.
 * **`scaled=0.92` is the sans only**: `--fs` is `0.92 * --pt` and sizes Merriweather
   Sans. The serif titles are not scaled, and the math symbols are not either.
@@ -105,7 +125,8 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   They are loaded as a second Merriweather Sans face with a `unicode-range` and
   `size-adjust: 108.7%`, declared **after** the text faces or the text faces win.
   `\iff` is ⇐ and ⇒ overlapped, as TeX builds it. `×`, `≠`, `≥` and `−` are
-  closer in Merriweather and stay there.
+  closer in Merriweather and stay there. `\mathcal` letters are the Unicode
+  script ones (`𝒜 𝒞 ℒ`), from the same face.
 * **Geometry, measured on 128 mm paper**: headline 12.8pt, frame title band 24.4pt
   with its text at 8.5pt, footline 9.9pt; text margin 10.909pt, text width
   342.295pt; item indent 21.818pt.
@@ -149,6 +170,7 @@ $T/subset-fonts.sh $A/fonts
 $T/seal.sh cesena $A                        # or bologna; prints the CSS box
 $T/externalize.sh tex/<deck>.tex $A         # fig-0.svg, fig-1.svg … in source order
 mv $A/fig-0.svg $A/<name>.svg               # one per data-asset name in the page
+cp img/<name>.png $A/                       # the deck's own pictures: .png or .jpg
 python3 $T/assets.py "html/<Title>.html" $A # refills the ASSETS block in place
 ```
 
@@ -196,3 +218,48 @@ ended within about 5px of the PDF.
 * Still open: the CSS of the theme and the script live in the deck's page. The
   next deck should take them from here, which means extracting them into this
   folder and having `assets.py` inline them as it does the fonts.
+
+### 2 — MAS tutorial @ AIxIA 2026, 2026-10-12
+
+`mastutorial-aixia2026`: 120 pages, of which 7 contents frames, 5
+`allowframebreaks` frames, two pictures (a PNG chart and a JPG cover in
+`picturecolumns`) and a bibliography of 108 entries over 21 pages. Every
+baseline ended within 1.0pt of the PDF in WebKit and 1.4pt in Firefox; left
+edges within 2.6pt, the worst where TeX shrank a line's interword glue.
+
+* Too many pages to write by hand: the page was generated from the `.tex` and
+  the `.bbl` by a converter for the deck's TeX subset, then checked like a
+  written one. Its text matched the PDF character for character on every page,
+  acronym first uses (reset on every page by the deck's `names.sty`) included.
+* Line breaks were copied by aligning the page's characters with the PDF's
+  (PyMuPDF), not its words: a break after an explicit hyphen has no space to
+  turn into a `<br>`.
+* The check that counts is the baseline of every text run, read in the
+  browser through a zero-height `inline-block` at its start and compared in
+  points with the PDF's glyph origins. `compare.py`'s ink lines misread block
+  title bars in Firefox and flag pages that are right.
+* TeX's glue was corrected per frame as in experiment 1, but computed: a
+  `margin-top` on the element where the PDF steps (338 of them) and one padding
+  per body (87). On a `[c]` body, a top padding moves the content by 0.6 of
+  itself, a bottom one by 0.4.
+* An item that wraps before its sub-list takes the sub-list's baselineskip,
+  12pt at the first level and 11pt at the second: the sub-list's font is set
+  before TeX ends the item's paragraph. `li.wrapsub` carries it.
+* Found here: third-level items are `\footnotesize`, 9/11; `\item[label]` is
+  right-aligned `.5em` before the text, in the item's size; `indquotation` has a
+  2em left margin in a block and none in an item, its first line indented
+  1.5em; a lone `$=$`, `$+$` or `$\times$` has no space around it, `\mid` has
+  5mu each side; `\smaller` from `\normalsize` in a quotation is
+  `\footnotesize`; a `[t]` frame has no top fill; an unnumbered page's date sits
+  9.58pt further right.
+* An `<i>` in a bibliography title is bold italic, as in the PDF; the theme's
+  `i` rule made it light. Experiment 1's page has the same rule and one such
+  title, not rechecked.
+* Tools: `subset-fonts.sh` and `assets.py` gained Merriweather Italic and the
+  three script letters, `assets.py` embeds `.png` and `.jpg` beside `.svg`, and
+  `shoot.sh` makes its output folder absolute: given a relative one, headless
+  Firefox wrote nothing and said nothing.
+* Over 99 pages `pdftoppm` names its files `p-001.png`, while `compare.py` reads
+  `p-01.png`: link them under two-digit names.
+* Still open: the converter, the measuring and the per-frame corrections live
+  in a scratch folder, not here.
