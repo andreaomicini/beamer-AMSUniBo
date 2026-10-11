@@ -110,6 +110,10 @@ Every release attaches a `style.zip` holding all four plus the `LICENSE`. The
 archive is enough to typeset with, given a TeX installation carrying the four
 font packages listed under [typography](#typography) — it does not bundle fonts.
 
+`html/` is not in the archive: it holds the rules and the tools for translating
+an AMSUniBo deck into a single HTML page that matches its PDF — see
+[html/README.md](html/README.md).
+
 Beyond the beamer furniture, the theme defines:
 
 <!-- markdownlint-disable MD013 -->
