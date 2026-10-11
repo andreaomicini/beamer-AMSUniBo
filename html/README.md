@@ -85,7 +85,8 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   so `width` alone sizes it, as `\resizebox{\linewidth}{!}` did.
 * **Fonts are the ones the PDF used**: the TeX Live OTFs of the same faces,
   subset to WOFF2, with their OpenType features kept.
-* **Check by overlay.** Every page is shot in headless Chrome and compared with
+* **Check by overlay, in more than one engine.** Every page is shot in Firefox
+  (Gecko) and in WebKit, the engine of Safari, and each is compared with
   `pdftoppm` of the PDF at the same size. The target is the same lines within a
   few pixels; a constant offset is the frame's glue, a step is one gap.
 
@@ -134,10 +135,12 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 
 ## the tools
 
-`tools/` needs TeX Live, poppler (`pdftoppm`, `pdftocairo`, `pdfinfo`), Google
-Chrome, and a Python with `fonttools`, `brotli` and `Pillow`:
-`python3 -m venv .venv && .venv/bin/pip install fonttools brotli pillow`, with that
-venv first on `PATH`. From the deck's root, with `A` a scratch folder for the
+`tools/` needs TeX Live, poppler (`pdftoppm`, `pdftocairo`, `pdfinfo`), Firefox,
+and a Python with `fonttools`, `brotli`, `Pillow` and `playwright`:
+`python3 -m venv .venv && .venv/bin/pip install fonttools brotli pillow playwright`,
+then `.venv/bin/python -m playwright install webkit`, with that venv first on
+`PATH`. Playwright's WebKit stands in for Safari, which does not reliably accept
+automated sessions. From the deck's root, with `A` a scratch folder for the
 assets:
 
 ```sh
@@ -153,8 +156,9 @@ and to check:
 
 ```sh
 pdftoppm -scale-to-x 1024 -scale-to-y 768 -png "pdf/<Title>.pdf" $A/ref/p
-$T/shoot.sh "html/<Title>.html" $A/shots <pages>
-python3 $T/compare.py $A/ref $A/shots <page> $A/sheet.png
+$T/shoot.sh firefox "html/<Title>.html" $A/firefox <pages>
+$T/shoot.sh webkit "html/<Title>.html" $A/webkit <pages>
+python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for webkit
 ```
 
 ## experiments
@@ -177,6 +181,18 @@ ended within about 5px of the PDF.
   Size and space pictures with `img.<class>`.
 * `.block-body > :first-child { margin-top: 0 }` beats a plain class on a display
   that opens a block. Qualify it as `.block-body > .displaymath`.
+* The page is standard HTML and CSS: no engine prefix, nothing loaded from the
+  network. Two `-webkit-` properties were found and removed after the first
+  commit; the rule is to write the standard property and nothing else.
+* The checks were first made in Chrome alone, which proves nothing about the
+  other engines. Redone in Firefox and in Playwright's WebKit 26.6, every page
+  matches the PDF within the same few pixels in both. Between the two engines,
+  0.3–3% of pixels differ, all of it glyph anti-aliasing, none of it position.
+* Safari 27 itself would not open a WebDriver session, with remote automation
+  allowed, `safaridriver --enable` done and the driver run from Terminal. Hence
+  Playwright's WebKit in `shoot.sh`.
+* Still visible, in every engine: NewCMMath's `→` is a little shorter than the
+  one in the PDF, so text after it sits a few pixels left.
 * Still open: the CSS of the theme and the script live in the deck's page. The
   next deck should take them from here, which means extracting them into this
   folder and having `assets.py` inline them as it does the fonts.
