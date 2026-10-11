@@ -48,6 +48,12 @@ JS = r'''() => {
     let E = null;
     if (body && body.contains(n)) {
       for (let e = p; e && e !== body; e = e.parentElement) {
+        // never a block's body: under a title bar a margin there opens a gap, or covers the bar;
+        // an untitled block moves as a whole
+        if (e.classList.contains('block-body')) {
+          if (e.parentElement.querySelector(':scope > .block-title')) break;
+          continue;
+        }
         if (getComputedStyle(e).display.startsWith('inline')) continue;
         const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let t0;

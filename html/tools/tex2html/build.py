@@ -5,6 +5,7 @@ from frames import pages, C, T
 from bib import entries
 from align import add_breaks, PDF
 from deck import CFG, DIR, path
+from depth import depths
 
 HERE = pathlib.Path(__file__).parent
 OUT = path('page')
@@ -82,11 +83,27 @@ def quirks(h):
             lines[i] = f'{m.group(1)}<li{attrs}>{m.group(3)}'
     return '\n'.join(lines)
 
+def block_depths(n, h):
+    """each block body ends where TeX's last line ends: shallower than a 'g', less padding"""
+    ds = depths(n)
+    parts = h.split('<div class="block-body')
+    if len(parts) - 1 != len(ds):
+        print(f'page {n}: {len(parts) - 1} blocks, {len(ds)} in the PDF: depths left alone')
+        return h
+    out = parts[0]
+    for d, rest in zip(ds, parts[1:]):
+        if abs(d) >= 0.05:
+            q = rest.index('"')
+            rest = rest[:q + 1] + f' style="padding-bottom: {pt(round(2.8 + d, 2))}"' + rest[q + 1:]
+        out += '<div class="block-body' + rest
+    return out
+
 def frame(n, p):
     body = '\n'.join(p['body'])
     body, probs, k = add_breaks(body, n)
     body = quirks(body)
     body = margins(n, body)
+    body = block_depths(n, body)
     head, bst = section_open(n, 'frame' + (' top' if p['top'] else ''), secname(p['section']), centred=not p['top'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
     return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,

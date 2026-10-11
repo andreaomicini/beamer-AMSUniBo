@@ -161,9 +161,10 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   (institute) on `amsgreendark`, the short title on `amsgreentint2`, the date and
   `n / N` on `amsgreentint`. All of it is in `\tiny`.
 * **Blocks**: rounded at 4pt and shadowed. The box overhangs the text 4pt left
-  and 2.6pt right, with 4pt of padding. The title is 12pt regular; the body opens
-  with a 2pt gradient from the title colour. A block has 7.5pt above it, 4pt
-  below, and 7pt before a list that follows it.
+  and 2.6pt right, with 4pt of padding. The title is 12pt regular in a bar
+  15.76pt tall, its baseline 11.95pt down; the body opens with a 2pt gradient
+  from the title colour. An untitled block's text starts 3.5pt into the box. A
+  block has 7.5pt above it, 4pt below, and 7pt before a list that follows it.
 * **Balls**: radial-gradient spheres in `amsred`, 5.2pt at the first level, 4pt
   at the second. Enumerate balls are 8.4pt with the number in white bold.
 * **Paired commands keep their weights**: `.ccite` is `amsgreyline`, `\tiny`,
@@ -317,6 +318,18 @@ edges within 2.6pt, the worst where TeX shrank a line's interword glue.
   `p-01.png`: link them under two-digit names.
 * The converter, the measuring and the per-frame corrections are kept as
   `tools/tex2html/`, the deck's inputs in its `html/tex2html/`.
+* Block bars, seen by Andrea on the live page: a correction put on a block's
+  body opened a light line under the title bar, or slid the body's gradient up
+  over it, which read as a blurred edge. The nudger now never moves a body,
+  only what is inside it, and an untitled block as a whole. The title bar was
+  also 0.7pt too tall in both engines: 1.03pt and 0.73pt of padding, not 1.5
+  and 1, give the PDF's bar. Experiment 1's page still has the old padding.
+* **TeX ends a block at the real depth of its last line**, a browser at the
+  font's descent: a last line with no descender (`own`, `social`) ends its
+  block 2.44pt higher in the PDF than one with a `g` or a `p`. `depth.py`
+  reads each block's last line in the PDF and the glyph outlines of its faces,
+  and pads the body by the difference. Every block now meets the PDF's drawn
+  box within about 1pt, top and bottom; `compare.py` could not have seen it.
 * The deck-size rule came the same night, from APICe: the page carries it
   through the converter's `script.js`, and was checked framed in a sandboxed
   `<iframe>` with the host listener above, in WebKit and Firefox.

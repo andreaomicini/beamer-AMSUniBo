@@ -168,7 +168,7 @@ dd > ul { margin-top: var(--subtopsep); margin-bottom: 0; margin-left: calc(-62.
 .block.alert { --title-bg: var(--amsred); --body-bg: var(--amsredfill); color: var(--amstext); }
 .block.example { --title-bg: var(--amsgreenborder); --title-fg: var(--amstext); --body-bg: var(--amsgreenfill); }
 .block-title {
-	margin: 0; padding: calc(1.5 * var(--pt)) calc(4 * var(--pt)) calc(1 * var(--pt));
+	margin: 0; padding: calc(1.03 * var(--pt)) calc(4 * var(--pt)) calc(0.73 * var(--pt));
 	border-radius: calc(4 * var(--pt)) calc(4 * var(--pt)) 0 0;
 	background: var(--title-bg); color: var(--title-fg);
 	font-weight: 400; font-size: calc(12 * var(--fs)); line-height: calc(14 * var(--pt));
@@ -180,11 +180,11 @@ dd > ul { margin-top: var(--subtopsep); margin-bottom: 0; margin-left: calc(-62.
 }
 .block + ul { margin-top: calc(7 * var(--pt)); }
 /* a block with an empty title: the body alone */
-.block.notitle .block-body { background: none; }
+.block.notitle .block-body { background: none; padding-top: calc(3.5 * var(--pt)); }
 /* indquotation: quotation's 2em margins, the first line indented by 1.5em */
 .quote { margin: 0 calc(21.818 * var(--pt)); text-indent: calc(1.5 * 10.95 * var(--fs)); font-style: italic; white-space: nowrap; }
 .quote .sc, .quote code { font-style: normal; }
-.block-body > .quote:last-child { margin-bottom: calc(3.3 * var(--pt)); }
+.block-body > .quote:last-child { margin-bottom: calc(2.92 * var(--pt)); }
 li > .quote { margin-left: 0; margin-top: calc(-1.87 * var(--pt)); }
 /* \begin{center} */
 div.center { text-align: center; }
