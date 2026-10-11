@@ -184,7 +184,8 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 
 `tools/` needs TeX Live, poppler (`pdftoppm`, `pdftocairo`, `pdfinfo`), Firefox,
 and a Python with `fonttools`, `brotli`, `Pillow` and `playwright`:
-`python3 -m venv .venv && .venv/bin/pip install fonttools brotli pillow playwright`,
+`python3 -m venv .venv && .venv/bin/pip install fonttools brotli pillow playwright`
+(and `pymupdf` for `tex2html`),
 then `.venv/bin/python -m playwright install webkit`, with that venv first on
 `PATH`. Playwright's WebKit stands in for Safari, which does not reliably accept
 automated sessions. From the deck's root, with `A` a scratch folder for the
@@ -208,6 +209,33 @@ $T/shoot.sh firefox "html/<Title>.html" $A/firefox <pages>
 $T/shoot.sh webkit "html/<Title>.html" $A/webkit <pages>
 python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for webkit
 ```
+
+### tex2html, the converter
+
+`tools/tex2html/` writes the page instead of a hand: frames from the `.tex`,
+references from the `.bbl`, line breaks and per-frame corrections from the PDF.
+It knows the TeX subset of the decks it has met and reports any command it does
+not; a new deck may need it grown. It also needs `pymupdf` in the venv, and
+Playwright's Firefox (`playwright install firefox`) to measure.
+
+`theme.css` and `script.js` there are the theme and the deck script every
+generated page carries, the deck-size announcement included. What belongs to
+one deck lives in that deck, in `html/tex2html/`: `deck.json` (paths, names,
+short fields, alt texts, the deck's own name macros), `titlepage.html`,
+`deck.css` and `nudges.json`, the per-frame corrections, which `nudge.py` writes.
+
+```sh
+export TEX2HTML_DECK=html/tex2html
+python3 $T/tex2html/build.py                # writes the page named in deck.json
+python3 $T/assets.py "html/<Title>.html" $A
+python3 $T/tex2html/nudge.py webkit "" gaps # build; twice more; then "both"
+python3 $T/tex2html/stats.py webkit         # worst errors, per page
+python3 $T/tex2html/stats.py firefox
+```
+
+`build.py` keeps the page's ASSETS block, so a rebuild needs `assets.py` only
+when the assets change. After an edit to a frame, rebuild the PDF, then the
+page, and nudge that frame again: its old corrections may no longer fit.
 
 ## experiments
 
@@ -287,5 +315,8 @@ edges within 2.6pt, the worst where TeX shrank a line's interword glue.
   Firefox wrote nothing and said nothing.
 * Over 99 pages `pdftoppm` names its files `p-001.png`, while `compare.py` reads
   `p-01.png`: link them under two-digit names.
-* Still open: the converter, the measuring and the per-frame corrections live
-  in a scratch folder, not here.
+* The converter, the measuring and the per-frame corrections are kept as
+  `tools/tex2html/`, the deck's inputs in its `html/tex2html/`.
+* The deck-size rule came the same night, from APICe: the page carries it
+  through the converter's `script.js`, and was checked framed in a sandboxed
+  `<iframe>` with the host listener above, in WebKit and Firefox.

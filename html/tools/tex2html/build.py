@@ -1,0 +1,201 @@
+"""build.py: the deck's page, from its .tex, .bbl and PDF and the inputs in $TEX2HTML_DECK.
+Keeps the page's ASSETS block, if there is one: refill it with assets.py."""
+import re, json, pathlib
+from frames import pages, C, T
+from bib import entries
+from align import add_breaks, PDF
+from deck import CFG, DIR, path
+
+HERE = pathlib.Path(__file__).parent
+OUT = path('page')
+NUD = json.load(open(DIR / 'nudges.json')) if (DIR / 'nudges.json').exists() else {}
+
+def pt(v):
+    return f'calc({v:g} * var(--pt))'
+
+def body_style(n, centred):
+    """the frame's shift, in pt, as padding: [c] moves 0.6 of a top padding and 0.4 of a bottom one"""
+    s = NUD.get(str(n), {}).get('shift', 0.0)
+    if abs(s) < 0.05:
+        return ''
+    if not centred:
+        return f'padding-top: {pt(round(s, 2))}' if s > 0 else f'margin-top: {pt(round(s, 2))}'
+    return f'padding-top: {pt(round(s / 0.6, 2))}' if s > 0 else f'padding-bottom: {pt(round(-s / 0.4, 2))}'
+
+TAG = re.compile(r'<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>')
+def margins(n, h):
+    """the gaps TeX's glue made: margin-top on the k-th element of the body"""
+    m = NUD.get(str(n), {}).get('m', {})
+    if not m:
+        return h
+    out, k, last = [], 0, 0
+    for t in TAG.finditer(h):
+        if str(k) in m:
+            out.append(h[last:t.end() - 1] + f' style="margin-top: {pt(m[str(k)])}">')
+            last = t.end()
+        k += 1
+    out.append(h[last:])
+    return ''.join(out)
+
+def secname(h):
+    return re.sub(r'<[^>]+>', '', h)
+
+def titlepage():
+    """the title page is the deck's own, written once in titlepage.html"""
+    return (DIR / 'titlepage.html').read_text().strip()
+
+def section_open(n, cls, sec, extra='', centred=True):
+    bst = body_style(n, centred)
+    return f'<section class="{cls}" data-section="{sec}"{extra}>', (f' style="{bst}"' if bst else '')
+
+def toc(n, p, title=True):
+    cls = 'frame toc' + ('' if title else ' outline')
+    head, bst = section_open(n, cls, secname(p['section']), centred=False)
+    out = [head]
+    if title:
+        out.append(f'{T}<h2 class="frametitle">{CFG["toc_title"]}</h2>')
+    out.append(f'{T}<div class="body"{bst}>')
+    out.append(f'{T}{T}<ol class="toc">')
+    for k, s in enumerate(p['secs'], 1):
+        sh = ' class="shaded"' if title and k != p['current'] else ''
+        out.append(f'{T}{T}{T}<li{sh}>{s}</li>')
+    out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
+    return '\n'.join(out)
+
+SIZEP = re.compile(r'<p>(\s*)<span class="(tiny|scriptsize|footnotesize|small|smaller|large|Large)">(.*)</span>(\s*)</p>')
+
+def quirks(h):
+    """TeX quirks that CSS has to be told about"""
+    # a paragraph that is all one size: its baselineskip is that size's
+    h = SIZEP.sub(lambda m: f'<p class="{m.group(2)}">{m.group(3).strip()}</p>' if '</span>' not in m.group(3) else m.group(0), h)
+    # an item that wraps before its sub-list: the sub-list's font, and so its baselineskip,
+    # is already in force when TeX breaks the item's lines
+    lines = h.split('\n')
+    for i, l in enumerate(lines[:-1]):
+        m = re.match(r'(\s*)<li\b([^>]*)>(.*)$', l)
+        if m and '<br>' in m.group(3) and lines[i + 1].strip() == '<ul>':
+            attrs = m.group(2)
+            if 'class="' in attrs:
+                attrs = attrs.replace('class="', 'class="wrapsub ')
+            else:
+                attrs += ' class="wrapsub"'
+            lines[i] = f'{m.group(1)}<li{attrs}>{m.group(3)}'
+    return '\n'.join(lines)
+
+def frame(n, p):
+    body = '\n'.join(p['body'])
+    body, probs, k = add_breaks(body, n)
+    body = quirks(body)
+    body = margins(n, body)
+    head, bst = section_open(n, 'frame' + (' top' if p['top'] else ''), secname(p['section']), centred=not p['top'])
+    cls = 'body' + (' center' if 'center' in p['flags'] else '')
+    return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
+                      f'{T}</div>', '</section>'])
+
+def bib_pages(n0, p):
+    from align import pdf_chars, html_chars
+    import difflib
+    es = entries()
+    out = []
+    # page of each entry: its first character's page in the PDF
+    pc = []
+    last = len(PDF)   # the bibliography runs to the end of the deck
+    for pn in range(n0, last + 1):
+        for c in pdf_chars(pn, skip_cite=False):
+            c['pn'] = pn
+            pc.append(c)
+    hc, own = [], []
+    for k, (key, h) in enumerate(es):
+        cs, _ = html_chars(h)
+        hc += [x[0] for x in cs]
+        own += [k] * len(cs)
+    sm = difflib.SequenceMatcher(None, ''.join(hc), ''.join(c['c'] for c in pc), autojunk=False)
+    page = {}
+    for op, i1, i2, j1, j2 in sm.get_opcodes():
+        if op == 'equal':
+            for t in range(i2 - i1):
+                page.setdefault(own[i1 + t], pc[j1 + t]['pn'])
+    from frames import ROMAN
+    for pn in range(n0, last + 1):
+        items = [h for k, (key, h) in enumerate(es) if page[k] == pn]
+        body = '\n'.join(f'{T}{T}{h}' for h in items)
+        body, probs, nb = add_breaks(body, pn, skip_cite=False)
+        body = margins(pn, body)
+        head, bst = section_open(pn, 'frame top', secname(p['section']), ' data-noframenumbering', centred=False)
+        out.append('\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]} {ROMAN[pn - n0 + 1]}</h2>',
+                              f'{T}<div class="body tiny refs"{bst}>', body, f'{T}</div>', '</section>']))
+    return out
+
+ps = pages()
+parts = []
+for n, p in enumerate(ps, 1):
+    sep = '<!-- ======================================================================= -->\n'
+    if p['kind'] == 'titlepage':
+        parts.append(sep + titlepage())
+    elif p['kind'] == 'outline':
+        parts.append(sep + toc(n, p, title=False))
+    elif p['kind'] == 'toc':
+        parts.append(sep + toc(n, p))
+    elif p['kind'] == 'frame':
+        parts.append(frame(n, p))
+    elif p['kind'] == 'bib':
+        bp = bib_pages(n, p)
+        parts.append(sep + bp[0])
+        parts += bp[1:]
+frames_html = '\n\n'.join(parts)
+ALT = CFG.get('alt', {})
+for k, v in ALT.items():
+    frames_html = frames_html.replace(f'alt="ALT-{k}"', f'alt="{v}"')
+assert 'ALT-' not in frames_html
+
+theme = (HERE / 'theme.css').read_text()
+deck_css = (DIR / 'deck.css').read_text()
+script = (HERE / 'script.js').read_text()
+comment = '\n'.join('  ' + l if l else '' for l in CFG['comment'])
+sh = CFG['short']
+html = f'''<!doctype html>
+<!--
+{comment}
+  Keys: → ← space, PgUp PgDn, Home End; f full screen. #n opens page n.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{CFG['title']}</title>
+<meta name="author" content="{CFG['author']}">
+<meta name="description" content="{CFG['description']}">
+<style>
+{theme}</style>
+</head>
+<body>
+<main class="deck"
+	data-width="{CFG['width']}"
+	data-height="{CFG['height']}"
+	data-shortauthor="{sh['author']}"
+	data-shortinstitute="{sh['institute']}"
+	data-shorttitle="{sh['title']}"
+	data-shortdate="{sh['date']}"
+	data-totalframes="{CFG['totalframes']}">
+
+{frames_html}
+
+</main>
+
+<style>
+{deck_css}</style>
+
+<script>
+{script}</script>
+
+<!-- ASSETS -->
+<!-- /ASSETS -->
+</body>
+</html>
+'''
+if OUT.exists():
+    m = re.search(r'<!-- ASSETS -->.*?<!-- /ASSETS -->', OUT.read_text(), re.S)
+    if m:
+        html = html.replace('<!-- ASSETS -->\n<!-- /ASSETS -->', m.group(0))
+OUT.write_text(html)
+print(OUT, len(html) // 1024, 'KB', 'unknown TeX:', ' '.join(sorted(C.unknown)) or 'none')

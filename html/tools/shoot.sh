@@ -3,8 +3,9 @@
 # firefox: the installed Firefox, headless, in a throwaway profile
 # webkit: Playwright's WebKit, the engine of Safari (python3 with playwright on PATH)
 set -e
-ENGINE="$1"; H="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"; OUT="$3"; N="$4"
-mkdir -p "$OUT"
+ENGINE="$1"; H="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"; N="$4"
+# absolute: Firefox resolves a relative --screenshot path elsewhere, and writes nothing
+mkdir -p "$3"; OUT="$(cd "$3" && pwd)"
 URL="file://$(printf %s "$H" | sed 's/ /%20/g; s/(/%28/g; s/)/%29/g')"
 case "$ENGINE" in
 firefox)
