@@ -317,6 +317,33 @@ ended within about 5px of the PDF.
   next deck should take them from here, which means extracting them into this
   folder and having `assets.py` inline them as it does the fonts.
 
+* **Brought through the checklist, 2026-10-12**, by hand, measured with
+  `stats.py` and `blocks.py` from a `deck.json` alone. Before: blocks off by up
+  to 2.4pt and baselines by up to 3.1pt; experiment 1's ink-line overlays had
+  read the same page as within 5px. After: every block within 0.5pt of the PDF,
+  top and bottom, and every baseline within 0.4pt, in WebKit and Firefox.
+* Depth was not the fault here: every block's last line reaches as deep as a
+  `g`, and `depth.py` gives about 0 throughout. What moved the blocks was the
+  title bar padding, text set about 0.5–1.3pt high under its bar, and the
+  frames' glue.
+* By hand the corrections are one CSS block, keyed by page
+  (`.frame:nth-of-type(n)`), not attributes on the markup: a `translate` per
+  top-level element of a body, which moves nothing around it, and a padding on
+  the first element inside a block body where its text sits high. A body with
+  an inline padding cannot take a second padding from a rule; `translate`
+  sidesteps that. Iterate: shortening one element re-centres the frame by 0.4
+  of the change.
+* Found here: the enumerate's item spacing was 0.8pt short on a stretched page;
+  the bibliography's lines are 9.467pt apart, not 9.5pt, its entries 2.88pt
+  apart, not 3.5pt; a booktabs body's first row sits 1.36pt nearer the rule.
+* The footline number had a gap, not a box: the date moved with the number's
+  width, by up to 2.4pt, and an unnumbered page's date sat 8pt off. A 26.9pt
+  box with 0.73pt of padding inside it, 19.04pt when unnumbered, puts the date
+  within 0.01pt on both kinds of page.
+* `stats.py`'s worst numbers on page 8 (+135pt) and `blocks.py`'s on page 12
+  (+124pt) are the TikZ labels and the chart throwing the alignment off; the
+  rows themselves are right.
+
 ### 2 — MAS tutorial @ AIxIA 2026, 2026-10-12
 
 `mastutorial-aixia2026`: 120 pages, of which 7 contents frames, 5
