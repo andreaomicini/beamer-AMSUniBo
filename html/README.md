@@ -232,11 +232,54 @@ python3 $T/assets.py "html/<Title>.html" $A
 python3 $T/tex2html/nudge.py webkit "" gaps # build; twice more; then "both"
 python3 $T/tex2html/stats.py webkit         # worst errors, per page
 python3 $T/tex2html/stats.py firefox
+python3 $T/tex2html/blocks.py webkit        # every block against the PDF's box
 ```
 
 `build.py` keeps the page's ASSETS block, so a rebuild needs `assets.py` only
 when the assets change. After an edit to a frame, rebuild the PDF, then the
 page, and nudge that frame again: its old corrections may no longer fit.
+
+## the checklist
+
+Every page, new or old, before it is called done. Each point is a mistake an
+experiment made and Andrea saw; each has the check that catches it. A page made
+before a point was added is checked against it when it is next touched.
+
+1. **Text and lines.** The text and its line breaks are identical to the PDF,
+   and every baseline is within about 1pt of it, in WebKit and in Firefox:
+   `stats.py webkit`, `stats.py firefox`.
+2. **Blocks.** Every block's box meets the box the PDF draws within about 1pt,
+   top and bottom: `blocks.py webkit`, `blocks.py firefox`. What it caught:
+   * a correction on `.block-body` itself. Never put a margin or a padding
+     nudge there: under a title bar it opens a light line, or slides the body's
+     gradient over the bar and blurs its edge. Correct what is inside the body,
+     or move an untitled block as a whole;
+   * the title bar's height: 15.76pt, its baseline 11.95pt down, which is a
+     padding of 1.03pt and 0.73pt. Pages made before 2026-10-12 have 1.5pt and
+     1pt, 0.7pt too tall;
+   * the bottom, which TeX sets by the real depth of the last line: a body's
+     padding-bottom is 2.8pt less the gap between that line's deepest glyph
+     and a `g`. `depth.py` computes it from the PDF and the fonts; by hand, a
+     last line with none of `g j p q y , ; ( ) /` takes about 2.44pt less at
+     `\normalsize`, 2.2pt in a second-level item;
+   * an untitled block: its body's padding-top is 3.5pt.
+3. **Bibliography.** An `<i>` in a title is bold italic, as the PDF has it:
+   `.bib-title > i { font-weight: 700; }`. The theme's `i` rule makes it light.
+4. **Footline.** The date's right edge does not move with the page number.
+   Check it against the PDF on a numbered and on an unnumbered page; in
+   experiment 2 the number sat in a 28pt box, 18.38pt when unnumbered.
+5. **Embedded.** The three parts of the deck-size rule above, copied as they
+   are.
+6. **Look closely.** Overlays at 1024 × 768 hide half-point faults that show on
+   a real screen. Zoom on the block bars at four times, the PDF beside both
+   engines: `pdftoppm -scale-to-x 4096 -scale-to-y 3072`, and a Playwright page
+   with `device_scale_factor=4`.
+
+The checks run on a page written by hand too: a `deck.json` with `root`,
+`tex`, `bbl`, `pdf` and `page` is all `stats.py` and `blocks.py` need. Text
+inside a picture (TikZ labels in the PDF) can throw `stats.py`'s alignment off
+on that page, and a table can throw off `blocks.py`'s: read the rows, not only
+the worst number.
 
 ## experiments
 
