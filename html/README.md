@@ -91,17 +91,43 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `pdftoppm` of the PDF at the same size. The target is the same lines within a
   few pixels; a constant offset is the frame's glue, a step is one gap.
 
-* **Embedded, the deck tells its host its shape.** In an `<iframe>`, the deck
-  posts `{type: 'deck-size', width, height}` to its parent, taken from
-  `data-width`/`data-height`. That works inside a sandbox without
-  `allow-same-origin`, which an uploaded file must keep. It re-scales through a
-  `ResizeObserver` on its root, since a frame resized by its host does not
-  reliably fire `resize`. The host side, as APICe has it:
+* **Embedded, the deck tells its host its shape.** Every HTML deck must do this,
+  so that APICe (or any page) can frame it at its own proportions, 4:3, 16:9 or
+  anything else. Three parts, all in the deck, copied as they are:
+
+  1. the drawing size on the deck element: `1024`/`768` for 4:3, `1024`/`576` for
+     16:9, the same numbers the frame CSS uses:
+
+     ```html
+     <main class="deck" data-width="1024" data-height="768" …>
+     ```
+
+  2. scaling on the root's size, not on the `resize` event, which a frame resized
+     by its host does not reliably fire:
+
+     ```js
+     const fit = () => deck.style.setProperty('--scale',
+       Math.min(innerWidth / +deck.dataset.width, innerHeight / +deck.dataset.height));
+     new ResizeObserver(fit).observe(document.documentElement);
+     ```
+
+  3. the announcement, at the end of the deck's script, after the first `fit()`:
+
+     ```js
+     if (window.parent !== window)
+       window.parent.postMessage({ type: 'deck-size',
+         width: +deck.dataset.width, height: +deck.dataset.height }, '*');
+     ```
+
+  A message, not a read from outside: the host frames an uploaded file with
+  `sandbox="allow-scripts"` and no `allow-same-origin`, which must stay, so it
+  cannot look inside. The host side, as APICe's Talks sheet has it for its
+  `<iframe id="talkhtml">`:
 
   ```js
   addEventListener('message', e => {
     const f = document.getElementById('talkhtml');
-    if (e.source !== f.contentWindow || e.data?.type !== 'deck-size') return;
+    if (!f || e.source !== f.contentWindow || e.data?.type !== 'deck-size') return;
     const { width: w, height: h } = e.data;
     if (w > 0 && h > 0) { f.style.aspectRatio = `${w} / ${h}`; f.style.height = 'auto'; }
   });
