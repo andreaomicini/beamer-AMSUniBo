@@ -49,10 +49,15 @@
 
 ENTRY
   { address
+    amseprint    % AMS extension: an AMS Laurea e-print number, from APICe's Theses
+    amsphdeprint % AMS extension: an AMS Dottorato e-print number, from APICe's Theses
     apice   % AMS extension
     author
     booktitle
     chapter
+    cosupervisor % AMS extension: a thesis's co-supervisors
+    cycle   % AMS extension: present on every record of APICe's Theses
+    date    % AMS extension: a talk's day, yyyy-mm-dd
     doi     % AMS extension
     edition
     editor
@@ -68,7 +73,10 @@ ENTRY
     publisher
     school
     series
+    speaker % AMS extension: who gave a talk
+    supervisor   % AMS extension: a thesis's supervisors
     title
+    translatedtitle % AMS extension: a thesis's title in its other language
     type
     url		% AMS extension
     volume
@@ -235,6 +243,35 @@ FUNCTION {format.names}
   numnames 'namesleft :=
     { namesleft #0 > }
     { s nameptr "{vv~}{ll}{, jj}{, f.}" format.name$ 't :=   % last name first
+      nameptr #1 >
+        { namesleft #1 >
+            { ", " * t * }
+            { numnames #2 >
+                { "," * }
+                'skip$
+              if$
+              t "others" =
+                { " et~al." * }
+                { " and " * t * }
+              if$
+            }
+          if$
+        }
+        't
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+}
+
+FUNCTION {format.names.fl}                              % AMSUniBo: a name
+{ 's :=                                                 % as it is said,
+  #1 'nameptr :=                                        % "A. Natali", for
+  s num.names$ 'numnames :=                             % supervisors and
+  numnames 'namesleft :=                                % speakers
+    { namesleft #0 > }
+    { s nameptr "{f.~}{vv~}{ll}{, jj}" format.name$ 't :=
       nameptr #1 >
         { namesleft #1 >
             { ", " * t * }
@@ -459,11 +496,54 @@ FUNCTION {format.in.ed.booktitle}
   if$
 }
 
+FUNCTION {format.thesis.title}                         % AMSUniBo: a title
+{ cycle empty$                                          % from APICe's Theses
+    { format.title }                                    % is printed as it is
+    { title empty$                                      % written, as a PhD
+        { "" }                                          % thesis's always was
+        { title embolden }
+      if$
+    }
+  if$
+}
+
+FUNCTION {add.translatedtitle}                         % AMSUniBo: a thesis
+{ translatedtitle empty$                                % title, then its
+    'skip$                                              % translation in
+    { " [" * translatedtitle * "]" * }                  % brackets
+  if$
+}
+
+FUNCTION {format.supervision}                           % AMSUniBo: who
+{ supervisor empty$                                     % supervised a thesis
+    { "" }
+    { supervisor num.names$ #1 >
+        { "Supervisors: " }
+        { "Supervisor: " }
+      if$
+      supervisor format.names.fl *
+    }
+  if$
+  cosupervisor empty$
+    'skip$
+    { duplicate$ empty$ 'skip$ { "; " * } if$
+      cosupervisor num.names$ #1 >
+        { "Co-supervisors: " }
+        { "Co-supervisor: " }
+      if$
+      * cosupervisor format.names.fl *
+    }
+  if$
+}
+
 FUNCTION {format.thesis.type}
 { type empty$
     'skip$
     { pop$
-      type "t" change.case$
+      cycle empty$                                      % AMSUniBo: an APICe
+        { type "t" change.case$ }                       % thesis says "PhD
+        { type }                                        % thesis": keep it
+      if$
     }
   if$
 }
@@ -504,8 +584,14 @@ FUNCTION {format.incoll.inproc.crossref}
 % AMS style functions -- START 
 
 FUNCTION {format.apice}
-{ 
-  "\apicepubpar{" * apice * "}  " * ""
+{ type$ "talk" =                                        % AMSUniBo: a talk,
+    { "\apicetalkpar{" * apice * "}  " * "" }           % a thesis and a
+    { cycle empty$                                      % publication each
+        { "\apicepubpar{" * apice * "}  " * "" }        % link their own
+        { "\apicethesispar{" * apice * "}  " * "" }     % APICe page
+      if$
+    }
+  if$
 }
 
 FUNCTION {format.url}
@@ -526,7 +612,15 @@ FUNCTION {format.ams}
   if$
   doi empty$
   { url empty$
-    {}
+    { amsphdeprint empty$                               % AMSUniBo: a thesis
+        { amseprint empty$                              % with neither DOI
+            {}                                          % nor URL links its
+            { "\uuurl{https://amslaurea.unibo.it/id/eprint/" * amseprint * "/}" * "" output }
+          if$
+        }
+        { "\uuurl{https://amsdottorato.unibo.it/id/eprint/" * amsphdeprint * "/}" * "" output }
+      if$
+    }
     { format.url output }
     if$
   }
@@ -732,11 +826,13 @@ FUNCTION {mastersthesis}
   author format.key output                              % special for
   output.year.check                                     % apalike
   new.block
-  format.title "title" output.check
+  format.thesis.title add.translatedtitle "title" output.check
   new.block
   "Master's thesis" format.thesis.type output.nonnull
   school "school" output.check
   address output
+  new.block
+  format.supervision output
   new.block
   note output
   new.block		% AMS style extensions 
@@ -762,6 +858,79 @@ FUNCTION {misc}
 
 % AMS style entry -- START
 
+% talk: an APICe Talks record -- author, title, then the venue line
+% "type, howpublished, address, day month year", then the speaker when not
+% the authors, the note, and the APICe marker
+FUNCTION {month.name}
+{ 't :=
+  t "01" = { "January" }
+  { t "02" = { "February" }
+  { t "03" = { "March" }
+  { t "04" = { "April" }
+  { t "05" = { "May" }
+  { t "06" = { "June" }
+  { t "07" = { "July" }
+  { t "08" = { "August" }
+  { t "09" = { "September" }
+  { t "10" = { "October" }
+  { t "11" = { "November" }
+  { t "12" = { "December" }
+  { "" } if$ } if$ } if$ } if$ } if$ } if$ } if$ } if$ } if$ } if$ } if$ } if$
+}
+
+FUNCTION {format.talk.date}
+{ date empty$
+    { "" }
+    { date text.length$ #10 <
+        { "" }
+        { date #9 #1 substring$ "0" =
+            { date #10 #1 substring$ }
+            { date #9 #2 substring$ }
+          if$
+          " " * date #6 #2 substring$ month.name * " " * date #1 #4 substring$ *
+        }
+      if$
+    }
+  if$
+}
+
+FUNCTION {format.speaker}
+{ speaker empty$
+    { "" }
+    { speaker author =
+        { "" }
+        { speaker num.names$ #1 >
+            { "Speakers: " }
+            { "Speaker: " }
+          if$
+          speaker format.names.fl *
+        }
+      if$
+    }
+  if$
+}
+
+FUNCTION {talk}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output                              % special for
+  output.year.check                                     % apalike
+  new.block
+  format.title "title" output.check
+  new.block
+  type output
+  howpublished output
+  address output
+  format.talk.date output
+  new.block
+  format.speaker output
+  new.block
+  note output
+  new.block		% AMS style extensions 
+  format.ams	% AMS style extensions 
+  fin.entry
+}
+
 FUNCTION {webpage}
 { output.bibitem
   format.authors output
@@ -784,11 +953,13 @@ FUNCTION {phdthesis}
   author format.key output                              % special for
   output.year.check                                     % apalike
   new.block
-  format.btitle "title" output.check
+  format.btitle add.translatedtitle "title" output.check
   new.block
   "PhD thesis" format.thesis.type output.nonnull
   school "school" output.check
   address output
+  new.block
+  format.supervision output
   new.block
   note output
   new.block		% AMS style extensions 

@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{7}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-%\newcommand{\stylepatch}{0}
+\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -56,14 +56,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \mode<presentation>
 %
-%% the APICe marker; expands to nothing without the apice option. It carries its
+%% the APICe marker, a publication's or (since 1.7.1) a talk's or a thesis's; expands to nothing
+%% without the apice option. It carries its
 %% own trailing gap, outside the link so the hotspot stops at the word: the .bst
 %% appends two spaces after \apicepubpar, but BibTeX wraps the .bbl line there and
 %% the newline collapses them into one \tiny space, which the DOI runs into
 \if@doApice
 \newcommand{\apicepubpar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://\ams@apice@host@pub.apice.unibo.it/#1}{\textsf{APICe}}\mbox{~~~}}}}
+\newcommand{\apicetalkpar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://\ams@apice@host@talk.apice.unibo.it/#1}{\textsf{APICe}}\mbox{~~~}}}}
+%% a thesis has no short host that works yet: its full address
+\newcommand{\apicethesispar}[1]{{\textcolor{amsgreendark}{\tiny\href{https://apice.unibo.it/bin/view/Thesis/#1}{\textsf{APICe}}\mbox{~~~}}}}
 \else
 \newcommand{\apicepubpar}[1]{}
+\newcommand{\apicetalkpar}[1]{}
+\newcommand{\apicethesispar}[1]{}
 \fi
 %
 \setbeamertemplate{navigation symbols}{}
@@ -274,6 +280,8 @@
     \let\ddoi\ams@nodoi
     \let\dddoi\ams@nodoi
     \let\apicepubpar\@gobble
+    \let\apicetalkpar\@gobble
+    \let\apicethesispar\@gobble
     \let\apice\ams@noapice
     \let\aapice\ams@noapice
     \let\apicesite\ams@noapicesite

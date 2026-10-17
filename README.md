@@ -367,6 +367,54 @@ stops at the word rather than covering the blank. The parentheses went with it:
 the marker is a green sans word among grey monospace URLs and already looks like
 a separate thing.
 
+### talks
+
+Since 1.7.1 `apalike-AMS.bst` has a `talk` entry type, for the records APICe's Talks
+application writes (`@talk{…}`). It reads the classical fields where they mean what they
+mean elsewhere, and two of its own:
+
+| BibTeX field | from APICe's Talks | printed as |
+|---|---|---|
+| `author`, `year` | authors, the date's year | label, sort key and the year after the names, as everywhere |
+| `title` | title | bold, sentence case as for papers—protect capitals with braces, `{FIPA}` |
+| `type` | the sort's label | the venue line's first word: *Talk*, *Invited Talk*, *Tutorial*, … |
+| `howpublished` | context | the venue |
+| `address` | place | after the venue |
+| `date` | date, `yyyy-mm-dd` | last on the venue line, written out: *12 October 2004* |
+| `speaker` | speakers | *Speaker:* or *Speakers:*, only when it differs from `author` |
+| `note`, `url` | note, external link | as for every other type |
+| `apice` | the page | the APICe marker, `\apicetalkpar`: it links the talk's short address, `talks.apice.unibo.it/<Name>`, where a publication's `\apicepubpar` links `pubs.apice.unibo.it/<Name>` |
+
+So a venue line reads *Tutorial, Tutorial on the Java Agent Development Framework (JADE),
+IEEE SMC 2004, The Hague, The Netherlands, 12 October 2004*. Everything else a Talks record
+carries—`annote`, `abstract`, `sort`, `language`, the translations, `externallabel`,
+`slideshare`, `prezi`—is left unprinted. `note` is the short bibliographic note, as in a
+publication; the talk's own detail (session, room, chair) belongs in `annote`, which no
+style prints. A record with no `date` simply ends its venue line earlier.
+
+### theses
+
+APICe's Theses write `@phdthesis` and `@mastersthesis`, the classical types, with fields of
+their own beside the classical ones. Since 1.7.1 the `.bst` reads them; a record from Theses
+is recognised by its `cycle`, which nothing else carries.
+
+| BibTeX field | from APICe's Theses | printed as |
+|---|---|---|
+| `title` | title | as written, bold—bold italic for a PhD; never put into sentence case |
+| `translatedtitle` | translated title | after the title, in brackets |
+| `type` | the cycle's wording | *Bachelor's thesis*, *Master's thesis*, *PhD thesis*, as written |
+| `supervisor`, `cosupervisor` | supervisors, co-supervisors | *Supervisor: A. Natali; Co-supervisors: A. Omicini and M. Viroli* |
+| `amsphdeprint`, `amseprint` | the AMS Dottorato and AMS Laurea e-print numbers | the link, when there is neither `doi` nor `url`: `amsdottorato.unibo.it/id/eprint/<n>/`, `amslaurea.unibo.it/id/eprint/<n>/` |
+| `apice` | the page | `\apicethesispar`, linking `apice.unibo.it/bin/view/Thesis/<Name>`—no short address works for a thesis yet |
+
+The rest—`abstract`, `keywords`, `reviewer`, `opponent`, `contact`, `cycle`, `language`,
+`description`, `amspractice`, `start`, `available`—is not printed. A thesis that comes from
+APICe's Publications instead (no `cycle`) is a publication and keeps `\apicepubpar` and the
+classical rules.
+
+Names other than the authors—supervisors, speakers—are printed as said, *A. Natali*; the
+author list keeps *Natali, A.*
+
 ## the palette
 
 Every value is the one used by the AMSUniBo theme on APICe, and each is used in
