@@ -367,6 +367,15 @@ stops at the word rather than covering the blank. The parentheses went with it:
 the marker is a green sans word among grey monospace URLs and already looks like
 a separate thing.
 
+### subtitles
+
+Since 1.7.2 `apalike-AMS.bst` reads a `subtitle` field, which APICe's Publications write
+apart from the title, and prints it after the title past a colon: *Multi-Agent Oriented
+Programming: Programming Multi-Agent Systems Using JaCaMo*. The pair is treated as one title
+everywhere a title is formatted—sentence case for a paper (BibTeX keeps the capital after the
+colon), bold italic for a book, as written for a thesis from APICe's Theses. Sorting still
+reads the title alone. An entry with no `subtitle` prints exactly as before.
+
 ### talks
 
 Since 1.7.1 `apalike-AMS.bst` has a `talk` entry type, for the records APICe's Talks

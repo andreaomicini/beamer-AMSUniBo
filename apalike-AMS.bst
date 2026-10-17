@@ -74,6 +74,7 @@ ENTRY
     school
     series
     speaker % AMS extension: who gave a talk
+    subtitle     % AMS extension: printed after the title, past a colon
     supervisor   % AMS extension: a thesis's supervisors
     title
     translatedtitle % AMS extension: a thesis's title in its other language
@@ -320,10 +321,17 @@ FUNCTION {format.editors}
   if$
 }
 
+FUNCTION {title.subtitle}                              % AMSUniBo: the title,
+{ subtitle empty$                                       % then ": " and the
+    { title }                                           % subtitle when there
+    { title ": " * subtitle * }                         % is one
+  if$
+}
+
 FUNCTION {format.title}
 { title empty$
     { "" }
-    { title "t" change.case$ embolden }   % AMSUniBo
+    { title.subtitle "t" change.case$ embolden }   % AMSUniBo
   if$
 }
 
@@ -353,7 +361,7 @@ FUNCTION {n.dashify}
 }
 
 FUNCTION {format.btitle}
-{ title emphasize embolden   % AMSUniBo
+{ title.subtitle emphasize embolden   % AMSUniBo
 }
 
 FUNCTION {tie.or.space.connect}
@@ -501,7 +509,7 @@ FUNCTION {format.thesis.title}                         % AMSUniBo: a title
     { format.title }                                    % is printed as it is
     { title empty$                                      % written, as a PhD
         { "" }                                          % thesis's always was
-        { title embolden }
+        { title.subtitle embolden }
       if$
     }
   if$
