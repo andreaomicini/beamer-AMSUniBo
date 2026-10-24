@@ -1,7 +1,8 @@
 """measure.py <engine> [pages]: every text run's baseline and left edge, HTML against PDF, in TeX points.
 Prints, per page, the runs off by more than 0.6pt: dy > 0 means the HTML sits lower than the PDF."""
-import sys, json, difflib, statistics, unicodedata
-from playwright.sync_api import sync_playwright
+import sys, json, difflib, statistics, unicodedata, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+from browser import Browser
 from align import PDF
 
 K = 1024 / 362.835
@@ -93,14 +94,11 @@ def pdf_chars(pn):
 
 def run(engine, pages):
     res = {}
-    with sync_playwright() as p:
-        b = getattr(p, engine).launch()
-        pg = b.new_page(viewport={'width': 1024, 'height': 768}, device_scale_factor=1)
-        pg.goto(URL + '#1'); pg.wait_for_timeout(500)
+    with Browser(engine) as b:
+        b.goto(URL + '#1'); b.wait(500)
         for n in pages:
-            pg.evaluate(f'location.hash = "#{n}"'); pg.wait_for_timeout(60)
-            res[n] = pg.evaluate(JS)
-        b.close()
+            b.eval(f'location.hash = "#{n}"'); b.wait(60)
+            res[n] = b.eval(JS)
     return res
 
 def compare(n, nodes, limit=0.6):

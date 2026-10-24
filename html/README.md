@@ -183,14 +183,36 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 
 ## the tools
 
-`tools/` needs TeX Live, poppler (`pdftoppm`, `pdftocairo`, `pdfinfo`), Firefox,
-and a Python with `fonttools`, `brotli`, `Pillow` and `playwright`:
-`python3 -m venv .venv && .venv/bin/pip install fonttools brotli pillow playwright`
-(and `pymupdf` for `tex2html`),
-then `.venv/bin/python -m playwright install webkit`, with that venv first on
-`PATH`. Playwright's WebKit stands in for Safari, which does not reliably accept
-automated sessions. From the deck's root, with `A` a scratch folder for the
-assets:
+Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
+geckodriver`, with TeX Live, poppler and the Firefox cask. Firefox is driven
+headless through `geckodriver`; WebKit is Playwright's, through the Node library
+inside `playwright-cli`, whose browser build Playwright downloads once:
+`node $(brew --prefix playwright-cli)/libexec/lib/node_modules/@playwright/cli/node_modules/playwright-core/cli.js install webkit`.
+`tools/browser.py` puts the two behind one interface, for `shoot.sh` and the
+measuring tools; Safari itself does not reliably accept automated sessions.
+
+### html.sh, the whole run
+
+From the deck's root:
+
+```sh
+../beamer-AMSUniBo/html/html.sh            # tex/ holds one deck
+../beamer-AMSUniBo/html/html.sh l2-lp      # tex/ holds several: name one
+```
+
+It builds the PDF; for a generated page (a `deck.json` with a `title`) it writes
+the page with `build.py` and runs `nudge.py` four times (`gaps` three, then
+`both`), rebuilding after each; it refills the ASSETS block — fonts, the seal of
+the class option, the TikZ pictures listed in `deck.json`'s `figures` in source
+order, the deck's own `img/` pictures — and ends with `stats.py` and `blocks.py`
+in WebKit and in Firefox, whose rows a person reads against the checklist. The
+deck's inputs are in `html/tex2html/`, or `html/tex2html/<deck>/` in a
+repository of several decks; with none there, it writes a starting `deck.json`
+and stops.
+
+### one tool at a time
+
+With `A` a scratch folder for the assets:
 
 ```sh
 T=../beamer-AMSUniBo/html/tools
@@ -208,6 +230,7 @@ and to check:
 pdftoppm -scale-to-x 1024 -scale-to-y 768 -png "pdf/<Title>.pdf" $A/ref/p
 $T/shoot.sh firefox "html/<Title>.html" $A/firefox <pages>
 $T/shoot.sh webkit "html/<Title>.html" $A/webkit <pages>
+$T/shoot.sh webkit "html/<Title>.html" $A/zoom <pages> 4    # the checklist's 4x look
 python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for webkit
 ```
 
@@ -216,8 +239,7 @@ python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for
 `tools/tex2html/` writes the page instead of a hand: frames from the `.tex`,
 references from the `.bbl`, line breaks and per-frame corrections from the PDF.
 It knows the TeX subset of the decks it has met and reports any command it does
-not; a new deck may need it grown. It also needs `pymupdf` in the venv, and
-Playwright's Firefox (`playwright install firefox`) to measure.
+not; a new deck may need it grown.
 
 `theme.css` and `script.js` there are the theme and the deck script every
 generated page carries, the deck-size announcement included. What belongs to
@@ -272,8 +294,8 @@ before a point was added is checked against it when it is next touched.
    are.
 6. **Look closely.** Overlays at 1024 × 768 hide half-point faults that show on
    a real screen. Zoom on the block bars at four times, the PDF beside both
-   engines: `pdftoppm -scale-to-x 4096 -scale-to-y 3072`, and a Playwright page
-   with `device_scale_factor=4`.
+   engines: `pdftoppm -scale-to-x 4096 -scale-to-y 3072`, and
+   `shoot.sh <engine> <page> <outdir> <pages> 4`.
 
 The checks run on a page written by hand too: a `deck.json` with `root`,
 `tex`, `bbl`, `pdf` and `page` is all `stats.py` and `blocks.py` need. Text
@@ -403,3 +425,33 @@ edges within 2.6pt, the worst where TeX shrank a line's interword glue.
 * The deck-size rule came the same night, from APICe: the page carries it
   through the converter's `script.js`, and was checked framed in a sandboxed
   `<iframe>` with the host listener above, in WebKit and Firefox.
+
+### 3 — the tools on Homebrew, and `html.sh`, 2026-10-24
+
+No new page: the tools moved off the pip venv, at Andrea's rule that everything
+comes from Homebrew, and the run became one command. Checked on experiments 1
+and 2, whose pages were rebuilt and measured again.
+
+* `browser.py` drives Firefox through `geckodriver` with plain WebDriver calls,
+  and WebKit through a small Node bridge to the Playwright library inside
+  `playwright-cli`; `shoot.sh`, `measure.py` and `blocks.py` use it. Playwright's
+  own Firefox is no longer needed: the Firefox cask is measured instead.
+* The numbers are the logged ones. Experiment 1: baselines within 1pt on every
+  page but 8, where the TikZ labels throw the alignment, and the block of page 12
+  the same way. Experiment 2: baselines within 1.02pt in WebKit and 1.36pt in
+  Firefox, left edges within 2.64pt, blocks within 1.05pt.
+* Headless Firefox counts its chrome in the window: a 1024 × 768 window gave a
+  683pt-high viewport. `browser.py` grows the window by what is missing.
+* **The corrections are not idempotent.** Four more `nudge.py` passes on the
+  settled page of experiment 2 added a margin and moved one block from −0.39pt to
+  −1.02pt. `html.sh` corrects a page only the first time, when there is no
+  `nudges.json`, or when asked with `--nudge`.
+* Rebuilt with the corrections it has, experiment 2's page came out byte for byte
+  the same, but for the seal, whose PNG is now encoded differently: all 120 pages
+  pixel-identical to before in both engines. Experiment 1's assets, refreshed,
+  gained Merriweather Italic and the three script letters of experiment 2; its 20
+  pages too are pixel-identical. Neither page was replaced.
+* The converter against `iag2627-slides`: of 19 decks one reads through
+  (`m3-ai`, which still lacks `\prolog`); the others stop at the first
+  environment it does not know — `description`, `enumerate`, `verbatim`, `quote`,
+  `tabular` — and two have no `.bbl`, which `build.py` still requires.
