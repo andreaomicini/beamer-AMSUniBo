@@ -112,7 +112,8 @@ font packages listed under [typography](#typography) — it does not bundle font
 
 `html/` is not in the archive: it holds the rules and the tools for translating
 an AMSUniBo deck into a single HTML page that matches its PDF — see
-[html/README.md](html/README.md).
+[html/README.md](html/README.md). Nor is `zip/`, whose script packs a deck into one
+flat folder that builds with a plain `pdflatex` — see [zip/README.md](zip/README.md).
 
 Beyond the beamer furniture, the theme defines:
 
