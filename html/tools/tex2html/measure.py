@@ -6,7 +6,7 @@ from browser import Browser
 from align import PDF
 
 K = 1024 / 362.835
-from deck import path
+from deck import path, STYLE
 URL = path('page').as_uri()
 JS = r'''() => {
   const f = document.querySelector('.frame.current');
@@ -85,7 +85,7 @@ def pdf_chars(pn):
             for sp in l['spans']:
                 for ch in sp['chars']:
                     x, y = ch['origin']
-                    if y < 12.9 or y > 262:
+                    if y < STYLE['head'] or y > STYLE['foot']:
                         continue
                     for c in unicodedata.normalize('NFKC', ch['c']):
                         if not c.isspace():

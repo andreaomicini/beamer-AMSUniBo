@@ -1,0 +1,273 @@
+/* ===== AMSBolognaFC in CSS ============================================== */
+/* palette: beamercolorthemebolognafc.sty, and the mixes the theme sets, named after them */
+:root {
+	--bolognafcblue: #1A2F48;
+	--bolognafcred: #A21C26;
+	--bolognafcwhite: #FFFFFF;
+	--bolognafcsilver: #ECECEC;
+	--text: #030507;           /* bolognafcblue!10!black, normal text */
+	--emph: #0D1724;           /* bolognafcblue!50!black, \emph */
+	--alert: #921922;          /* bolognafcred!90!black */
+	--aalert: #D4D4D4;         /* bolognafcsilver!90!black */
+	--head-dark: #15263A;      /* palette tertiary: bolognafcblue!80!black */
+	--head-light: #D9D9D9;     /* gray!30!white */
+	--head-text: #F2F2F2;      /* gray!10!white */
+	--band: #F2F2F2;           /* frametitle: gray!10!white */
+	--foot-mid: #ECECEC;       /* gray!15!white */
+	--foot-mid-text: #122132;  /* bolognafcblue!70!black */
+	--foot-right-text: #101C2B;  /* bolognafcblue!60!black */
+	--cite: #BDBDBD;           /* bolognafcsilver!80!black */
+	--toc-current: #0A131D;    /* bolognafcblue!40!black */
+	--block-title: #142336;    /* bolognafcblue!75!black */
+	--block-title-text: #EEEEEE;
+	--block-body: #FAFBFB;     /* bolognafcblue!2!white */
+	--alert-title: #091019;    /* bolognafcblue!35!black */
+	--alert-body: #F4F5F6;
+	--example-title: #BAC1C8;  /* bolognafcblue!30!white */
+	--example-title-text: #0F1B29;
+	--example-body: #EFF0F2;
+	--tp-box: #D9D9D9;
+	--tp-title: #172A41;       /* bolognafcblue!90!black */
+	--tp-author: #921922;
+	--tp-institute: #142336;   /* bolognafcblue!75!black */
+	--tp-date: #536376;        /* bolognafcblue!75!white */
+	--bib-label: #434F5E;      /* bolognafcblue!60!gray */
+	--bib-author: #172A41;
+	--bib-title: #79151D;      /* bolognafcred!75!black */
+	--bib-location: #334356;   /* bolognafcblue!75!gray */
+	--bib-note: #767676;       /* bolognafcsilver!50!black */
+}
+/* the PDF page, 128 x 96 mm, drawn at 1024 x 768 and scaled to the window.
+   --pt is one TeX point; Computer Modern Sans is not scaled, so --fs is --pt. Latin Modern stands
+   in for cm-super, whose design sizes differ in width: each size below carries the ratio of
+   cm-super's advance widths to Latin Modern's, measured on a PDF (6pt 1.10, 9pt 0.994,
+   10.95pt 0.989, 14.4pt 0.970, 17.28pt 0.995; 6pt bold 1.042) */
+.deck {
+	--pt: calc(1024px / 362.835);
+	--fs: var(--pt);
+	--ball: radial-gradient(circle at 32% 32%, #E8C8CA 0, #D5999E 10%, #C47076 18%, #B04C54 26%,
+		#923138 33%, #74161D 41%, #611016 48%, #5C1E22 55%);
+}
+html, body { margin: 0; height: 100%; background: #000; }
+body { overflow: hidden; }
+.deck { position: fixed; inset: 0; }
+/* cm-super, through Latin Modern: one family per optical size, as TeX picks them */
+.frame {
+	position: absolute; left: 50%; top: 50%;
+	width: 1024px; height: 768px; margin: -384px 0 0 -512px;
+	transform: scale(var(--scale, 1));
+	background: var(--bolognafcwhite); color: var(--text);
+	overflow: hidden; display: none;
+	font-family: "LM Sans 10", "LM Math", sans-serif; font-weight: 400;
+	font-size: calc(10.83 * var(--fs)); line-height: calc(13.6 * var(--pt));
+	white-space: nowrap;
+}
+.frame.current { display: block; }
+/* the seal, cropped at the lower right: option cesena */
+.frame::before {
+	content: ""; position: absolute;
+	left: 79.80%; top: 51.92%; width: 20.20%; height: 45.02%;
+	background: var(--seal) no-repeat 0 0 / 100% 100%;
+}
+/* sizes of the 11pt class, each in its optical size */
+.tiny { font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); line-height: calc(7 * var(--pt)); }
+.scriptsize { font-family: "LM Sans 8", "LM Math"; font-size: calc(8 * var(--fs)); line-height: calc(9.5 * var(--pt)); }
+.footnotesize { font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(11 * var(--pt)); }
+.small { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+.large { font-family: "LM Sans 12", "LM Math"; font-size: calc(12 * var(--fs)); line-height: calc(14 * var(--pt)); }
+.Large { font-family: "LM Sans 12", "LM Math"; font-size: calc(13.97 * var(--fs)); line-height: calc(18 * var(--pt)); }
+.LARGE { font-family: "LM Sans 17", "LM Math"; font-size: calc(17.2 * var(--fs)); line-height: calc(22 * var(--pt)); }
+/* \emph \alert \aalert \textbf \textsc \texttt \it, and math */
+b { font-weight: 700; }
+em { font-style: italic; color: var(--emph); }
+.alert { color: var(--alert); }
+.aalert { font-style: italic; color: var(--aalert); }
+.it { font-style: italic; }
+/* Computer Modern Sans has no small caps: the theme falls back to the serif ones */
+.sc { font-family: "LM Roman Caps"; font-variant-caps: normal; }
+code, .tt { font-family: "LM Mono 10", monospace; font-weight: 400; }
+/* math letters: beamer sets them in the sans italic; \phi alone comes from the math italic */
+i { font-style: italic; font-weight: 400; }
+.rel { margin: 0 0.28em; }
+sub { font-size: 70%; line-height: 0; vertical-align: -0.25em; }
+a { color: inherit; text-decoration: none; }
+p { margin: 0; }
+.center { text-align: center; }
+/* \ccite, \uurl, \apice */
+.ccite { color: var(--cite); font-family: "LM Sans 8", "LM Math"; font-style: normal; font-size: calc(6.6 * var(--fs)); line-height: 0; vertical-align: calc(3.6 * var(--pt)); }
+.url, .uurl, .apice { font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
+.uurl, .apice { color: var(--alert); }
+
+/* ----- infolines: head and foot ----------------------------------------- */
+.headline, .footline { position: absolute; left: 0; width: 100%; display: flex; font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); }
+.headline { top: 0; height: calc(11.03 * var(--pt)); line-height: calc(8.55 * var(--pt)); }
+.headline > div { width: 50%; box-sizing: border-box; }
+.headline .section { background: var(--head-dark); color: var(--head-text); text-align: right; padding-right: calc(5.33 * var(--pt)); }
+.headline .subsection { background: var(--head-light); }
+.footline { bottom: 0; height: calc(8.64 * var(--pt)); line-height: calc(6.42 * var(--pt)); }
+.footline > div { width: 33.3333%; box-sizing: border-box; }
+.footline .author { background: var(--head-dark); color: var(--head-text); text-align: center; }
+.footline .title { background: var(--foot-mid); color: var(--foot-mid-text); text-align: center; }
+.footline .date { background: var(--head-light); color: var(--foot-right-text); text-align: right; padding-right: calc(5.32 * var(--pt)); }
+.footline .number { display: inline-block; width: calc(23.61 * var(--pt)); text-align: right; word-spacing: calc(-1.16 * var(--pt)); }
+.frame[data-noframenumbering] .footline .number { width: calc(13.66 * var(--pt)); }
+
+/* ----- frame title and text area ---------------------------------------- */
+.frametitle {
+	position: absolute; left: 0; top: calc(11.03 * var(--pt)); width: 100%; height: calc(27.89 * var(--pt));
+	box-sizing: border-box; margin: 0; padding-left: calc(8.5 * var(--pt));
+	background: var(--band); color: var(--bolognafcblue);
+	font-family: "LM Sans 12", "LM Math"; font-weight: 400;
+	font-size: calc(13.97 * var(--pt)); line-height: calc(27.89 * var(--pt));
+}
+.frametitle .ccite { font-size: calc(6.6 * var(--pt)); }
+.body {
+	position: absolute; top: calc(38.92 * var(--pt)); bottom: calc(8.64 * var(--pt));
+	left: calc(10.909 * var(--pt)); width: calc(342.295 * var(--pt));
+	display: flex; flex-direction: column;
+}
+.body > * { flex: none; }
+/* [c]: beamer's frametopskip and framebottomskip, 1fill over 1.5fill */
+.body::before { content: ""; flex: 2 1 0; }
+.body::after { content: ""; flex: 3 1 0; }
+.titlepage .body::before, .titlepage .body::after { display: none; }
+/* [t] */
+.frame.top .body::before { display: none; }
+.medskip { height: calc(6 * var(--pt)); }
+.smallskip { height: calc(3 * var(--pt)); }
+.bigskip { height: calc(12 * var(--pt)); }
+.vfill { flex: 2 1 0; }
+/* a \vfill inside center: the fil it stretches shares the frame's free space */
+.body > div.center:has(> .vfill) { display: contents; }
+
+/* ----- lists: beamer's \@listi and \@listii, balls of the rounded theme -- */
+.frame { --topsep: calc(3 * var(--pt)); --itemsep: calc(3 * var(--pt)); --subtopsep: calc(2 * var(--pt)); --subitemsep: 0px; }
+ul, ol { list-style: none; margin: var(--topsep) 0; padding: 0; }
+li { position: relative; padding-left: calc(21.818 * var(--pt)); }
+li + li { margin-top: var(--itemsep); }
+ul > li::before {
+	content: ""; position: absolute;
+	left: calc(11.25 * var(--pt)); top: calc(6.04 * var(--pt));
+	width: calc(5.1 * var(--pt)); height: calc(5.1 * var(--pt)); border-radius: 50%;
+	background: var(--ball); box-shadow: 0.4px 0.6px 0.8px rgba(0, 0, 0, .3);
+}
+li ul { margin: var(--subtopsep) 0 0; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+li li + li { margin-top: var(--subitemsep); }
+li li::before { left: calc(12.22 * var(--pt)); top: calc(6.08 * var(--pt)); width: calc(4.14 * var(--pt)); height: calc(4.14 * var(--pt)); }
+li li ul { font-family: "LM Sans 9", "LM Math"; font-size: calc(9 * var(--fs)); line-height: calc(11 * var(--pt)); }
+li li li::before { left: calc(12.4 * var(--pt)); top: calc(5.5 * var(--pt)); width: calc(3.6 * var(--pt)); height: calc(3.6 * var(--pt)); }
+/* \item[label]: the label right-aligned, labelsep .5em before the text, in the item colour */
+ul > li[data-label]::before {
+	content: attr(data-label); left: auto; right: calc(100% - 21.818 * var(--pt) + 0.5em); top: 0;
+	width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; color: var(--bolognafcred);
+}
+/* an item that wraps before its sub-list takes the sub-list's baselineskip */
+li.wrapsub { line-height: calc(12 * var(--pt)); }
+li li.wrapsub { line-height: calc(11 * var(--pt)); }
+ul > li.wrapsub::before { top: calc(5.24 * var(--pt)); }
+ol > li.wrapsub::before { top: calc(2.12 * var(--pt)); }
+li li.wrapsub::before { top: calc(5.58 * var(--pt)); }
+ul > li.wrapsub[data-label]::before { top: 0; }
+ul > li.lbl-small::before { font-size: calc(9 * var(--fs)); }
+ol { counter-reset: enum; }
+ol > li { counter-increment: enum; }
+ol > li::before {
+	content: counter(enum); position: absolute;
+	left: calc(7.02 * var(--pt)); top: calc(2.92 * var(--pt));
+	width: calc(8.99 * var(--pt)); height: calc(8.99 * var(--pt)); border-radius: 50%;
+	text-align: center; font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); line-height: calc(9.2 * var(--pt));
+	color: var(--bolognafcwhite); background: var(--ball); box-shadow: 0.4px 0.6px 0.8px rgba(0, 0, 0, .3);
+}
+ul.tight { --itemsep: calc(1 * var(--pt)); --topsep: calc(2 * var(--pt)); }
+/* description, an item per div.ditem: the text at 2cm + labelsep, the label right-aligned before
+   it, or from the left edge when longer; the text's other lines at its indent */
+dl { margin: var(--topsep) 0; }
+.ditem { padding-left: calc(62.15 * var(--pt)); }
+.ditem + .ditem { margin-top: var(--itemsep); }
+dt { display: inline-block; min-width: calc(56.7 * var(--pt)); margin-left: calc(-62.15 * var(--pt)); margin-right: 0.5em;
+	text-align: right; color: var(--bolognafcred); }
+dd { display: inline; margin: 0; }
+
+/* ----- blocks: rounded, shadowed ---------------------------------------- */
+.block {
+	--title-bg: var(--block-title); --title-fg: var(--block-title-text); --body-bg: var(--block-body);
+	margin: calc(7.5 * var(--pt)) calc(-2.73 * var(--pt)) calc(4 * var(--pt)) calc(-4 * var(--pt));
+	border-radius: calc(4 * var(--pt));
+	background: var(--body-bg);
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+}
+.block.alert { --title-bg: var(--alert-title); --body-bg: var(--alert-body); color: var(--text); }
+.block.example { --title-bg: var(--example-title); --title-fg: var(--example-title-text); --body-bg: var(--example-body); }
+.block-title {
+	margin: 0; padding: 0 calc(4 * var(--pt)) calc(3.16 * var(--pt));
+	border-radius: calc(4 * var(--pt)) calc(4 * var(--pt)) 0 0;
+	background: var(--title-bg); color: var(--title-fg);
+	font-family: "LM Sans 12", "LM Math"; font-weight: 400; font-size: calc(12 * var(--fs)); line-height: calc(13.78 * var(--pt));
+}
+.block-body {
+	padding: calc(2.5 * var(--pt)) calc(4 * var(--pt)) calc(3.58 * var(--pt));
+	border-radius: 0 0 calc(4 * var(--pt)) calc(4 * var(--pt));
+	background: linear-gradient(var(--title-bg), var(--body-bg) calc(2.5 * var(--pt))) no-repeat;
+}
+.block + ul { margin-top: calc(7 * var(--pt)); }
+.block.notitle .block-body { background: none; padding-top: calc(3.5 * var(--pt)); }
+div.center { text-align: center; }
+.block-body > :first-child { margin-top: 0; }
+.block-body > :last-child { margin-bottom: 0; }
+
+/* ----- tables of contents: numbered balls, the other sections shaded ---- */
+ol.toc { margin: 0; }
+ol.toc > li { padding-left: calc(13.33 * var(--pt)); color: var(--toc-current); }
+ol.toc > li + li { margin-top: calc(16.21 * var(--pt)); }
+ol.toc > li::before {
+	left: calc(-3.82 * var(--pt)); top: calc(1.72 * var(--pt)); width: calc(12.48 * var(--pt)); height: calc(12.48 * var(--pt));
+	font-size: calc(8 * var(--fs)); line-height: calc(12.9 * var(--pt)); color: #F6E8E9;
+	background: radial-gradient(circle at 32% 32%, #E2C3C5 0, #DBA8AC 10%, #CF8B90 18%, #BD5E65 26%, #9F4249 36%, #7F2B31 48%, #68272C 58%);
+}
+ol.toc > li.shaded { opacity: .2; }
+
+/* ----- pictures and boxes ----------------------------------------------- */
+img.figure { display: block; margin: 0 auto; }
+.minipages { display: flex; align-items: center; column-gap: calc(3.65 * var(--pt)); }
+.minipage { flex: none; }
+.minipage img.figure { width: 100%; }
+
+/* ----- title page ------------------------------------------------------- */
+.titlepage .body { text-align: center; top: calc(11.03 * var(--pt)); }
+.tp-box {
+	margin: calc(44.35 * var(--pt)) calc(-2.73 * var(--pt)) 0 calc(-4 * var(--pt));
+	height: calc(37.95 * var(--pt)); box-sizing: border-box; padding-top: calc(11.7 * var(--pt));
+	border-radius: calc(4 * var(--pt)); background: var(--tp-box);
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+}
+.tp-box h1 { margin: 0; font-family: "LM Sans 12", "LM Math"; font-weight: 400; font-size: calc(13.97 * var(--pt)); line-height: calc(18 * var(--pt)); color: var(--tp-title); }
+.tp-authors { margin-top: calc(20.8 * var(--pt)); color: var(--tp-author); }
+.tp-authors code { color: var(--tp-author); }
+.tp-institute { margin-top: calc(9 * var(--pt)); color: var(--tp-institute); }
+.tp-date { margin-top: calc(13.5 * var(--pt)); color: var(--tp-date); }
+
+/* ----- the bibliography ------------------------------------------------- */
+.bibitem { padding-left: calc(9.62 * var(--pt)); text-indent: calc(-9.62 * var(--pt)); margin-bottom: calc(5.88 * var(--pt)); }
+.bibitem > span { display: block; text-indent: 0; }
+.bibitem > .biblabel, .bibitem > .bib-author { display: inline; }
+.biblabel { color: var(--bib-label); margin-right: calc(4 * var(--pt)); }
+.bib-author { color: var(--bib-author); }
+.bib-title { color: var(--bib-title); font-weight: 700; font-size: calc(6.25 * var(--fs)); }
+.bib-title .nb { font-weight: 400; }
+.bibitem i { font-family: inherit; }
+.bib-title > i { font-family: inherit; font-weight: 700; }
+.bib-location { color: var(--bib-location); }
+.bib-location > em, .bib-location em { color: inherit; }
+.bib-note { color: var(--bib-note); }
+.apicepubpar { color: var(--aalert); font-size: calc(6.6 * var(--fs)); margin-right: calc(9 * var(--pt)); }
+.dddoi { color: var(--cite); font-size: calc(6.6 * var(--fs)); }
+.uuurl { color: var(--cite); font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(6 * var(--pt)); }
+
+/* ----- printing: one page per frame, PDF-sized -------------------------- */
+@media print {
+	@page { size: 1024px 768px; margin: 0; }
+	html, body { background: none; height: auto; overflow: visible; }
+	.deck { position: static; }
+	.frame { display: block; position: relative; left: 0; top: 0; margin: 0; transform: none; break-after: page; }
+	* { print-color-adjust: exact; }
+}

@@ -5,11 +5,10 @@ import subprocess, functools
 from fontTools.ttLib import TTFont
 from fontTools.pens.boundsPen import BoundsPen
 from align import PDF
+from deck import STYLE, cm_face
 
-BODY = [(0.867, 0.929, 0.922), (0.965, 0.851, 0.847), (0.882, 0.937, 0.929)]   # the three block bodies
-FACE = {'MerriwthrSans-Light': 'MerriweatherSans-Light', 'MerriwthrSans-LightItali': 'MerriweatherSans-LightItalic',
-        'MerriwthrSans-Regular': 'MerriweatherSans-Regular', 'MerriwthrSans-Bold': 'MerriweatherSans-Bold',
-        'MerriwthrSans-BoldItalic': 'MerriweatherSans-BoldItalic', 'Inconsolatazi4-Regular': 'Inconsolatazi4-Regular'}
+BODY = STYLE['bodies']   # the three block bodies
+FACE = STYLE['faces']
 
 @functools.lru_cache(None)
 def font(face):
@@ -32,7 +31,7 @@ def blocks(n):
     """the block bodies of page n, top to bottom: an untitled block is drawn as two fills"""
     rs = sorted((dr['rect'] for dr in PDF[n - 1].get_drawings()
                  if dr.get('fill') and dr['rect'].x0 > 1 and dr['rect'].width > 60 and near(dr['fill'], BODY)
-                 and dr['rect'].y0 > 13 and dr['rect'].y1 < 262),   # not the head or foot lines
+                 and dr['rect'].y0 > STYLE['head'] and dr['rect'].y1 < STYLE['foot']),   # not the head or foot lines
                 key=lambda r: r.y0)
     out = []
     for r in rs:
@@ -47,7 +46,8 @@ def depths(n):
     for b in PDF[n - 1].get_text('rawdict')['blocks']:
         for l in b.get('lines', []):
             for sp in l['spans']:
-                face = FACE.get(sp['font'].split('+')[-1])
+                nm = sp['font'].split('+')[-1]
+                face = FACE.get(nm) or (cm_face(nm) if not FACE else None)
                 for ch in sp['chars']:
                     if ch['c'].strip() and face:
                         lines.append((ch['origin'][1], ch['origin'][0], face, sp['size'], ch['c']))

@@ -2,7 +2,7 @@
 import re, unicodedata, difflib, html as H
 import pymupdf
 
-from deck import path
+from deck import path, STYLE
 
 PDF = pymupdf.open(path('pdf'))
 BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th'}
@@ -11,13 +11,13 @@ def norm(c):
     c = unicodedata.normalize('NFKC', c)
     return c
 
-def pdf_chars(pn, ytop=37.2, ybot=262.0, skip_cite=True):
+def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
     out = []
     raw = PDF[pn - 1].get_text('rawdict')
     for b in raw['blocks']:
         for l in b.get('lines', []):
             for sp in l['spans']:
-                cite = skip_cite and sp['size'] < 6.2 and sp['color'] == 0xc7c9cb
+                cite = skip_cite and sp['size'] < 6.2 and sp['color'] == STYLE['cite']
                 for ch in sp['chars']:
                     x, y = ch['origin']
                     if y < ytop or y > ybot or cite:

@@ -57,6 +57,18 @@ def container(s, ind, mode='body'):
         i = b
         items.append(('raw', env_html(env, inner, ind)))
 
+    # side by side: consecutive minipages are one line of boxes
+    grouped = []
+    for kind, h in items:
+        if kind == 'raw' and h.lstrip().startswith('<div class="minipage"'):
+            if grouped and grouped[-1][0] == 'minipages':
+                grouped[-1][1].append(h)
+            else:
+                grouped.append(('minipages', [h]))
+        else:
+            grouped.append((kind, h))
+    items = [('raw', '\n'.join([f'{ind}<div class="minipages">'] + [T + l for x in h for l in x.split('\n')]
+                                + [f'{ind}</div>'])) if kind == 'minipages' else (kind, h) for kind, h in grouped]
     lines = []
     first = True
     for kind, h in items:
@@ -75,8 +87,16 @@ def container(s, ind, mode='body'):
     return lines, flags
 
 def env_html(env, inner, ind):
-    if env == 'itemize':
-        return itemize(inner, ind)
+    if env in ('itemize', 'enumerate'):
+        return itemize(inner, ind, 'ol' if env == 'enumerate' else 'ul')
+    if env == 'description':
+        return description(inner, ind)
+    if env == 'minipage':
+        w, j = read_group(inner, skip_ws(inner, 0))
+        frac = float(w.replace('\\textwidth', '').replace('\\linewidth', '') or 1)
+        body, flags = container(inner[j:], ind + T, 'body')
+        return '\n'.join([f'{ind}<div class="minipage" style="width: calc({frac:g} * 342.295 * var(--pt))">'] + body
+                         + [f'{ind}</div>'])
     if env in BLOCK_ENVS:
         title, j = read_group(inner, skip_ws(inner, 0))
         body, flags = container(inner[j:], ind + T * 2, 'block')
@@ -102,10 +122,10 @@ def env_html(env, inner, ind):
                           f'{ind}{T}<div class="pc-text">'] + body + [f'{ind}{T}</div>', f'{ind}</div>'])
     raise ValueError('env ' + env)
 
-def itemize(inner, ind):
+def itemize(inner, ind, tag='ul'):
     parts = split_top(inner, 'item')
     assert not parts[0].strip(), parts[0]
-    out = [f'{ind}<ul>']
+    out = [f'{ind}<{tag}>']
     for p in parts[1:]:
         lab, j = read_opt(p, 0)
         attr = ''
@@ -125,7 +145,22 @@ def itemize(inner, ind):
             else:
                 out.append(f'{ind}{T}<li{attr}>{first}')
             out += rest + [f'{ind}{T}</li>']
-    out.append(f'{ind}</ul>')
+    out.append(f'{ind}</{tag}>')
+    return '\n'.join(out)
+
+def description(inner, ind):
+    parts = split_top(inner, 'item')
+    assert not parts[0].strip(), parts[0]
+    out = [f'{ind}<dl>']
+    for p in parts[1:]:
+        lab, j = read_opt(p, 0)
+        body, flags = container(p[j:], ind + T * 2, 'li')
+        dt = f'<dt>{C.inline(lab or "").strip()}</dt>'
+        if len(body) == 1:
+            out.append(f'{ind}{T}<div class="ditem">{dt}<dd>{body[0].strip()}</dd></div>')
+        else:
+            out += [f'{ind}{T}<div class="ditem">{dt}<dd>{body[0].strip()}'] + body[1:] + [f'{ind}{T}</dd></div>']
+    out.append(f'{ind}</dl>')
     return '\n'.join(out)
 
 # ---------------------------------------------------------------- the document
@@ -135,7 +170,7 @@ def includegraphics_hook():
         if name == '\\includegraphics':
             _, i = read_opt(s, i)
             g, i = read_arg(s, i)
-            n = g.split('/')[-1]
+            n = re.sub(r'\.(png|jpe?g|pdf|svg)$', '', g.split('/')[-1])
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}">\x00', i
         return orig(name, s, i)
     C.command = command
@@ -154,12 +189,18 @@ def pages():
     out = []
     section = ''
     i = 0
-    tok = re.compile(r'\\section(\*?)\{|\\frame(\[[a-z,]*\])?\{\\(titlepage|tableofcontents)\}|\\begin\{frame\}')
+    tok = re.compile(r'\\section(\*?)\{|\\frame(\[[a-z,]*\])?\{\\(titlepage|tableofcontents)\}|\\begin\{frame\}'
+                     r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
+    nonumber = False
     secno = 0
     while True:
         m = tok.search(doc, i)
         if not m:
             break
+        if m.group(0).startswith('\\setbeamertemplate'):
+            nonumber = True
+            i = m.end()
+            continue
         if m.group(0).startswith('\\section'):
             g, i = read_group(doc, m.end() - 1)
             C.reset()
@@ -195,7 +236,7 @@ def pages():
                 t += ' ' + ROMAN[k + 1]
             body, flags = container(part, T * 2, 'body')
             out.append(dict(kind='frame', section=section, title=t, body=body, flags=flags,
-                            top='t' in opts, nonum='noframenumbering' in opts))
+                            top='t' in opts, nonum='noframenumbering' in opts or nonumber))
     return out
 
 if __name__ == '__main__':

@@ -146,7 +146,7 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
 
 # ---------------------------------------------------------------- the converter
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
-SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'smaller'}
+SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'smaller'}
 
 class Conv:
     def __init__(self):
@@ -219,6 +219,10 @@ class Conv:
                     out.append(''.join({'A': '𝒜', 'C': '𝒞', 'L': 'ℒ'}[c] for c in g))
                 elif name == 'times':
                     out.append('<span class="rel">×</span>')
+                elif name in ('rightarrow', 'to'):
+                    out.append('<span class="rel">→</span>' if out else '→')
+                elif name == 'phi':
+                    out.append('\U0001D719')
                 else:
                     self.unknown.add('math\\' + name)
             elif c == '=':
@@ -277,11 +281,11 @@ class Conv:
 
     def group(self, g):
         """a brace group: a declaration inside it scopes to it"""
-        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|smaller|bfseries|em|sl|sf|sc|itshape)(?![A-Za-z])\s*', g)
+        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|LARGE|smaller|bfseries|em|it|sl|sf|sc|itshape)(?![A-Za-z])\s*', g)
         if m:
             d = m.group(1)
             inner = self.inline(g[m.end():])
-            tag = {'bfseries': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
+            tag = {'bfseries': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'it': ('<span class="it">', '</span>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
                    'sf': ('', ''), 'sc': ('<span class="sc">', '</span>')}.get(d, (f'<span class="{d}">', '</span>'))
             return tag[0] + inner + tag[1]
         return self.inline(g)
@@ -294,14 +298,17 @@ class Conv:
         if name in simple:
             if name == '\\ldots' and s.startswith('{}', i):
                 i += 2
+            elif re.match(r'\\[A-Za-z]+$', name):
+                while i < len(s) and s[i] in ' \t\n':   # TeX skips the spaces after a control word
+                    i += 1
             return simple[name], i
         n = name[1:]
-        if n in ('emph', 'alert', 'aalert', 'textbf', 'textsc', 'texttt', 'textit'):
+        if n in ('emph', 'alert', 'aalert', 'textbf', 'textsc', 'texttt', 'textit', 'textsf'):
             g, i = A()
             t = {'emph': ('<em>', '</em>'), 'alert': ('<span class="alert">', '</span>'),
                  'aalert': ('<span class="aalert">', '</span>'), 'textbf': ('<b>', '</b>'),
                  'textsc': ('<span class="sc">', '</span>'), 'texttt': ('<code>', '</code>'),
-                 'textit': ('<i>', '</i>')}[n]
+                 'textit': ('<i>', '</i>'), 'textsf': ('<span class="sf">', '</span>')}[n]
             return t[0] + self.inline(g) + t[1], i
         if re.match(r'[aA]c[a-z]*\*?$', n) and n.rstrip('*') in (
                 'ac', 'acs', 'acl', 'acf', 'acp', 'acsp', 'aclp', 'Aclp', 'Acl', 'Ac', 'Acp', 'acfp'):
@@ -346,7 +353,7 @@ class Conv:
             # a declaration: scope it to the rest of the current text
             rest = self.inline(s[i:])
             return f'<span class="{n}">{rest}</span>', len(s)
-        if n in ('bfseries', 'em', 'sf', 'sc'):
+        if n in ('bfseries', 'em', 'it', 'sf', 'sc'):
             rest = self.inline(s[i:])
             return self.group('\\' + n + ' ' + s[i:]), len(s)
         if n == 'ensuremath':

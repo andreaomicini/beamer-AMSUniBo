@@ -5,11 +5,11 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from browser import Browser
 from align import PDF
-from deck import path
+from deck import path, STYLE
 from depth import blocks, near
 
 K = 1024 / 362.835
-TITLE = [(0.212, 0.408, 0.38), (0.733, 0.18, 0.161), (0.698, 0.843, 0.824)]   # block, alert, example
+TITLE = STYLE['titles']   # block, alert, example
 JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.querySelectorAll('.block')].map(k=>{
   const r=k.getBoundingClientRect();let e=k.querySelector(':scope>.block-body'),d=[];
   while(e.lastElementChild&&!['P','SPAN','EM','A','BR','I','B','CODE'].includes(e.lastElementChild.tagName)){
@@ -19,7 +19,7 @@ JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.quer
 def titles(n):
     return sorted(dr['rect'].y0 for dr in PDF[n - 1].get_drawings()
                   if dr.get('fill') and dr['rect'].x0 > 1 and dr['rect'].width > 60 and near(dr['fill'], TITLE)
-                  and 13 < dr['rect'].y0 and dr['rect'].y1 < 262)
+                  and STYLE['head'] < dr['rect'].y0 and dr['rect'].y1 < STYLE['foot'])
 
 eng = sys.argv[1]
 rows = []

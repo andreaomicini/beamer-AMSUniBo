@@ -4,7 +4,7 @@ import re, json, pathlib
 from frames import pages, C, T
 from bib import entries
 from align import add_breaks, PDF
-from deck import CFG, DIR, path
+from deck import CFG, DIR, path, STYLE
 from depth import depths
 
 HERE = pathlib.Path(__file__).parent
@@ -69,6 +69,10 @@ def quirks(h):
     """TeX quirks that CSS has to be told about"""
     # a paragraph that is all one size: its baselineskip is that size's
     h = SIZEP.sub(lambda m: f'<p class="{m.group(2)}">{m.group(3).strip()}</p>' if '</span>' not in m.group(3) else m.group(0), h)
+    # an item that is all one size, declared inside \item: its paragraph's baselineskip is that size's
+    h = re.sub(r'<li([^>]*)><span class="(tiny|scriptsize|footnotesize|small|smaller|large|Large)">((?:(?!</?span)[^\n])*'
+               r'(?:<span[^>]*>(?:(?!</?span)[^\n])*</span>(?:(?!</?span)[^\n])*)*)</span></li>',
+               lambda m: f'<li{m.group(1)} class="{m.group(2)}">{m.group(3)}</li>' if 'class=' not in m.group(1) else m.group(0), h)
     # an item that wraps before its sub-list: the sub-list's font, and so its baselineskip,
     # is already in force when TeX breaks the item's lines
     lines = h.split('\n')
@@ -94,7 +98,7 @@ def block_depths(n, h):
     for d, rest in zip(ds, parts[1:]):
         if abs(d) >= 0.05:
             q = rest.index('"')
-            rest = rest[:q + 1] + f' style="padding-bottom: {pt(round(2.8 + d, 2))}"' + rest[q + 1:]
+            rest = rest[:q + 1] + f' style="padding-bottom: {pt(round(STYLE["bottom"] + d, 2))}"' + rest[q + 1:]
         out += '<div class="block-body' + rest
     return out
 
@@ -104,7 +108,8 @@ def frame(n, p):
     body = quirks(body)
     body = margins(n, body)
     body = block_depths(n, body)
-    head, bst = section_open(n, 'frame' + (' top' if p['top'] else ''), secname(p['section']), centred=not p['top'])
+    head, bst = section_open(n, 'frame' + (' top' if p['top'] else ''), secname(p['section']),
+                             ' data-noframenumbering' if p['nonum'] else '', centred=not p['top'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
     return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
                       f'{T}</div>', '</section>'])
@@ -133,6 +138,7 @@ def bib_pages(n0, p):
             for t in range(i2 - i1):
                 page.setdefault(own[i1 + t], pc[j1 + t]['pn'])
     from frames import ROMAN
+    last = max(page.values())   # frames may follow the bibliography
     for pn in range(n0, last + 1):
         items = [h for k, (key, h) in enumerate(es) if page[k] == pn]
         body = '\n'.join(f'{T}{T}{h}' for h in items)
@@ -145,7 +151,9 @@ def bib_pages(n0, p):
 
 ps = pages()
 parts = []
-for n, p in enumerate(ps, 1):
+n = 0
+for p in ps:
+    n += 1
     sep = '<!-- ======================================================================= -->\n'
     if p['kind'] == 'titlepage':
         parts.append(sep + titlepage())
@@ -159,17 +167,19 @@ for n, p in enumerate(ps, 1):
         bp = bib_pages(n, p)
         parts.append(sep + bp[0])
         parts += bp[1:]
+        n += len(bp) - 1
 frames_html = '\n\n'.join(parts)
 ALT = CFG.get('alt', {})
 for k, v in ALT.items():
     frames_html = frames_html.replace(f'alt="ALT-{k}"', f'alt="{v}"')
 assert 'ALT-' not in frames_html
 
-theme = (HERE / 'theme.css').read_text()
+theme = (HERE / STYLE['theme']).read_text()
 deck_css = (DIR / 'deck.css').read_text()
 script = (HERE / 'script.js').read_text()
 comment = '\n'.join('  ' + l if l else '' for l in CFG['comment'])
 sh = CFG['short']
+STYLEATTR = f' data-style="{CFG["style"]}"' if CFG.get('style', 'AMSUniBo') != 'AMSUniBo' else ''
 html = f'''<!doctype html>
 <!--
 {comment}
@@ -186,7 +196,7 @@ html = f'''<!doctype html>
 {theme}</style>
 </head>
 <body>
-<main class="deck"
+<main class="deck"{STYLEATTR}
 	data-width="{CFG['width']}"
 	data-height="{CFG['height']}"
 	data-shortauthor="{sh['author']}"

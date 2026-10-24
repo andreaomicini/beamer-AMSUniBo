@@ -4,6 +4,10 @@ How to turn an AMSUniBo Beamer deck into a single HTML page that matches its PDF
 page for page, and the tools that do the mechanical part. None of this is in
 `style.zip`: the release zips the top-level files only.
 
+Since experiment 4 the same tools translate AMSBolognaFC decks too:
+`"style": "AMSBolognaFC"` in the deck's `deck.json` picks that style's theme,
+fonts, seal and measuring constants.
+
 The page is a translation, not a conversion. The PDF is the reference: the text,
 its line breaks and its geometry are copied from it, and the result is checked
 against it by overlay. Each experiment adds to [what we have learnt](#experiments)
@@ -181,6 +185,40 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 * **The seal**: the theme's own placement, rendered and cropped by `seal.sh`,
   which prints the box to put in `.frame::before`.
 
+### AMSBolognaFC
+
+* **One profile, in `tools/tex2html/deck.py`**: `STYLES` holds what the tools must
+  know of a style — the theme CSS, the edges of the head, title band and foot, the
+  `\ccite` colour, the block fills, a block body's bottom padding. AMSUniBo is the
+  default and its values are the ones the tools always had.
+* **Faces**: the theme sets no font, so the PDF is in Computer Modern Sans from
+  cm-super (`SFSS…`). The page uses Latin Modern, one family per optical size —
+  `LM Sans 8` for 6 and 8pt, `9`, `10` for 10 and 10.95pt, `12` for 12 and 14.4pt,
+  `17` — plus `LM Mono`, `LM Roman Caps` for `\textsc` (CM Sans has no small caps,
+  the theme falls back to the serif ones) and Latin Modern Math for `→` and `𝜙`.
+  Math letters are the sans italic, as beamer sets them (`CMSSI10`).
+* **Widths**: cm-super's design sizes are not Latin Modern's. Measured on the PDF,
+  the ratio of their advance widths is 1.10 at 6pt, 0.994 at 9pt, 0.989 at
+  10.95pt, 0.970 at 14.4pt, 1.04 at 6pt bold, about 1 elsewhere; each size class
+  in the theme carries its factor in its `font-size`. Without them 6pt text ran
+  10% short and a body line up to 3pt.
+* **Geometry, on 128 mm paper**: headline 11.03pt, frame title band 27.89pt with
+  its 14.4pt text at x 8.5 and baseline 20.22 below the band's top, footline
+  8.64pt; text margin and width as AMSUniBo. Head and foot are `palette
+  tertiary` (`#15263A`) and grey; the footline's number box is 23.61pt,
+  13.66pt when unnumbered.
+* **Balls**: PGF radial shadings in `bolognafcred`, highlight at 32% 32%; 5.1pt
+  at the first level, 4.14 at the second, 8.99 for enumerate, 12.48 in a table of
+  contents, each placed from the baseline as the PDF draws it.
+* **Blocks**: the AMSUniBo box, overhang 4pt left and 2.73pt right; the title bar
+  16.94pt, its 12pt baseline 11.96pt down; the body opens with a 2.5pt gradient.
+* **`description`**: an item per `div.ditem` — the text at 2cm + labelsep, the label
+  right-aligned before it, or from the left edge when longer; the other lines at
+  the text's indent.
+* **Bibliography**: label `bolognafcblue!60!gray`, title bold `bolognafcred!75!black`,
+  location `bolognafcblue!75!gray`, note grey; hanging indent 9.62pt, entries
+  5.88pt apart.
+
 ## the tools
 
 Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
@@ -216,8 +254,8 @@ With `A` a scratch folder for the assets:
 
 ```sh
 T=../beamer-AMSUniBo/html/tools
-$T/subset-fonts.sh $A/fonts
-$T/seal.sh cesena $A                        # or bologna; prints the CSS box
+$T/subset-fonts.sh $A/fonts [style]        # AMSUniBo, or AMSBolognaFC
+$T/seal.sh cesena $A [style]                # or bologna; prints the CSS box
 $T/externalize.sh tex/<deck>.tex $A         # fig-0.svg, fig-1.svg … in source order
 mv $A/fig-0.svg $A/<name>.svg               # one per data-asset name in the page
 cp img/<name>.png $A/                       # the deck's own pictures: .png or .jpg
@@ -230,8 +268,8 @@ and to check:
 pdftoppm -scale-to-x 1024 -scale-to-y 768 -png "pdf/<Title>.pdf" $A/ref/p
 $T/shoot.sh firefox "html/<Title>.html" $A/firefox <pages>
 $T/shoot.sh webkit "html/<Title>.html" $A/webkit <pages>
-$T/shoot.sh webkit "html/<Title>.html" $A/zoom <pages> 4    # the checklist's 4x look
-python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for webkit
+$T/shoot.sh webkit "html/<Title>.html" $A/zoom <pages> 4   # the 4x look
+python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png  # and webkit
 ```
 
 ### tex2html, the converter
@@ -455,3 +493,32 @@ and 2, whose pages were rebuilt and measured again.
   (`m3-ai`, which still lacks `\prolog`); the others stop at the first
   environment it does not know — `description`, `enumerate`, `verbatim`, `quote`,
   `tabular` — and two have no `.bbl`, which `build.py` still requires.
+
+### 4 — Self-Explaining Agents @ CompuLaw Final 2025, AMSBolognaFC, 2026-10-24
+
+`selfexplaining-compulaw2025-slides`: 34 pages on AMSBolognaFC 1.9, the first deck
+not on AMSUniBo — five contents frames, a `description` in two frames, an
+`enumerate`, two side-by-side `minipage`s with a PNG, a `\vfill` page, a
+five-page bibliography and a frame after it. Every baseline ended within 0.6pt of
+the PDF in WebKit and in Firefox, the one block within 0.6pt, left edges within
+2pt but on one math line (3.7pt).
+
+* The style became a profile in `deck.py`, so every tool reads its constants from
+  there; `html.sh` takes the style from `deck.json`. AMSUniBo pages are unchanged:
+  experiment 2's page, rebuilt, is byte for byte the same, and experiment 1
+  measures as logged.
+* The converter learnt `description`, `enumerate`, `minipage`, `\LARGE`, `\it`,
+  `\textsf`, `\rightarrow` and `\phi`, images named with their extension, pages
+  without a number after `\setbeamertemplate{page number in head/foot}{}`, a
+  `\footnotesize` declared inside `\item` (the item's baselineskip is that
+  size's), and a bibliography with frames after it — `build.py` assumed it was
+  last, and numbered every following page from the wrong place.
+* **TeX skips the spaces after a control word**: `\ldots for` has no space after
+  the dots, only `\ldots`' own kern. The converter now drops them after the
+  commands it maps to text.
+* **A `\vfill` inside `center`** gets the same fil as the frame's top skip: the
+  free space goes 1 : 1 : 1.5. The theme lets the `center` dissolve into the body
+  (`display: contents`) and gives `.vfill` the top fill's flex.
+* The block bar's baseline was first set by reading `blocks.py`'s offsets the
+  wrong way round. Measuring the bar in the browser — top, baseline — is direct
+  and settled it in one step.

@@ -10,6 +10,10 @@ import base64, pathlib, re, sys
 deck, assets = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 b64 = lambda p: base64.b64encode(p.read_bytes()).decode()
 
+html = deck.read_text()
+m = re.search(r'<main class="deck"[^>]*data-style="([^"]+)"', html)
+style = m.group(1) if m else "AMSUniBo"
+
 faces = [  # family, weight, style, file
     ("Merriweather Sans", 300, "normal", "MerriweatherSans-Light"),
     ("Merriweather Sans", 300, "italic", "MerriweatherSans-LightItalic"),
@@ -20,18 +24,26 @@ faces = [  # family, weight, style, file
     ("Merriweather", 400, "italic", "Merriweather-Italic"),
     ("Inconsolata", 400, "normal", "Inconsolatazi4-Regular"),
 ]
+if style == "AMSBolognaFC":   # Latin Modern for cm-super, a family per optical size
+    faces = [(f"LM Sans {o}", 400, s, f"lmsans{o}-{n}") for o in (8, 9, 10, 12, 17)
+             for s, n in (("normal", "regular"), ("italic", "oblique"))]
+    faces += [("LM Sans 10", 700, "normal", "lmsans10-bold"), ("LM Sans 10", 700, "italic", "lmsans10-boldoblique"),
+              ("LM Mono 8", 400, "normal", "lmmono8-regular"), ("LM Mono 10", 400, "normal", "lmmono10-regular"),
+              ("LM Roman Caps", 400, "normal", "lmromancaps10-regular"), ("LM Roman", 400, "italic", "lmroman10-italic"),
+              ("LM Math", 400, "normal", "latinmodern-math")]
 font = lambda f: f'url(data:font/woff2;base64,{b64(assets / "fonts" / (f + ".woff2"))}) format("woff2")'
 css = [f'@font-face {{ font-family: "{fam}"; font-weight: {w}; font-style: {s}; src: {font(f)}; }}'
        for fam, w, s, f in faces]
 # math symbols: after the text faces, or the text faces win; unscaled, as TeX sets them
-css += [f'@font-face {{ font-family: "Merriweather Sans"; font-weight: {w}; font-style: {s}; '
+css += [] if style == "AMSBolognaFC" else [f'@font-face {{ font-family: "Merriweather Sans"; font-weight: {w}; font-style: {s}; '
         f'unicode-range: U+2192, U+21D0, U+21D2, U+2208, U+2219, U+223C, U+22C5, U+2112, U+1D49C, U+1D49E; '
         f'size-adjust: 108.7%; src: {font("NewCMMath-Book")}; }}'
         for w in (300, 400, 700) for s in ("normal", "italic")]
 if (assets / "seal.png").exists():
     css.append(f'.deck {{ --seal: url(data:image/png;base64,{b64(assets / "seal.png")}); }}')
+for p in sorted(assets.glob("ball-*.png")):   # the theme's balls, as the PDF draws them
+    css.append(f'.deck {{ --{p.stem}: url(data:image/png;base64,{b64(p)}); }}')
 
-html = deck.read_text()
 names = sorted(set(re.findall(r'data-asset="([^"]+)"', html)))
 MIME = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg"}
 def picture(n):
