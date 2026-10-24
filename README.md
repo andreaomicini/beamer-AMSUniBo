@@ -112,8 +112,9 @@ font packages listed under [typography](#typography) — it does not bundle font
 
 `html/` is not in the archive: it holds the rules and the tools for translating
 an AMSUniBo deck into a single HTML page that matches its PDF — see
-[html/README.md](html/README.md). Nor is `zip/`, whose script packs a deck into one
-flat folder that builds with a plain `pdflatex` — see [zip/README.md](zip/README.md).
+[html/README.md](html/README.md). Nor is `zip/`, whose script packs a deck into
+one flat folder that builds with a plain `pdflatex` — see
+[zip/README.md](zip/README.md).
 
 Beyond the beamer furniture, the theme defines:
 
@@ -370,18 +371,22 @@ a separate thing.
 
 ### subtitles
 
-Since 1.7.2 `apalike-AMS.bst` reads a `subtitle` field, which APICe's Publications write
-apart from the title, and prints it after the title past a colon: *Multi-Agent Oriented
-Programming: Programming Multi-Agent Systems Using JaCaMo*. The pair is treated as one title
-everywhere a title is formatted—sentence case for a paper (BibTeX keeps the capital after the
-colon), bold italic for a book, as written for a thesis from APICe's Theses. Sorting still
-reads the title alone. An entry with no `subtitle` prints exactly as before.
+Since 1.7.2 `apalike-AMS.bst` reads a `subtitle` field, which APICe's
+Publications write apart from the title, and prints it after the title past a
+colon: *Multi-Agent Oriented Programming: Programming Multi-Agent Systems Using
+JaCaMo*. The pair is treated as one title everywhere a title is
+formatted—sentence case for a paper (BibTeX keeps the capital after the colon),
+bold italic for a book, as written for a thesis from APICe's Theses. Sorting
+still reads the title alone. An entry with no `subtitle` prints exactly as
+before.
 
 ### talks
 
-Since 1.7.1 `apalike-AMS.bst` has a `talk` entry type, for the records APICe's Talks
-application writes (`@talk{…}`). It reads the classical fields where they mean what they
-mean elsewhere, and two of its own:
+Since 1.7.1 `apalike-AMS.bst` has a `talk` entry type, for the records APICe's
+Talks application writes (`@talk{…}`). It reads the classical fields where they
+mean what they mean elsewhere, and two of its own:
+
+<!-- markdownlint-disable MD013 -->
 
 | BibTeX field | from APICe's Talks | printed as |
 |---|---|---|
@@ -395,18 +400,24 @@ mean elsewhere, and two of its own:
 | `note`, `url` | note, external link | as for every other type |
 | `apice` | the page | the APICe marker, `\apicetalkpar`: it links the talk's short address, `talks.apice.unibo.it/<Name>`, where a publication's `\apicepubpar` links `pubs.apice.unibo.it/<Name>` |
 
-So a venue line reads *Tutorial, Tutorial on the Java Agent Development Framework (JADE),
-IEEE SMC 2004, The Hague, The Netherlands, 12 October 2004*. Everything else a Talks record
-carries—`annote`, `abstract`, `sort`, `language`, the translations, `externallabel`,
-`slideshare`, `prezi`—is left unprinted. `note` is the short bibliographic note, as in a
-publication; the talk's own detail (session, room, chair) belongs in `annote`, which no
-style prints. A record with no `date` simply ends its venue line earlier.
+<!-- markdownlint-enable MD013 -->
+
+So a venue line reads *Tutorial, Tutorial on the Java Agent Development
+Framework (JADE), IEEE SMC 2004, The Hague, The Netherlands, 12 October 2004*.
+Everything else a Talks record carries—`annote`, `abstract`, `sort`, `language`,
+the translations, `externallabel`, `slideshare`, `prezi`—is left unprinted.
+`note` is the short bibliographic note, as in a publication; the talk's own
+detail (session, room, chair) belongs in `annote`, which no style prints. A
+record with no `date` simply ends its venue line earlier.
 
 ### theses
 
-APICe's Theses write `@phdthesis` and `@mastersthesis`, the classical types, with fields of
-their own beside the classical ones. Since 1.7.1 the `.bst` reads them; a record from Theses
-is recognised by its `cycle`, which nothing else carries.
+APICe's Theses write `@phdthesis` and `@mastersthesis`, the classical types,
+with fields of their own beside the classical ones. Since 1.7.1 the `.bst` reads
+them; a record from Theses is recognised by its `cycle`, which nothing else
+carries.
+
+<!-- markdownlint-disable MD013 -->
 
 | BibTeX field | from APICe's Theses | printed as |
 |---|---|---|
@@ -417,13 +428,15 @@ is recognised by its `cycle`, which nothing else carries.
 | `amsphdeprint`, `amseprint` | the AMS Dottorato and AMS Laurea e-print numbers | the link, when there is neither `doi` nor `url`: `amsdottorato.unibo.it/id/eprint/<n>/`, `amslaurea.unibo.it/id/eprint/<n>/` |
 | `apice` | the page | `\apicethesispar`, linking `apice.unibo.it/bin/view/Thesis/<Name>`—no short address works for a thesis yet |
 
-The rest—`abstract`, `keywords`, `reviewer`, `opponent`, `contact`, `cycle`, `language`,
-`description`, `amspractice`, `start`, `available`—is not printed. A thesis that comes from
-APICe's Publications instead (no `cycle`) is a publication and keeps `\apicepubpar` and the
-classical rules.
+<!-- markdownlint-enable MD013 -->
 
-Names other than the authors—supervisors, speakers—are printed as said, *A. Natali*; the
-author list keeps *Natali, A.*
+The rest—`abstract`, `keywords`, `reviewer`, `opponent`, `contact`, `cycle`,
+`language`, `description`, `amspractice`, `start`, `available`—is not printed. A
+thesis that comes from APICe's Publications instead (no `cycle`) is a
+publication and keeps `\apicepubpar` and the classical rules.
+
+Names other than the authors—supervisors, speakers—are printed as said, *A.
+Natali*; the author list keeps *Natali, A.*
 
 ## the palette
 

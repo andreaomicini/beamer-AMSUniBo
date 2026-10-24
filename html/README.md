@@ -39,7 +39,7 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
 | `noframenumbering` | `data-noframenumbering` |
 | `\author[short]`, `\institute[short]`, `\title[short]`, `\date[short]` | `data-shortauthor` … `data-shortdate`, and `data-totalframes`, on `<main class="deck">` |
 | the paper size | `data-width` and `data-height` on `<main class="deck">`, the drawing size in px: `1024`/`768` for 4:3, `1024`/`576` for 16:9 |
-| `\frametitle` | `<h2 class="frametitle">`, with ` I`, ` II` … copied from the PDF on `allowframebreaks` pages |
+| `\frametitle` | `<h2 class="frametitle">`, with its suffix (a space, then `I`, `II` …) copied from the PDF on `allowframebreaks` pages |
 | frame body | `<div class="body">`, with the size class (`small`, `footnotesize`, `scriptsize`) when the frame sets one |
 | `block`, `alertblock`, `exampleblock` | `<div class="block">`, `block alert`, `block example`, holding `h3.block-title` and `div.block-body` |
 | `itemize`, `enumerate`, `description` | `ul`, `ol`, `dl` with `dt`/`dd` |
@@ -133,7 +133,9 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
     const f = document.getElementById('talkhtml');
     if (!f || e.source !== f.contentWindow || e.data?.type !== 'deck-size') return;
     const { width: w, height: h } = e.data;
-    if (w > 0 && h > 0) { f.style.aspectRatio = `${w} / ${h}`; f.style.height = 'auto'; }
+    if (w > 0 && h > 0) {
+      f.style.aspectRatio = `${w} / ${h}`; f.style.height = 'auto';
+    }
   });
   ```
 
@@ -175,9 +177,9 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   raised 3.3pt; `.uurl` and `.apice` are `amsred` Inconsolata at 8pt; in the
   bibliography the APICe marker is `amsgreendark` and `.dddoi`/`.uuurl` are
   `amsgreyline` at 6pt.
-* **Bibliography colours by block**: label `amsgreymid`, authors `amstext`, title
-  `amsred` bold, location `amsgreymid`, note `amsgreendark`. The hanging indent is
-  11.75pt.
+* **Bibliography colours by block**: label `amsgreymid`, authors `amstext`,
+  title `amsred` bold, location `amsgreymid`, note `amsgreendark`. The hanging
+  indent is 11.75pt.
 * **Title page**: a rounded, shadowed `amsgreentint` box holds the title (14.4pt)
   and the subtitle (`amsgreymid`, 10.95pt), both serif. Authors are `amsred`,
   with the speaker bold; the institute is `amsgrey` in `\scriptsize`, and the date
@@ -225,7 +227,12 @@ Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
 geckodriver`, with TeX Live, poppler and the Firefox cask. Firefox is driven
 headless through `geckodriver`; WebKit is Playwright's, through the Node library
 inside `playwright-cli`, whose browser build Playwright downloads once:
-`node $(brew --prefix playwright-cli)/libexec/lib/node_modules/@playwright/cli/node_modules/playwright-core/cli.js install webkit`.
+
+```sh
+P=$(brew --prefix playwright-cli)/libexec/lib/node_modules/@playwright/cli
+node $P/node_modules/playwright-core/cli.js install webkit
+```
+
 `tools/browser.py` puts the two behind one interface, for `shoot.sh` and the
 measuring tools; Safari itself does not reliably accept automated sessions.
 
