@@ -380,6 +380,14 @@ bold italic for a book, as written for a thesis from APICe's Theses. Sorting
 still reads the title alone. An entry with no `subtitle` prints exactly as
 before.
 
+Since 1.7.3 a contained entry—`inproceedings`, `incollection`, `inbook`,
+`conference`—with a `crossref` prints its title alone. BibTeX copies into such an
+entry every field it lacks from the volume it points to, the volume's `subtitle`
+included, so a chapter would otherwise wear its proceedings' subtitle, and in
+sentence case at that. BibTeX cannot tell an inherited field from the entry's
+own, so a contained entry with a `crossref` and a subtitle of its own loses it
+too; one without a `crossref` keeps it.
+
 ### talks
 
 Since 1.7.1 `apalike-AMS.bst` has a `talk` entry type, for the records APICe's

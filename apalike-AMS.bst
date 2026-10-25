@@ -324,7 +324,16 @@ FUNCTION {format.editors}
 FUNCTION {title.subtitle}                              % AMSUniBo: the title,
 { subtitle empty$                                       % then ": " and the
     { title }                                           % subtitle when there
-    { title ": " * subtitle * }                         % is one
+    { crossref empty$ not                               % is one. A contained
+      type$ "inproceedings" =                           % entry with a crossref
+      type$ "incollection" = or                         % inherits its volume's
+      type$ "inbook" = or                               % subtitle, which is not
+      type$ "conference" = or                           % its own: it keeps its
+      and                                               % title alone (1.7.3)
+        { title }
+        { title ": " * subtitle * }
+      if$
+    }
   if$
 }
 
