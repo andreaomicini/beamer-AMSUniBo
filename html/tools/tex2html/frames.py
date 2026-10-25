@@ -172,6 +172,19 @@ def includegraphics_hook():
             g, i = read_arg(s, i)
             n = re.sub(r'\.(png|jpe?g|pdf|svg)$', '', g.split('/')[-1])
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}">\x00', i
+        # \resizebox{<f>\textwidth}{!}{\<macro>}: a TikZ picture drawn by a deck macro, named in
+        # deck.json's "tikzmacros" (macro -> asset); the width is the fraction of the text width
+        if name == '\\resizebox':
+            w, i = read_arg(s, i)
+            _, i = read_arg(s, i)
+            g, i = read_arg(s, i)
+            mm = re.fullmatch(r'\s*\\(\w+)\s*', g)
+            n = CFG.get('tikzmacros', {}).get(mm.group(1)) if mm else None
+            fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
+            if n and fw:
+                f = float(fw.group(1) or 1)
+                return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
+                        f'style="width: calc({round(342.295 * f, 3)} * var(--pt))">\x00'), i
         return orig(name, s, i)
     C.command = command
 includegraphics_hook()
@@ -221,6 +234,13 @@ def pages():
         a, b = find_end(doc, m.end(), 'frame')
         fr = doc[m.end():a]
         i = b
+        # an overlay specification: <presentation:0>, <beamer:0> or <0> keeps the frame out of the PDF
+        k0 = skip_ws(fr, 0)
+        if fr[k0:k0 + 1] == '<':
+            spec = fr[k0 + 1:fr.index('>', k0)]
+            fr = fr[fr.index('>', k0) + 1:]
+            if any(re.fullmatch(r'(?:(?:beamer|presentation):)?0', x.strip()) for x in spec.split('|')):
+                continue
         opts, j = read_opt(fr, 0)
         title, j = read_group(fr, skip_ws(fr, j))
         opts = (opts or '').split(',')

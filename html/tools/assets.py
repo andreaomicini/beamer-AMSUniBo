@@ -24,7 +24,8 @@ faces = [  # family, weight, style, file
     ("Merriweather", 400, "italic", "Merriweather-Italic"),
     ("Inconsolata", 400, "normal", "Inconsolatazi4-Regular"),
 ]
-if style == "AMSBolognaFC":   # Latin Modern for cm-super, a family per optical size
+CM = ("AMSBolognaFC", "AMSPurpleAndGold")   # the styles on Computer Modern
+if style in CM:   # Latin Modern for cm-super, a family per optical size
     faces = [(f"LM Sans {o}", 400, s, f"lmsans{o}-{n}") for o in (8, 9, 10, 12, 17)
              for s, n in (("normal", "regular"), ("italic", "oblique"))]
     faces += [("LM Sans 10", 700, "normal", "lmsans10-bold"), ("LM Sans 10", 700, "italic", "lmsans10-boldoblique"),
@@ -35,7 +36,7 @@ font = lambda f: f'url(data:font/woff2;base64,{b64(assets / "fonts" / (f + ".wof
 css = [f'@font-face {{ font-family: "{fam}"; font-weight: {w}; font-style: {s}; src: {font(f)}; }}'
        for fam, w, s, f in faces]
 # math symbols: after the text faces, or the text faces win; unscaled, as TeX sets them
-css += [] if style == "AMSBolognaFC" else [f'@font-face {{ font-family: "Merriweather Sans"; font-weight: {w}; font-style: {s}; '
+css += [] if style in CM else [f'@font-face {{ font-family: "Merriweather Sans"; font-weight: {w}; font-style: {s}; '
         f'unicode-range: U+2192, U+21D0, U+21D2, U+2208, U+2219, U+223C, U+22C5, U+2112, U+1D49C, U+1D49E; '
         f'size-adjust: 108.7%; src: {font("NewCMMath-Book")}; }}'
         for w in (300, 400, 700) for s in ("normal", "italic")]

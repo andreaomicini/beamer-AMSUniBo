@@ -30,6 +30,12 @@ STYLES = {
         titles=[rgb('142336'), rgb('091019'), rgb('BAC1C8')],
         bodies=[rgb('FAFBFB'), rgb('F4F5F6'), rgb('EFF0F2')],
         faces={}),
+    # AMSBolognaFC's theme and geometry in the old Cesena purple and gold (experiment 5)
+    'AMSPurpleAndGold': dict(
+        theme='theme-AMSPurpleAndGold.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbeba89,
+        titles=[rgb('660066'), rgb('380038'), rgb('D1B2D1')],
+        bodies=[rgb('F4EDF4'), rgb('F9F5E5'), rgb('F4EDF4')],
+        faces={}),
 }
 STYLE = STYLES[CFG.get('style', 'AMSUniBo')]
 

@@ -6,7 +6,8 @@ page for page, and the tools that do the mechanical part. None of this is in
 
 Since experiment 4 the same tools translate AMSBolognaFC decks too:
 `"style": "AMSBolognaFC"` in the deck's `deck.json` picks that style's theme,
-fonts, seal and measuring constants.
+fonts, seal and measuring constants. Since experiment 5, AMSPurpleAndGold decks
+as well (`"style": "AMSPurpleAndGold"`).
 
 The page is a translation, not a conversion. The PDF is the reference: the text,
 its line breaks and its geometry are copied from it, and the result is checked
@@ -221,6 +222,25 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   location `bolognafcblue!75!gray`, note grey; hanging indent 9.62pt, entries
   5.88pt apart.
 
+### AMSPurpleAndGold
+
+* **AMSBolognaFC's profile in another palette.** The two themes are the same file
+  but for colours, so the faces, widths, geometry, balls' placement and block
+  metrics are AMSBolognaFC's, and `theme-AMSPurpleAndGold.css` is its CSS with the
+  `:root` palette of `beamercolorthemepurpleandgold.sty`, named after
+  it.
+* **Head and foot come from the colour theme**, not from beamer's palette: the
+  section on `pggold` with `pgpurpledeep` text, the empty half `pgpurpletint2`;
+  the footline author on `pgpurple` (`pggoldpale` text), title on
+  `pgpurpletint2`, date on `pgpurpletint` (`pggreymid` text). The frame title
+  band is `pgpurpletint`, its text `pgblack`, and the title page box the same
+  tint.
+* **Balls** in `pggolddark`: the gradient stops are AMSBolognaFC's, each the same
+  mix with white or black, taken from `bolognafcred` to `pggolddark`.
+* **Blocks** `pgpurple` / `pgpurpledeep` / `pgpurpleborder` over `pgpurpletint`,
+  `pggoldfill`, `pgpurplefill`; `\ccite` is `pggreyline`, the bibliography title
+  bold `pggolddark`, its note and the APICe marker `pgpurple`.
+
 ## the tools
 
 Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
@@ -261,7 +281,7 @@ With `A` a scratch folder for the assets:
 
 ```sh
 T=../beamer-AMSUniBo/html/tools
-$T/subset-fonts.sh $A/fonts [style]        # AMSUniBo, or AMSBolognaFC
+$T/subset-fonts.sh $A/fonts [style]        # AMSUniBo, AMSBolognaFC or AMSPurpleAndGold
 $T/seal.sh cesena $A [style]                # or bologna; prints the CSS box
 $T/externalize.sh tex/<deck>.tex $A         # fig-0.svg, fig-1.svg … in source order
 mv $A/fig-0.svg $A/<name>.svg               # one per data-asset name in the page
@@ -529,3 +549,34 @@ the PDF in WebKit and in Firefox, the one block within 0.6pt, left edges within
 * The block bar's baseline was first set by reading `blocks.py`'s offsets the
   wrong way round. Measuring the bar in the browser — top, baseline — is direct
   and settled it in one step.
+
+### 5 — Not just for humans @ AI\*IA 2020 DP, AMSPurpleAndGold, 2026-10-25
+
+`explanation-aixia2020dp-slides`: 23 pages on AMSPurpleAndGold 1.1, a 2020 deck
+recovered and moved to the current style — a two-line title, three contents
+frames, two `description`s, one block, one TikZ picture drawn by a deck macro
+inside `\resizebox`, two `<presentation:0>` frames, a four-page bibliography.
+Every baseline ended within 0.57pt of the PDF in WebKit and in Firefox, the block
+within 1pt, left edges within 2.5pt.
+
+* The style became a profile beside AMSBolognaFC's, with its own theme CSS; the
+  fonts and assets tools take both Computer Modern styles alike.
+* **`html.sh` now refills the assets before the corrections.** Measured with the
+  TikZ picture still missing, its `<img>` had no height, and `nudge.py` made up
+  for it with 100pt of margin above the next item, pushing it off the page once
+  the picture arrived. A generated page with a picture had not been nudged before.
+* **A `\ccite` that TeX moves to a line of its own at the end of an item** got no
+  break: the cites are left out of the character alignment, so `align.py` saw the
+  break only when text followed the cite in the same paragraph. It now compares
+  each cite's first character in the PDF with the text before it.
+* The converter learnt frames with an overlay specification — `<presentation:0>`,
+  `<beamer:0>`, `<0>` leave them out, as the PDF does — and
+  `\resizebox{<f>\textwidth}{!}{\<macro>}` for a TikZ picture drawn by a deck
+  macro: `deck.json`'s `tikzmacros` names the asset of each such macro, and the
+  `<img>` takes the width.
+* **The corrections are keyed by element index**, so a change that adds a `<br>`
+  shifts them onto the wrong elements: after it, `--nudge` from scratch.
+* The contents frames kept 2.6pt that `nudge.py` does not take off (three sections,
+  centred); a `translate` on `ol.toc` in the deck's `deck.css` does. The title page,
+  with its two-line title, has its own box and margins there, measured — the same
+  values experiment 4 had found for its margins.

@@ -109,6 +109,33 @@ def add_breaks(h, pn, report=True, **kw):
         else:
             between = b[match[i] + 1:match[i + 1]]
             inserts.append((hc[i][2], hc[i][2], '-<br>' if '-' in between else '<br>'))
+    # a \ccite that the PDF moves to a line of its own: its first character against the text before it.
+    # The cites are left out of the alignment, so the loop above sees this break only when text follows
+    # the cite in the same paragraph; at the end of an item it does not (experiment 5, [Pascal, 1669])
+    cites = []
+    for bl in PDF[pn - 1].get_text('rawdict')['blocks']:
+        for l in bl.get('lines', []):
+            for sp in l['spans']:
+                if sp['size'] < 6.2 and sp['color'] == STYLE['cite'] and sp['chars'] and sp['chars'][0]['c'] == '[':
+                    ch = sp['chars'][0]
+                    cites.append(dict(x=ch['origin'][0], y=ch['origin'][1], x1=ch['bbox'][2]))
+    anchors = [m.start() for m in re.finditer(r'<a class="ccite"', h)]
+    if len(anchors) == len(cites):
+        done = {x[0] for x in inserts}
+        for at, cq in zip(anchors, cites):
+            prev = [i for i, x in enumerate(hc) if x[2] <= at]
+            if not prev or prev[-1] not in match:
+                continue
+            if not newline(pc[match[prev[-1]]], cq):
+                continue
+            # a cite opening a paragraph or a block of its own breaks there already
+            if re.search(r'<(?:p|div|li|ul|ol|dl|dt|dd|br)\b', h[hc[prev[-1]][2]:at]):
+                continue
+            sp_ = [k for k in range(hc[prev[-1]][2], at) if k in spaces]
+            pos = sp_[0] if sp_ else at
+            if pos not in done:
+                inserts.append((pos, pos + 1 if sp_ else pos, '<br>'))
+                done.add(pos)
     for s, e, t in sorted(inserts, reverse=True):
         h = h[:s] + t + h[e:]
     return h, problems, len(inserts)

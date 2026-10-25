@@ -44,17 +44,12 @@ style=$(field style); style=${style:-AMSUniBo}
 ## the PDF, so that aux/ is the reference
 latexmk -pdf "tex/$deck.tex" >/dev/null 2>&1 || die "the deck does not build: see aux/$deck.log"
 
-## a generated page is written again; corrected frame by frame the first time, or with --nudge:
-## the corrections are not idempotent, and a second round on a settled page moves it off
+## a generated page is written again
+## the assets go in before any correction is measured: a picture still missing has no height, and the
+## corrections would make up for it (experiment 5, a TikZ figure: 100pt of margin, the text pushed off)
 if [ -n "$generated" ]; then
 	[ -f "$cfg/nudges.json" ] || nudge=1
 	python3 "$T/tex2html/build.py"
-	if [ -n "$nudge" ]; then
-		for mode in gaps gaps gaps both; do
-			python3 "$T/tex2html/nudge.py" webkit "" $mode >/dev/null
-			python3 "$T/tex2html/build.py" >/dev/null
-		done
-	fi
 fi
 [ -f "$page" ] || die "no $page: write it, or give deck.json the fields of a generated page"
 
@@ -76,6 +71,15 @@ for name in $(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | s
 	cp -L "$src" "$A/"
 done
 python3 "$T/assets.py" "$page" "$A"
+
+## corrected frame by frame the first time, or with --nudge: the corrections are not idempotent, and a
+## second round on a settled page moves it off. build.py keeps the ASSETS block it finds
+if [ -n "$generated" ] && [ -n "$nudge" ]; then
+	for mode in gaps gaps gaps both; do
+		python3 "$T/tex2html/nudge.py" webkit "" $mode >/dev/null
+		python3 "$T/tex2html/build.py" >/dev/null
+	done
+fi
 
 ## the checks of the checklist that a program can make; the rows are read by a person
 for engine in webkit firefox; do
