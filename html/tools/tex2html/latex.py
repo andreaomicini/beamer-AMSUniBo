@@ -145,6 +145,12 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
          'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII']
 
 # ---------------------------------------------------------------- the converter
+# math symbols: relations, binary operators, ordinary symbols
+MATHREL = {'approx': '≈', 'longrightarrow': '⟶', 'mapsto': '↦', 'neq': '≠', 'ne': '≠', 'geq': '≥', 'ge': '≥', 'leq': '≤',
+           'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈'}
+MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨'}
+MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': '∞', 'Delta': 'Δ', 'Xi': 'Ξ',
+           'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ'}
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
 SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'smaller'}
 
@@ -223,8 +229,90 @@ class Conv:
                     out.append('<span class="rel">→</span>' if out else '→')
                 elif name == 'phi':
                     out.append('\U0001D719')
+                elif name in MATHREL:
+                    out.append(f'<span class="rel">{MATHREL[name]}</span>' if out else MATHREL[name])
+                elif name in MATHBIN:
+                    out.append(f'<span class="bin">{MATHBIN[name]}</span>')
+                elif name in MATHORD:
+                    out.append(MATHORD[name])
+                elif name == 'implies':
+                    out.append('<span class="rel implies">⟹</span>' if out else '⟹')
+                elif name in ('mathbb', 'mathtt', 'mathsf', 'mathit', 'mathrm', 'terminal', 'variable'):
+                    g, i = read_arg(s, i)
+                    if name == 'mathbb':
+                        out.append(''.join({'P': 'ℙ', 'E': '𝔼', 'N': 'ℕ', 'R': 'ℝ'}[c] for c in g.strip()))
+                    elif name in ('mathtt', 'terminal'):
+                        out.append(f'<code>{esc(g)}</code>')
+                    elif name == 'mathsf':
+                        out.append(f'<span class="msf">{self.math(g)}</span>')
+                    elif name == 'variable':   # the deck's \left\langle{#1\/}\right\rangle
+                        out.append(f'⟨{self.math(g.replace(chr(92) + "/", ""))}⟩')
+                    else:
+                        out.append(self.math(g))
+                elif name in ('frac',):
+                    a, i = read_arg(s, i)
+                    b, i = read_arg(s, i)
+                    out.append(f'<span class="frac"><span class="num">{self.math(a)}</span><span class="den">{self.math(b)}</span></span>')
+                elif name == 'stackrel':
+                    a, i = read_arg(s, i)
+                    b, i = read_arg(s, i)
+                    out.append(f'<span class="rel stack"><span class="over">{self.math(a)}</span>{self.math(b)}</span>')
+                elif name in ('left', 'right', 'big', 'Big'):
+                    m2 = re.match(r'\\([A-Za-z]+)|(.)', s[i:])
+                    i += len(m2.group(0))
+                    d = MATHORD.get(m2.group(1), '') if m2.group(1) else ('' if m2.group(2) == '.' else esc(m2.group(2)))
+                    out.append(d)
+                elif name in ('sum', 'lim'):
+                    out.append('<span class="op">∑</span>' if name == 'sum' else '<span class="op lim">lim</span>')
+                elif name == 'begin':
+                    env, i = read_arg(s, i)
+                    a, b = find_end(s, i, env)
+                    inner = s[i:a]
+                    i = b
+                    if env == 'array':
+                        _, inner = read_arg(inner, 0)[0], inner[read_arg(inner, 0)[1]:]
+                    rows = [r for r in re.split(r'\\\\', inner) if r.strip()]
+                    cells = [[self.math(c) for c in r.split('&')] for r in rows]
+                    if env == 'cases':
+                        body = '<br>'.join(''.join(r) for r in cells)
+                        out.append(f'<span class="cases" style="--rows: {len(rows)}"><span class="brace">{{</span><span class="rows">{body}</span></span>')
+                    else:
+                        out.append('<span class="array">' + ''.join(f'<span>{c}</span>' for r in cells for c in r) + '</span>')
+                elif name in (',', ';', ' ', '!', 'quad'):
+                    out.append({',': '\u2009', ';': '\u2005', ' ': ' ', '!': '', 'quad': '\u2003'}[name])
                 else:
                     self.unknown.add('math\\' + name)
+            elif c in '_^':
+                g, i = read_arg(s, i + 1)
+                g = self.math(g)
+                tag = 'sub' if c == '_' else 'sup'
+                # both: TeX stacks them after the base
+                nxt = skip_ws(s, i)
+                if nxt < len(s) and s[nxt] in '_^' and s[nxt] != c:
+                    g2, i = read_arg(s, nxt + 1)
+                    sub, sup = (g, self.math(g2)) if c == '_' else (self.math(g2), g)
+                    out.append(f'<span class="subsup"><sup>{sup}</sup><sub>{sub}</sub></span>')
+                else:
+                    out.append(f'<{tag}>{g}</{tag}>')
+            elif c == '{':
+                g, i = read_group(s, i)
+                out.append(self.math(g))
+            elif c == '-' and out:
+                out.append('<span class="bin">−</span>'); i += 1
+            elif c == '-':
+                out.append('−'); i += 1
+            elif c in '<>':
+                out.append(f'<span class="rel">{esc(c)}</span>'); i += 1
+            elif c == "'":
+                out.append('′'); i += 1
+            elif c in ',;' and out and i + 1 < len(s):   # punctuation: a thin space after it, 3mu
+                out.append(f'{c}<span class="mthin"></span>'); i += 1
+            elif c == '=' and out and re.fullmatch(r'<span class="rel">[^<]*</span>', out[-1]):
+                out[-1] = out[-1][:-7] + '=</span>'; i += 1   # consecutive relations: one spacing, as ::=
+            elif c == ':' and out and re.fullmatch(r'<span class="rel">[^<]*</span>', out[-1]):
+                out[-1] = out[-1][:-7] + ':</span>'; i += 1
+            elif c == ':':
+                out.append('<span class="rel">:</span>' if out else ':'); i += 1
             elif c == '=':
                 out.append('<span class="rel">=</span>'); i += 1
             elif c == '+':
@@ -285,6 +373,8 @@ class Conv:
         if m:
             d = m.group(1)
             inner = self.inline(g[m.end():])
+            if d in SIZES and inner.strip().startswith('\x00disp:<div class="displaymath">') and inner.strip().endswith('\x00'):
+                return inner.strip().replace('class="displaymath"', f'class="displaymath {d}"', 1)
             tag = {'bfseries': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'it': ('<span class="it">', '</span>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
                    'sf': ('', ''), 'sc': ('<span class="sc">', '</span>')}.get(d, (f'<span class="{d}">', '</span>'))
             return tag[0] + inner + tag[1]
@@ -318,6 +408,39 @@ class Conv:
             note, i = read_opt(s, i)
             g, i = read_arg(s, i)
             return self.cite(g, 'ccite', note), i
+        if n == 'cccite':
+            note, i = read_opt(s, i)
+            g, i = read_arg(s, i)
+            return self.cite(g, 'ccite cccite', note), i
+        if name == '\\[':   # a display: its own line, centred
+            j = s.index('\\]', i)
+            return f'\x00disp:<div class="displaymath">{self.math(s[i:j])}</div>\x00', j + 2
+        if n == 'href':
+            u, i = A()
+            g, i = read_arg(s, i)
+            return f'<a href="{H.escape(u.replace(chr(92), ""))}">{self.inline(g)}</a>', i
+        if n == 'hhref':   # the deck's: grey, scriptsize, typewriter, underlined
+            u, i = A()
+            g, i = read_arg(s, i)
+            return f'<a class="hhref" href="{H.escape(u.replace(chr(92), ""))}">{self.inline(g)}</a>', i
+        if n == 'hint':   # the deck's: \hfill{\scriptsize \alert{!} {\color{gray}#1}}
+            g, i = A()
+            return f'\x00disp:<p class="hint"><span class="alert">!</span> <span class="grey">{self.inline(g)}</span></p>\x00', i
+        if n == 'vspace':
+            g, i = A()
+            m = re.fullmatch(r'\s*(-?[0-9.]+)\s*(cm|mm|pt|em|ex)\s*', g)
+            v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
+            return f'\x00vspace:{v:.2f}\x00', i
+        if n == 'setcounter':
+            c, i = A()
+            v, i = read_arg(s, i)
+            return f'\x00counter:{v.strip()}\x00', i
+        if n == '@':
+            return '', i
+        if n in ('newcommand', 'renewcommand'):   # a local definition: it prints nothing
+            _, i = A()
+            _, i = read_arg(s, i)
+            return '', i
         if n == 'cite':
             g, i = A()
             return self.cite(g, 'bibref'), i
@@ -353,6 +476,8 @@ class Conv:
             # a declaration: scope it to the rest of the current text
             rest = self.inline(s[i:])
             return f'<span class="{n}">{rest}</span>', len(s)
+        if n == 'tt':
+            return '<code>' + self.inline(s[i:]) + '</code>', len(s)
         if n in ('bfseries', 'em', 'it', 'sf', 'sc'):
             rest = self.inline(s[i:])
             return self.group('\\' + n + ' ' + s[i:]), len(s)

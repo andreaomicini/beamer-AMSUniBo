@@ -10,10 +10,14 @@
 		head.className = 'headline';
 		head.innerHTML = '<div class="section"></div><div class="subsection"></div>';
 		head.firstChild.textContent = f.dataset.section;
+		if (f.dataset.subsection) head.lastChild.textContent = f.dataset.subsection;
 		const foot = document.createElement('div');
 		foot.className = 'footline';
 		foot.innerHTML = '<div class="author"></div><div class="title"></div><div class="date"></div>';
-		foot.children[0].textContent = `${d.shortauthor}  (${d.shortinstitute})`;
+		// infolines' ~~ as two spaces kept as they are: Latin Modern's no-break space is wider than its
+		// space, and Firefox draws it where WebKit does not
+		foot.children[0].style.whiteSpace = 'pre';
+		foot.children[0].textContent = `${d.shortauthor}  (${d.shortinstitute})`;
 		foot.children[1].textContent = d.shorttitle;
 		foot.children[2].textContent = d.shortdate;
 		const number = document.createElement('span');

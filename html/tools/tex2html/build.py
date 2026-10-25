@@ -32,11 +32,29 @@ def margins(n, h):
     out, k, last = [], 0, 0
     for t in TAG.finditer(h):
         if str(k) in m:
-            out.append(h[last:t.end() - 1] + f' style="margin-top: {pt(m[str(k)])}">')
-            last = t.end()
+            st = re.search(r' style="([^"]*)"', t.group(2))
+            if st:   # one style attribute: a second one would be ignored
+                a = t.start(2) + st.start(1)
+                out.append(h[last:a] + f'margin-top: {pt(m[str(k)])}; ')
+                last = a
+            else:
+                out.append(h[last:t.end() - 1] + f' style="margin-top: {pt(m[str(k)])}">')
+                last = t.end()
         k += 1
     out.append(h[last:])
     return ''.join(out)
+
+def columns(n, h):
+    """each column of the page moved as a whole, by a translate"""
+    cs = NUD.get(str(n), {}).get('cols', {})
+    if not cs:
+        return h
+    parts = re.split(r'<div class="column(?=[" ])', h)
+    for c, v in cs.items():
+        k = int(c) + 1
+        if k < len(parts):
+            parts[k] = re.sub(r'style="', f'style="translate: 0 {pt(v)}; ', parts[k], count=1)
+    return '<div class="column'.join(parts)
 
 def secname(h):
     return re.sub(r'<[^>]+>', '', h)
@@ -45,13 +63,18 @@ def titlepage():
     """the title page is the deck's own, written once in titlepage.html"""
     return (DIR / 'titlepage.html').read_text().strip()
 
-def section_open(n, cls, sec, extra='', centred=True):
+def section_open(n, cls, sec, extra='', centred=True, sub=''):
     bst = body_style(n, centred)
-    return f'<section class="{cls}" data-section="{sec}"{extra}>', (f' style="{bst}"' if bst else '')
+    sub = f' data-subsection="{secname(sub)}"' if sub else ''
+    return f'<section class="{cls}" data-section="{sec}"{sub}{extra}>', (f' style="{bst}"' if bst else '')
+
+# the contents frames are [c]: their corrections move them as a centred frame's. Pages made before
+# experiment 6 corrected them as [t] and keep doing so, unless deck.json says "toc_centred": true
+TOCC = CFG.get('toc_centred', False)
 
 def toc(n, p, title=True):
     cls = 'frame toc' + ('' if title else ' outline')
-    head, bst = section_open(n, cls, secname(p['section']), centred=False)
+    head, bst = section_open(n, cls, secname(p['section']), centred=TOCC, sub=p.get('subsection', ''))
     out = [head]
     if title:
         out.append(f'{T}<h2 class="frametitle">{CFG["toc_title"]}</h2>')
@@ -60,6 +83,25 @@ def toc(n, p, title=True):
     for k, s in enumerate(p['secs'], 1):
         sh = ' class="shaded"' if title and k != p['current'] else ''
         out.append(f'{T}{T}{T}<li{sh}>{s}</li>')
+    out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
+    return '\n'.join(out)
+
+def subtoc(n, p):
+    """\\AtBeginSubsection's frame: every section shaded, the current one's subsections listed, the
+    current subsection shown"""
+    head, bst = section_open(n, 'frame toc subtoc', secname(p['section']), centred=TOCC, sub=p['subsection'])
+    out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
+           f'{T}{T}<ol class="toc">']
+    for k, sct in enumerate(p['secs'], 1):
+        if k == p['current'] and p['subs'][k - 1]:
+            out.append(f'{T}{T}{T}<li class="parent"><span class="shade">{sct}</span>')
+            out.append(f'{T}{T}{T}{T}<ul class="subtoc">')
+            for q, sub in enumerate(p['subs'][k - 1], 1):
+                sh = '' if q == p['currentsub'] else ' class="shaded"'
+                out.append(f'{T}{T}{T}{T}{T}<li{sh}>{sub}</li>')
+            out += [f'{T}{T}{T}{T}</ul>', f'{T}{T}{T}</li>']
+        else:
+            out.append(f'{T}{T}{T}<li class="shaded">{sct}</li>')
     out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
     return '\n'.join(out)
 
@@ -78,7 +120,7 @@ def quirks(h):
     lines = h.split('\n')
     for i, l in enumerate(lines[:-1]):
         m = re.match(r'(\s*)<li\b([^>]*)>(.*)$', l)
-        if m and '<br>' in m.group(3) and lines[i + 1].strip() == '<ul>':
+        if m and '<br>' in m.group(3) and re.match(r'<ul[ >]', lines[i + 1].strip()):
             attrs = m.group(2)
             if 'class="' in attrs:
                 attrs = attrs.replace('class="', 'class="wrapsub ')
@@ -107,9 +149,11 @@ def frame(n, p):
     body, probs, k = add_breaks(body, n)
     body = quirks(body)
     body = margins(n, body)
+    body = columns(n, body)
     body = block_depths(n, body)
-    head, bst = section_open(n, 'frame' + (' top' if p['top'] else ''), secname(p['section']),
-                             ' data-noframenumbering' if p['nonum'] else '', centred=not p['top'])
+    head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if p.get('shrink') else ''),
+                             secname(p['section']), ' data-noframenumbering' if p['nonum'] else '',
+                             centred=not p['top'], sub=p['subsection'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
     return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
                       f'{T}</div>', '</section>'])
@@ -144,9 +188,10 @@ def bib_pages(n0, p):
         body = '\n'.join(f'{T}{T}{h}' for h in items)
         body, probs, nb = add_breaks(body, pn, skip_cite=False)
         body = margins(pn, body)
-        head, bst = section_open(pn, 'frame top', secname(p['section']), ' data-noframenumbering', centred=False)
+        head, bst = section_open(pn, 'frame' + (' top' if p.get('top', True) else ''), secname(p['section']),
+                                 ' data-noframenumbering' if p.get('nonum', True) else '', centred=False)
         out.append('\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]} {ROMAN[pn - n0 + 1]}</h2>',
-                              f'{T}<div class="body tiny refs"{bst}>', body, f'{T}</div>', '</section>']))
+                              f'{T}<div class="body {p.get("size", "tiny")} refs"{bst}>', body, f'{T}</div>', '</section>']))
     return out
 
 ps = pages()
@@ -161,6 +206,8 @@ for p in ps:
         parts.append(sep + toc(n, p, title=False))
     elif p['kind'] == 'toc':
         parts.append(sep + toc(n, p))
+    elif p['kind'] == 'subtoc':
+        parts.append(sep + subtoc(n, p))
     elif p['kind'] == 'frame':
         parts.append(frame(n, p))
     elif p['kind'] == 'bib':

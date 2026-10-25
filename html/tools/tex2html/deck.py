@@ -36,8 +36,16 @@ STYLES = {
         titles=[rgb('660066'), rgb('380038'), rgb('D1B2D1')],
         bodies=[rgb('F4EDF4'), rgb('F9F5E5'), rgb('F4EDF4')],
         faces={}),
+    # the same again in the old Cesena blue and silver (experiment 6)
+    'AMSSilverBlue': dict(
+        theme='theme-AMSSilverBlue.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbfbfbf,
+        cites=[0xbfbfbf, 0xececec],   # \ccite and \cccite
+        titles=[rgb('003F66'), rgb('0073BA'), rgb('DCDCDC')],
+        bodies=[rgb('EBF4F9'), rgb('DEEDF6'), rgb('F1F1F1')],
+        faces={}),
 }
 STYLE = STYLES[CFG.get('style', 'AMSUniBo')]
+CITES = STYLE.get('cites', [STYLE['cite']])   # the colours of the citation commands
 
 def cm_face(name):
     """a cm-super or CM font name of the PDF -> the Latin Modern OTF with its outlines"""

@@ -3,7 +3,7 @@ Prints, per page, the runs off by more than 0.6pt: dy > 0 means the HTML sits lo
 import sys, json, difflib, statistics, unicodedata, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from browser import Browser
-from align import PDF
+from align import PDF, SAME
 
 K = 1024 / 362.835
 from deck import path, STYLE
@@ -56,6 +56,8 @@ JS = r'''() => {
           continue;
         }
         if (getComputedStyle(e).display.startsWith('inline')) continue;
+        // never inside multicols: a margin there rebalances the columns
+        if (e.parentElement.closest('.multicols')) continue;
         const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let t0;
         while ((t0 = w.nextNode()) && !/\S/.test(t0.data));
@@ -67,7 +69,9 @@ JS = r'''() => {
     const emargin = E ? parseFloat(getComputedStyle(E).marginTop) : 0;
     let prevSib = n.previousSibling;
     const brk = prevSib && prevSib.nodeName === 'BR';
-    out.push({t, x, base: 0, cite: !!p.closest('.ccite'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin});
+    const colEl = p.closest('.column');
+    const col = colEl ? [...f.querySelectorAll('.column')].indexOf(colEl) : -1;
+    out.push({t, x, base: 0, cite: !!p.closest('.ccite'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin, col});
     marks.push([n, i, m]);
   }
   // all markers in, read, then all out: inserting splits text nodes
@@ -87,7 +91,7 @@ def pdf_chars(pn):
                     x, y = ch['origin']
                     if y < STYLE['head'] or y > STYLE['foot']:
                         continue
-                    for c in unicodedata.normalize('NFKC', ch['c']):
+                    for c in unicodedata.normalize('NFKC', ch['c']).translate(SAME):
                         if not c.isspace():
                             out.append((c, x, y))
     return out
@@ -104,7 +108,7 @@ def run(engine, pages):
 def compare(n, nodes, limit=0.6):
     hc, own, first = [], [], []
     for k, nd in enumerate(nodes):
-        t = unicodedata.normalize('NFKC', nd['t'])
+        t = unicodedata.normalize('NFKC', nd['t']).translate(SAME)
         f = True
         for c in t:
             if c.isspace():

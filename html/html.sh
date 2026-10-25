@@ -67,8 +67,11 @@ fi
 for name in $(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | sort -u); do
 	ls "$A/$name".* >/dev/null 2>&1 && continue
 	src=$(find -L img -name "$name.png" -o -name "$name.jpg" | head -1)
+	if [ -n "$src" ]; then cp -L "$src" "$A/"; continue; fi
+	# a PDF picture, as pdflatex took it: to SVG, its text as outlines
+	src=$(find -L img -name "$name.pdf" | head -1)
 	[ -n "$src" ] || die "no picture for data-asset $name: list the TikZ ones in figures, in source order"
-	cp -L "$src" "$A/"
+	pdftocairo -svg "$src" "$A/$name.svg"
 done
 python3 "$T/assets.py" "$page" "$A"
 

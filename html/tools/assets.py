@@ -24,7 +24,7 @@ faces = [  # family, weight, style, file
     ("Merriweather", 400, "italic", "Merriweather-Italic"),
     ("Inconsolata", 400, "normal", "Inconsolatazi4-Regular"),
 ]
-CM = ("AMSBolognaFC", "AMSPurpleAndGold")   # the styles on Computer Modern
+CM = ("AMSBolognaFC", "AMSPurpleAndGold", "AMSSilverBlue")   # the styles on Computer Modern
 if style in CM:   # Latin Modern for cm-super, a family per optical size
     faces = [(f"LM Sans {o}", 400, s, f"lmsans{o}-{n}") for o in (8, 9, 10, 12, 17)
              for s, n in (("normal", "regular"), ("italic", "oblique"))]

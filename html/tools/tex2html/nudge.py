@@ -27,12 +27,23 @@ for n in pages:
         for (ya, dya, ka), (yb, dyb, kb) in zip(lines, lines[1:]):
             step = dyb - dya
             r = nd[kb]
-            if abs(step) > 0.4 and r['eidx'] >= 0 and not r['brk']:
+            # a step between two columns is no gap: each column is corrected on its own
+            ca, cb = nd[ka].get('col', -1), r.get('col', -1)
+            if abs(step) > 0.4 and r['eidx'] >= 0 and not r['brk'] and not (ca >= 0 and cb >= 0 and ca != cb):
                 cur = r['emargin'] / K
                 e['m'][str(r['eidx'])] = round(cur - step, 2)
     if mode in ('shift', 'both'):
         dy0 = sorted(l[1] for l in lines)[len(lines) // 2]   # median offset
         if abs(dy0) > 0.3:
             e['shift'] = round(e['shift'] - dy0, 2)
+        # a column as a whole, against the page: a translate, which moves nothing around it
+        cols = {}
+        for y, dy, k in lines:
+            if nd[k].get('col', -1) >= 0:
+                cols.setdefault(nd[k]['col'], []).append(dy)
+        for c, dys in cols.items():
+            d = sorted(dys)[len(dys) // 2] - dy0
+            if abs(d) > 0.3:
+                e.setdefault('cols', {})[str(c)] = round(e.get('cols', {}).get(str(c), 0.0) - d, 2)
 json.dump(nud, open(NJ, 'w'), indent=0, sort_keys=True)
 print('nudged', len(pages), 'pages')

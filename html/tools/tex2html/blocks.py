@@ -17,9 +17,9 @@ JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.quer
   return [r.top,r.bottom,!!k.querySelector(':scope>.block-title'),d.join('>')||'p']})})()"""
 
 def titles(n):
-    return sorted(dr['rect'].y0 for dr in PDF[n - 1].get_drawings()
+    return [r.y0 for r in sorted((dr['rect'] for dr in PDF[n - 1].get_drawings()
                   if dr.get('fill') and dr['rect'].x0 > 1 and dr['rect'].width > 60 and near(dr['fill'], TITLE)
-                  and STYLE['head'] < dr['rect'].y0 and dr['rect'].y1 < STYLE['foot'])
+                  and STYLE['head'] < dr['rect'].y0 and dr['rect'].y1 < STYLE['foot']), key=lambda r: (round(r.y0), r.x0))]
 
 eng = sys.argv[1]
 rows = []

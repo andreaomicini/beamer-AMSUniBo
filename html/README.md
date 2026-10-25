@@ -7,7 +7,8 @@ page for page, and the tools that do the mechanical part. None of this is in
 Since experiment 4 the same tools translate AMSBolognaFC decks too:
 `"style": "AMSBolognaFC"` in the deck's `deck.json` picks that style's theme,
 fonts, seal and measuring constants. Since experiment 5, AMSPurpleAndGold decks
-as well (`"style": "AMSPurpleAndGold"`).
+as well (`"style": "AMSPurpleAndGold"`), and since experiment 6 AMSSilverBlue
+ones (`"style": "AMSSilverBlue"`).
 
 The page is a translation, not a conversion. The PDF is the reference: the text,
 its line breaks and its geometry are copied from it, and the result is checked
@@ -241,6 +242,23 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `pggoldfill`, `pgpurplefill`; `\ccite` is `pggreyline`, the bibliography title
   bold `pggolddark`, its note and the APICe marker `pgpurple`.
 
+### AMSSilverBlue
+
+* **AMSBolognaFC's profile again, in the old Cesena blue and silver.** The theme
+  is AMSPurpleAndGold's file with the palette of `beamercolorthemesilverblue.sty`;
+  `theme-AMSSilverBlue.css` is AMSPurpleAndGold's CSS with that palette, the balls
+  in `sbblue` from the same mixes.
+* **Head and foot**: the section on `sbblue` in white, the subsection on
+  `sbsilvertint2`; the author on `sbbluedeep`, the title on `sbsilvertint2`, the
+  date on `sbsilvertint`. Two citation colours, `\ccite` in `sbgreyline` and
+  `\cccite` in `sbgreybg`: the profile's `cites` lists both, and the tools that
+  leave citations out of the alignment read it.
+* **What experiment 6's deck brought** is in this style's CSS only, at its end:
+  listings, beamer's columns, figures and captions, `multicols`, `\hint`,
+  `\hhref`, the contents frame of a subsection, the bibliography in
+  `\scriptsize`, and math beyond letters — scripts, fractions, `\stackrel`,
+  `cases`, `array`. The other styles take it when a deck of theirs needs it.
+
 ## the tools
 
 Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
@@ -269,8 +287,9 @@ It builds the PDF; for a generated page (a `deck.json` with a `title`) it writes
 the page with `build.py` and runs `nudge.py` four times (`gaps` three, then
 `both`), rebuilding after each; it refills the ASSETS block — fonts, the seal of
 the class option, the TikZ pictures listed in `deck.json`'s `figures` in source
-order, the deck's own `img/` pictures — and ends with `stats.py` and `blocks.py`
-in WebKit and in Firefox, whose rows a person reads against the checklist. The
+order, the deck's own `img/` pictures, PDF ones through `pdftocairo -svg` — and
+ends with `stats.py` and `blocks.py` in WebKit and in Firefox, whose rows a
+person reads against the checklist. The
 deck's inputs are in `html/tex2html/`, or `html/tex2html/<deck>/` in a
 repository of several decks; with none there, it writes a starting `deck.json`
 and stops.
@@ -281,7 +300,7 @@ With `A` a scratch folder for the assets:
 
 ```sh
 T=../beamer-AMSUniBo/html/tools
-$T/subset-fonts.sh $A/fonts [style]        # AMSUniBo, AMSBolognaFC or AMSPurpleAndGold
+$T/subset-fonts.sh $A/fonts [style]        # AMSUniBo, or a Computer Modern style
 $T/seal.sh cesena $A [style]                # or bologna; prints the CSS box
 $T/externalize.sh tex/<deck>.tex $A         # fig-0.svg, fig-1.svg … in source order
 mv $A/fig-0.svg $A/<name>.svg               # one per data-asset name in the page
@@ -309,8 +328,11 @@ not; a new deck may need it grown.
 `theme.css` and `script.js` there are the theme and the deck script every
 generated page carries, the deck-size announcement included. What belongs to
 one deck lives in that deck, in `html/tex2html/`: `deck.json` (paths, names,
-short fields, alt texts, the deck's own name macros), `titlepage.html`,
-`deck.css` and `nudges.json`, the per-frame corrections, which `nudge.py` writes.
+short fields, alt texts, the deck's own name macros, `subtoc_title` and
+`toc_centred` for decks with subsections), `titlepage.html`, `deck.css` and
+`nudges.json`, the per-frame corrections, which `nudge.py` writes: a shift per
+frame, margins keyed by element, and a `translate` per column. Listings are
+`listing.py`'s.
 
 ```sh
 export TEX2HTML_DECK=html/tex2html
@@ -580,3 +602,72 @@ within 1pt, left edges within 2.5pt.
   centred); a `translate` on `ol.toc` in the deck's `deck.css` does. The title page,
   with its two-line title, has its own box and margins there, measured — the same
   values experiment 4 had found for its margins.
+
+### 6 — Blockchain & Smart Contracts @ WOA 2018, AMSSilverBlue, 2026-10-25
+
+`blockchain-woa2018minischool-slides`: 93 pages on AMSSilverBlue 1.2, a 2018 deck
+recovered and moved to the current style, the first to have subsections, and the
+largest since experiment 2 — eight listings in Java and Solidity, seven PDF
+pictures, beamer's `columns` on five pages, `multicols`, a dozen math constructs,
+21 `allowframebreaks` frames, all but three broken by TeX alone, a thirteen-page
+bibliography in `\scriptsize`. Every baseline ended within 1.5pt of the PDF in
+WebKit and in Firefox but on two pages: the display title of page 9, 2.2pt high,
+and the `∑` of page 43, whose glyph the PDF places from its top. Left edges are
+within 5.3pt, the worst in math, but after a bold italic title in the
+bibliography (7.4pt in WebKit); blocks within 1.6pt but page 9's top (2.2pt) and
+page 43's bottom (1.9pt).
+
+* **An `allowframebreaks` frame breaks where TeX breaks it**, not only at
+  `\framebreak`: the converter counts the frame's pages by their titles in the
+  PDF (`X I`, `X II` …) and gives each top-level element the page its text is on;
+  a picture without text takes a page no text took. Every page title matched the
+  PDF at the first try once the window of text was long enough to tell two
+  blocks with the same title apart.
+* **Subsections**: `data-subsection` and the headline's right half, and with
+  `\AtBeginSubsection` the contents frame of a subsection — every section
+  shaded, the current one's subsections listed, the current one shown. A
+  margin under the subsections collapsed into the next section's: a padding.
+* **Contents frames are `[c]`**, and were corrected as `[t]`: experiment 5 made
+  up for it in its `deck.css`. `deck.json`'s `"toc_centred": true` corrects them
+  as centred frames; pages made before keep the old way unless they set it.
+* **Listings** (`listing.py`): `columns=fixed` sets each token, a run of letters
+  and digits or one of other characters, in a box of n × 0.6 of the typewriter
+  quad, its characters spread evenly inside; the quad is two characters, so the
+  spread is `0.10625em × n / (n + 1)`. A span per token with that letter-spacing
+  puts every character within 0.4pt of the PDF. `frame=trBL` draws the doubled
+  rules outside, and TeX counts the outer bottom one in the space the listing
+  takes.
+* **Beamer's columns span the paper, not the text**: an `\hfill` before the
+  first column and after each, over the paper width with both margins, so the
+  outer gaps are not the text margins. An `\hfill` between columns in the source
+  adds one more. A `[t]` set of columns aligns first baselines.
+* **Math**: scripts in the script size, 8pt of 10.95; a superscript 0.413em up;
+  both scripts 5.03pt up and 3.23pt down; a text fraction's numerator 5.37pt up
+  and denominator 3.76pt down; consecutive relations as one, so `::=` has no
+  inner space; `,` with a thin space after it; `cases` as an inline-block whose
+  last row is its baseline, its rows 1.2 baselineskips apart and their middle
+  0.52pt below the line's — the line then grows above and below as TeX's does.
+  The PDF writes `\Delta` as `∆`, U+2206: the alignment maps it to `Δ`.
+* **`\hfill` has two more meanings**: alone in a paragraph it is an empty line;
+  between two pieces of a line it spreads them from margin to margin. Inside a
+  group it is left as before.
+* **A correction on an element with a `style` added a second `style`
+  attribute**, which browsers ignore: `build.py` now writes into the one there
+  is. Seen on columns, `multicols` and numbered lists.
+* **Corrections and columns**: a step between two columns is no gap, and a
+  margin inside `multicols` rebalances them, so `nudge.py` skips both; a column
+  moves as a whole by a `translate` in `nudges.json`'s `cols`, which moves
+  nothing around it.
+* **A citation alone on the last line of a block** reaches no deeper than the
+  baseline: `depth.py` measured it as a line of 6pt text and padded the block
+  2.7pt too much. Blocks side by side are now paired left first.
+* **The footline**: `~~` were written as no-break spaces, which Latin Modern
+  draws 1.5 spaces wide in Firefox and WebKit draws as spaces; they are spaces
+  now, kept by `white-space: pre`. This deck's number box is 35.2pt, measured,
+  not the 23.61pt of experiments 4 and 5.
+* **`\symETH`** is `$\mathsf{\Xi}$`, which with T1 fonts takes slot 4 of the
+  sans, a dieresis: the PDF shows `¨`, and so does the page.
+* Pages of the experiments before, rebuilt with these tools: experiments 2 and 4
+  change only in the shared script; experiment 5 also gains a break before a
+  citation of two keys, which its PDF has and its page had missed, and its
+  corrections, keyed by element, would then need `--nudge`. None was replaced.

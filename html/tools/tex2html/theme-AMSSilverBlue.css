@@ -1,0 +1,413 @@
+/* ===== AMSSilverBlue in CSS ============================================ */
+/* AMSBolognaFC's CSS (the same theme, the same Computer Modern) in the palette of
+   beamercolorthemesilverblue.sty, named after it; balls in sbblue, from the same mixes */
+:root {
+	--sbblue: #0073BA;
+	--sbbluedeep: #003F66;
+	--sbwhite: #FFFFFF;
+	--text: #000C13;           /* sbtext, normal text */
+	--emph: #003F66;           /* sbbluedeep, \emph */
+	--alert: #0073BA;          /* sbblue, alerted text */
+	--aalert: #BFBFBF;         /* sbgreyline, \aalert */
+	--head-dark: #003F66;      /* author in head/foot bg: sbbluedeep */
+	--head-light: #D9D9D9;     /* subsection in head/foot bg: sbsilvertint2 */
+	--head-text: #FFFFFF;      /* author in head/foot fg: sbwhite */
+	--head-section: #0073BA;   /* section in head/foot bg: sbblue */
+	--head-section-text: #FFFFFF;  /* section in head/foot fg: sbwhite */
+	--head-subsection-text: #000C13;  /* subsection in head/foot fg: sbtext */
+	--band: #F2F2F2;           /* frametitle bg: sbsilvertint */
+	--band-text: #000000;      /* frametitle fg: sbblack */
+	--foot-mid: #D9D9D9;       /* title in head/foot bg: sbsilvertint2 */
+	--foot-mid-text: #000C13;  /* sbtext */
+	--foot-right: #F2F2F2;     /* date in head/foot bg: sbsilvertint */
+	--foot-right-text: #5A5A5A;  /* sbgreymid */
+	--cite: #BFBFBF;           /* sbgreyline, \ccite */
+	--ccite: #ECECEC;          /* sbgreybg, \cccite */
+	--toc-current: #003F66;    /* section in toc: sbbluedeep */
+	--toc-subsection: #5A5A5A; /* subsection in toc: sbgreymid */
+	--block-title: #003F66;    /* sbbluedeep */
+	--block-title-text: #FFFFFF;  /* sbwhite */
+	--block-body: #EBF4F9;     /* sbbluetint */
+	--alert-title: #0073BA;    /* sbblue */
+	--alert-body: #DEEDF6;     /* sbbluefill */
+	--example-title: #DCDCDC;  /* sbsilverborder */
+	--example-title-text: #000C13;
+	--example-body: #F1F1F1;   /* sbsilverfill */
+	--tp-box: #F2F2F2;         /* titlelike: palette primary bg, sbsilvertint */
+	--tp-title: #000000;       /* title: sbblack */
+	--tp-author: #0073BA;      /* author: sbblue */
+	--tp-institute: #404040;   /* institute: sbgrey */
+	--tp-date: #5A5A5A;        /* date: sbgreymid */
+	--bib-label: #5A5A5A;      /* sbgreymid */
+	--bib-author: #000C13;     /* sbtext */
+	--bib-title: #0073BA;      /* sbblue */
+	--bib-location: #5A5A5A;   /* sbgreymid */
+	--bib-note: #003F66;       /* sbbluedeep */
+	--apice-marker: #003F66;   /* \apicepubpar: sbbluedeep */
+}
+/* the PDF page, 128 x 96 mm, drawn at 1024 x 768 and scaled to the window.
+   --pt is one TeX point; Computer Modern Sans is not scaled, so --fs is --pt. Latin Modern stands
+   in for cm-super, whose design sizes differ in width: each size below carries the ratio of
+   cm-super's advance widths to Latin Modern's, measured on a PDF (6pt 1.10, 9pt 0.994,
+   10.95pt 0.989, 14.4pt 0.970, 17.28pt 0.995; 6pt bold 1.042) */
+.deck {
+	--pt: calc(1024px / 362.835);
+	--fs: var(--pt);
+	--ball: radial-gradient(circle at 32% 32%, #C1DDEE 0, #8DC0E0 10%, #5EA7D3 18%, #3590C8 26%,
+		#117CBF 33%, #005386 41%, #00456F 48%, #00456F 55%);
+}
+html, body { margin: 0; height: 100%; background: #000; }
+body { overflow: hidden; }
+.deck { position: fixed; inset: 0; }
+/* cm-super, through Latin Modern: one family per optical size, as TeX picks them */
+.frame {
+	position: absolute; left: 50%; top: 50%;
+	width: 1024px; height: 768px; margin: -384px 0 0 -512px;
+	transform: scale(var(--scale, 1));
+	background: var(--sbwhite); color: var(--text);
+	overflow: hidden; display: none;
+	font-family: "LM Sans 10", "LM Math", sans-serif; font-weight: 400;
+	font-size: calc(10.83 * var(--fs)); line-height: calc(13.6 * var(--pt));
+	white-space: nowrap;
+}
+.frame.current { display: block; }
+/* the seal, cropped at the lower right: option cesena */
+.frame::before {
+	content: ""; position: absolute;
+	left: 79.80%; top: 51.92%; width: 20.20%; height: 45.02%;
+	background: var(--seal) no-repeat 0 0 / 100% 100%;
+}
+/* sizes of the 11pt class, each in its optical size */
+.tiny { font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); line-height: calc(7 * var(--pt)); }
+.scriptsize { font-family: "LM Sans 8", "LM Math"; font-size: calc(8 * var(--fs)); line-height: calc(9.5 * var(--pt)); }
+.footnotesize { font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(11 * var(--pt)); }
+.small { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+.large { font-family: "LM Sans 12", "LM Math"; font-size: calc(12 * var(--fs)); line-height: calc(14 * var(--pt)); }
+.Large { font-family: "LM Sans 12", "LM Math"; font-size: calc(13.97 * var(--fs)); line-height: calc(18 * var(--pt)); }
+.LARGE { font-family: "LM Sans 17", "LM Math"; font-size: calc(17.2 * var(--fs)); line-height: calc(22 * var(--pt)); }
+/* \emph \alert \aalert \textbf \textsc \texttt \it, and math */
+b { font-weight: 700; }
+em { font-style: italic; color: var(--emph); }
+.alert { color: var(--alert); }
+.aalert { font-style: italic; color: var(--aalert); }
+.it { font-style: italic; }
+/* Computer Modern Sans has no small caps: the theme falls back to the serif ones */
+.sc { font-family: "LM Roman Caps"; font-variant-caps: normal; }
+code, .tt { font-family: "LM Mono 10", monospace; font-weight: 400; }
+/* math letters: beamer sets them in the sans italic; \phi alone comes from the math italic */
+i { font-style: italic; font-weight: 400; }
+.rel { margin: 0 0.28em; }
+sub { font-size: 70%; line-height: 0; vertical-align: -0.25em; }
+a { color: inherit; text-decoration: none; }
+p { margin: 0; }
+.center { text-align: center; }
+/* \ccite, \uurl, \apice */
+.ccite { color: var(--cite); font-family: "LM Sans 8", "LM Math"; font-style: normal; font-size: calc(6.6 * var(--fs)); line-height: 0; vertical-align: calc(3.6 * var(--pt)); }
+.url, .uurl, .apice { font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
+.uurl, .apice { color: var(--alert); }
+
+/* ----- infolines: head and foot ----------------------------------------- */
+.headline, .footline { position: absolute; left: 0; width: 100%; display: flex; font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); }
+.headline { top: 0; height: calc(11.03 * var(--pt)); line-height: calc(8.55 * var(--pt)); }
+.headline > div { width: 50%; box-sizing: border-box; }
+.headline .section { background: var(--head-section); color: var(--head-section-text); text-align: right; padding-right: calc(5.33 * var(--pt)); }
+.headline .subsection { background: var(--head-light); color: var(--head-subsection-text); padding-left: calc(5.33 * var(--pt)); }
+.footline { bottom: 0; height: calc(8.64 * var(--pt)); line-height: calc(6.42 * var(--pt)); }
+.footline > div { width: 33.3333%; box-sizing: border-box; }
+.footline .author { background: var(--head-dark); color: var(--head-text); text-align: center; }
+.footline .title { background: var(--foot-mid); color: var(--foot-mid-text); text-align: center; }
+.footline .date { background: var(--foot-right); color: var(--foot-right-text); text-align: right; padding-right: calc(5.32 * var(--pt)); }
+.footline .number { display: inline-block; width: calc(23.61 * var(--pt)); text-align: right; word-spacing: calc(-1.16 * var(--pt)); }
+.frame[data-noframenumbering] .footline .number { width: calc(13.66 * var(--pt)); }
+
+/* ----- frame title and text area ---------------------------------------- */
+.frametitle {
+	position: absolute; left: 0; top: calc(11.03 * var(--pt)); width: 100%; height: calc(27.89 * var(--pt));
+	box-sizing: border-box; margin: 0; padding-left: calc(8.5 * var(--pt));
+	background: var(--band); color: var(--band-text);
+	font-family: "LM Sans 12", "LM Math"; font-weight: 400;
+	font-size: calc(13.97 * var(--pt)); line-height: calc(27.89 * var(--pt));
+}
+.frametitle .ccite { font-size: calc(6.6 * var(--pt)); }
+.body {
+	position: absolute; top: calc(38.92 * var(--pt)); bottom: calc(8.64 * var(--pt));
+	left: calc(10.909 * var(--pt)); width: calc(342.295 * var(--pt));
+	display: flex; flex-direction: column;
+}
+.body > * { flex: none; }
+/* [c]: beamer's frametopskip and framebottomskip, 1fill over 1.5fill */
+.body::before { content: ""; flex: 2 1 0; }
+.body::after { content: ""; flex: 3 1 0; }
+.titlepage .body::before, .titlepage .body::after { display: none; }
+/* [t] */
+.frame.top .body::before { display: none; }
+.medskip { height: calc(6 * var(--pt)); }
+.smallskip { height: calc(3 * var(--pt)); }
+.bigskip { height: calc(12 * var(--pt)); }
+.vfill { flex: 2 1 0; }
+/* a \vfill inside center: the fil it stretches shares the frame's free space */
+.body > div.center:has(> .vfill) { display: contents; }
+
+/* ----- lists: beamer's \@listi and \@listii, balls of the rounded theme -- */
+.frame { --topsep: calc(3 * var(--pt)); --itemsep: calc(3 * var(--pt)); --subtopsep: calc(2 * var(--pt)); --subitemsep: 0px; }
+ul, ol { list-style: none; margin: var(--topsep) 0; padding: 0; }
+li { position: relative; padding-left: calc(21.818 * var(--pt)); }
+li + li { margin-top: var(--itemsep); }
+ul > li::before {
+	content: ""; position: absolute;
+	left: calc(11.25 * var(--pt)); top: calc(6.04 * var(--pt));
+	width: calc(5.1 * var(--pt)); height: calc(5.1 * var(--pt)); border-radius: 50%;
+	background: var(--ball); box-shadow: 0.4px 0.6px 0.8px rgba(0, 0, 0, .3);
+}
+li ul { margin: var(--subtopsep) 0 0; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+li li + li { margin-top: var(--subitemsep); }
+li li::before { left: calc(12.22 * var(--pt)); top: calc(6.08 * var(--pt)); width: calc(4.14 * var(--pt)); height: calc(4.14 * var(--pt)); }
+li li ul { font-family: "LM Sans 9", "LM Math"; font-size: calc(9 * var(--fs)); line-height: calc(11 * var(--pt)); }
+li li li::before { left: calc(12.4 * var(--pt)); top: calc(5.5 * var(--pt)); width: calc(3.6 * var(--pt)); height: calc(3.6 * var(--pt)); }
+/* \item[label]: the label right-aligned, labelsep .5em before the text, in the item colour */
+ul > li[data-label]::before {
+	content: attr(data-label); left: auto; right: calc(100% - 21.818 * var(--pt) + 0.5em); top: 0;
+	width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; color: var(--sbblue);
+}
+/* an item that wraps before its sub-list takes the sub-list's baselineskip */
+li.wrapsub { line-height: calc(12 * var(--pt)); }
+li li.wrapsub { line-height: calc(11 * var(--pt)); }
+ul > li.wrapsub::before { top: calc(5.24 * var(--pt)); }
+ol > li.wrapsub::before { top: calc(2.12 * var(--pt)); }
+li li.wrapsub::before { top: calc(5.58 * var(--pt)); }
+ul > li.wrapsub[data-label]::before { top: 0; }
+ul > li.lbl-small::before { font-size: calc(9 * var(--fs)); }
+ol { counter-reset: enum; }
+ol > li { counter-increment: enum; }
+ol > li::before {
+	content: counter(enum); position: absolute;
+	left: calc(7.02 * var(--pt)); top: calc(2.92 * var(--pt));
+	width: calc(8.99 * var(--pt)); height: calc(8.99 * var(--pt)); border-radius: 50%;
+	text-align: center; font-family: "LM Sans 8", "LM Math"; font-size: calc(6.6 * var(--fs)); line-height: calc(9.2 * var(--pt));
+	color: var(--sbwhite); background: var(--ball); box-shadow: 0.4px 0.6px 0.8px rgba(0, 0, 0, .3);
+}
+ul.tight { --itemsep: calc(1 * var(--pt)); --topsep: calc(2 * var(--pt)); }
+/* description, an item per div.ditem: the text at 2cm + labelsep, the label right-aligned before
+   it, or from the left edge when longer; the text's other lines at its indent */
+dl { margin: var(--topsep) 0; }
+.ditem { padding-left: calc(62.15 * var(--pt)); }
+.ditem + .ditem { margin-top: var(--itemsep); }
+dt { display: inline-block; min-width: calc(56.7 * var(--pt)); margin-left: calc(-62.15 * var(--pt)); margin-right: 0.5em;
+	text-align: right; color: var(--sbblue); }
+dd { display: inline; margin: 0; }
+
+/* ----- blocks: rounded, shadowed ---------------------------------------- */
+.block {
+	--title-bg: var(--block-title); --title-fg: var(--block-title-text); --body-bg: var(--block-body);
+	margin: calc(7.5 * var(--pt)) calc(-2.73 * var(--pt)) calc(4 * var(--pt)) calc(-4 * var(--pt));
+	border-radius: calc(4 * var(--pt));
+	background: var(--body-bg);
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+}
+.block.alert { --title-bg: var(--alert-title); --body-bg: var(--alert-body); color: var(--text); }
+.block.example { --title-bg: var(--example-title); --title-fg: var(--example-title-text); --body-bg: var(--example-body); }
+.block-title {
+	margin: 0; padding: 0 calc(4 * var(--pt)) calc(3.16 * var(--pt));
+	border-radius: calc(4 * var(--pt)) calc(4 * var(--pt)) 0 0;
+	background: var(--title-bg); color: var(--title-fg);
+	font-family: "LM Sans 12", "LM Math"; font-weight: 400; font-size: calc(12 * var(--fs)); line-height: calc(13.78 * var(--pt));
+}
+.block-body {
+	padding: calc(2.5 * var(--pt)) calc(4 * var(--pt)) calc(3.58 * var(--pt));
+	border-radius: 0 0 calc(4 * var(--pt)) calc(4 * var(--pt));
+	background: linear-gradient(var(--title-bg), var(--body-bg) calc(2.5 * var(--pt))) no-repeat;
+}
+.block + ul { margin-top: calc(7 * var(--pt)); }
+.block.notitle .block-body { background: none; padding-top: calc(3.5 * var(--pt)); }
+div.center { text-align: center; }
+.block-body > :first-child { margin-top: 0; }
+.block-body > :last-child { margin-bottom: 0; }
+
+/* ----- tables of contents: numbered balls, the other sections shaded ---- */
+ol.toc { margin: 0; }
+ol.toc > li { padding-left: calc(13.33 * var(--pt)); color: var(--toc-current); }
+ol.toc > li + li { margin-top: calc(16.21 * var(--pt)); }
+ol.toc > li::before {
+	left: calc(-3.82 * var(--pt)); top: calc(1.72 * var(--pt)); width: calc(12.48 * var(--pt)); height: calc(12.48 * var(--pt));
+	font-size: calc(8 * var(--fs)); line-height: calc(12.9 * var(--pt)); color: #E5F1F8;
+	background: radial-gradient(circle at 32% 32%, #BAD9EC 0, #9DC9E5 10%, #7DB7DC 18%, #4A9CCE 26%, #2688C4 36%, #005F9A 48%, #004F80 58%);
+}
+ol.toc > li.shaded { opacity: .2; }
+
+/* ----- pictures and boxes ----------------------------------------------- */
+img.figure { display: block; margin: 0 auto; }
+.minipages { display: flex; align-items: center; column-gap: calc(3.65 * var(--pt)); }
+.minipage { flex: none; }
+.minipage img.figure { width: 100%; }
+
+/* ----- title page ------------------------------------------------------- */
+.titlepage .body { text-align: center; top: calc(11.03 * var(--pt)); }
+.tp-box {
+	margin: calc(44.35 * var(--pt)) calc(-2.73 * var(--pt)) 0 calc(-4 * var(--pt));
+	height: calc(37.95 * var(--pt)); box-sizing: border-box; padding-top: calc(11.7 * var(--pt));
+	border-radius: calc(4 * var(--pt)); background: var(--tp-box);
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+}
+.tp-box h1 { margin: 0; font-family: "LM Sans 12", "LM Math"; font-weight: 400; font-size: calc(13.97 * var(--pt)); line-height: calc(18 * var(--pt)); color: var(--tp-title); }
+.tp-authors { margin-top: calc(20.8 * var(--pt)); color: var(--tp-author); }
+.tp-authors code { color: var(--tp-author); }
+.tp-institute { margin-top: calc(9 * var(--pt)); color: var(--tp-institute); }
+.tp-date { margin-top: calc(13.5 * var(--pt)); color: var(--tp-date); }
+
+/* ----- the bibliography ------------------------------------------------- */
+.bibitem { padding-left: calc(9.62 * var(--pt)); text-indent: calc(-9.62 * var(--pt)); margin-bottom: calc(5.88 * var(--pt)); }
+.bibitem > span { display: block; text-indent: 0; }
+.bibitem > .biblabel, .bibitem > .bib-author { display: inline; }
+.biblabel { color: var(--bib-label); margin-right: calc(4 * var(--pt)); }
+.bib-author { color: var(--bib-author); }
+.bib-title { color: var(--bib-title); font-weight: 700; font-size: calc(6.25 * var(--fs)); }
+.bib-title .nb { font-weight: 400; }
+.bibitem i { font-family: inherit; }
+.bib-title > i { font-family: inherit; font-weight: 700; }
+.bib-location { color: var(--bib-location); }
+.bib-location > em, .bib-location em { color: inherit; }
+.bib-note { color: var(--bib-note); }
+.apicepubpar { color: var(--apice-marker); font-size: calc(6.6 * var(--fs)); margin-right: calc(9 * var(--pt)); }
+.dddoi { color: var(--cite); font-size: calc(6.6 * var(--fs)); }
+.uuurl { color: var(--cite); font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(6 * var(--pt)); }
+
+/* ----- what experiment 6's deck brought: listings, columns, figures, math -- */
+/* the headline's right half carries the subsection */
+.headline .subsection { text-align: left; }
+/* \cccite: the lighter grey */
+.ccite.cccite { color: var(--ccite); }
+/* a math sans letter, \mathsf; \symBTC, a B with two short bars above and below */
+.msf { font-style: normal; }
+.btc { position: relative; }
+.btc::before, .btc::after {
+	content: ""; position: absolute; left: 32%; width: 36%; height: 0.3ex;
+	border-left: 0.15ex solid currentColor; border-right: 0.15ex solid currentColor; box-sizing: border-box;
+}
+.btc::before { top: -0.3ex; }
+.btc::after { bottom: -0.3ex; }
+/* math: binary operators 4mu, relations 5mu; sub- and superscripts; fractions, \stackrel, cases */
+.bin { margin: 0 0.22em; }
+.rel.implies { margin: 0 0.56em; }
+/* scripts in the script size, 8pt of 10.95; a superscript 0.413em up; both: 5.03pt up and 3.23pt
+   down (measured) */
+sub { font-size: 73%; }
+sup { font-size: 73%; line-height: 0; vertical-align: 0.565em; }
+.subsup { display: inline-flex; flex-direction: column; vertical-align: 0.631em; line-height: 1.036; font-size: 73%; }
+.subsup > sup, .subsup > sub { font-size: 100%; vertical-align: 0; line-height: inherit; }
+.op { font-family: "LM Math"; }
+.op.lim { font-family: inherit; margin-right: 0.17em; }
+/* a text-style fraction: numerator and denominator in the script size, their baselines 5.37pt
+   above and 3.76pt below the line's (measured at \normalsize) */
+.frac { display: inline-flex; flex-direction: column; vertical-align: 0.674em; font-size: 73%; line-height: 1.145; text-align: center; margin: 0 0.12em; }
+.frac > .num { border-bottom: calc(0.4 * var(--pt)) solid currentColor; padding: 0 0.1em; }
+/* \stackrel: the relation on the baseline, its label over it, 4.63pt up at \scriptsize (measured) */
+.rel.stack { position: relative; display: inline-block; text-align: center; }
+.rel.stack > .over { position: absolute; left: -50%; right: -50%; bottom: 0.92em; font-size: 75%; font-style: italic; line-height: 1; }
+/* cases, as TeX sets them: rows 1.2 baselineskip apart, centred so that the middle of their
+   baselines is 0.52pt below the line's (measured); the box is an inline-block, whose baseline is its
+   last row's, so the line grows above and below as TeX's does */
+.cases { display: inline-block; position: relative; padding-left: 0.876em; padding-right: calc(11.89 * var(--pt)); vertical-align: calc(-1 * ((var(--rows) - 1) * 8.16 + 0.52) * var(--pt)); }
+.cases > .brace { position: absolute; left: 0; top: 50%; font-family: "LM Math"; font-style: normal; line-height: 1;
+	transform: translateY(-50%) scaleY(var(--rows)); }
+.cases > .rows { display: inline-block; text-align: left; line-height: calc(1.2 * 13.6 * var(--pt)); }
+.array { display: inline-grid; grid-template-columns: auto auto auto; column-gap: calc(10 * var(--pt)); text-align: center; }
+.mthin { display: inline-block; width: 0.167em; }
+.array > :nth-child(3n + 1) { text-align: right; }
+.array > :nth-child(3n) { text-align: left; }
+.displaymath { text-align: center; margin: calc(6 * var(--pt)) 0; }
+.block-title > .displaymath { margin: 0; }
+/* a display for a block title: a taller bar, 21.26pt, its baseline 16.95pt down (measured) */
+.block-title.display { height: calc(21.26 * var(--pt)); box-sizing: border-box; padding-top: calc(4.99 * var(--pt)); padding-bottom: 0; }
+/* \hint: \hfill, then a grey scriptsize note after an alerted ! */
+.hint { text-align: right; font-family: "LM Sans 8", "LM Math"; font-size: calc(8 * var(--fs)); line-height: calc(9.5 * var(--pt)); }
+.hint .grey { color: #7F807F; }
+/* \hhref: grey, scriptsize, typewriter, underlined */
+.hhref { color: var(--cite); font-family: "LM Mono 8", monospace; font-size: calc(8 * var(--pt)); text-decoration: underline; }
+/* \vspace: a height, or a negative margin */
+.vspace { height: max(0px, calc(var(--v) * var(--pt))); margin-bottom: min(0px, calc(var(--v) * var(--pt))); }
+/* a paragraph of \hfill alone is an empty line; \hfill between pieces spreads the line */
+.emptyline { height: 1lh; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; }
+/* lists keep to the left under \centering */
+.center ul, .center ol, .center dl { text-align: left; }
+/* an item whose first line holds cases: the ball follows the baseline down */
+ul > li[style*="--tall"]::before { top: calc((6.04 + (var(--tall) - 1) * 8.16 + 0.86) * var(--pt)); }
+ul > li[style*="--tall"][data-label]::before { top: calc(((var(--tall) - 1) * 8.16 + 0.86) * var(--pt)); }
+/* a list in \scriptsize: its balls as the second level's, centred on its smaller x-height */
+ul.scriptsize > li::before { top: calc(3.9 * var(--pt)); width: calc(4.14 * var(--pt)); height: calc(4.14 * var(--pt)); left: calc(12.22 * var(--pt)); }
+ul.scriptsize > li[data-label]::before { top: 0; width: auto; height: auto; left: auto; }
+/* \symBTC as a label: a B, two short bars above and below it */
+ul > li.lbl-btc::after {
+	content: ""; position: absolute; top: calc(1.2 * var(--pt)); height: calc(12.4 * var(--pt));
+	right: calc(100% - 21.818 * var(--pt) + 0.5em + 0.18em); width: 0.24em;
+	border-left: 0.07em solid var(--sbblue); border-right: 0.07em solid var(--sbblue); box-sizing: border-box;
+	clip-path: polygon(0 0, 100% 0, 100% 18%, 0 18%, 0 82%, 100% 82%, 100% 100%, 0 100%);
+}
+/* figure: centred, its caption \small with the label in structure colour */
+.figure { text-align: center; margin: calc(6 * var(--pt)) 0; }
+.caption { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); white-space: nowrap; }
+.caption-label { color: var(--emph); }
+/* a caption over more than one line is set flush left, as the caption package does */
+.caption:has(br) { text-align: left; }
+/* columns: beamer spreads them over the paper width, \hfill before and after each one */
+.columns { display: flex; align-items: center; margin-left: calc(-10.909 * var(--pt)); width: calc(363.43 * var(--pt)); }
+.columns::before, .columns::after { content: ""; flex: 1 1 0; }
+.columns.top { align-items: baseline; }
+.column { flex: none; width: calc(var(--w) * 342.295 * var(--pt)); }
+.columns > .fill { flex: 1 1 0; }
+.column ~ .column { margin-left: calc(-0.6 * var(--pt)); }
+.multicols { columns: var(--cols); column-gap: calc(10 * var(--pt)); margin: calc(12 * var(--pt)) 0; }
+.multicols > ul { margin: 0; }
+/* the contents frame of a subsection: the section shaded, its subsections listed */
+ol.toc > li.parent { opacity: 1; }
+ol.toc > li.parent > .shade, ol.toc > li.parent::before { opacity: .2; }
+ul.subtoc { margin: 0; padding-bottom: calc(7.15 * var(--pt)); color: var(--toc-subsection); font-size: calc(10.83 * var(--fs)); line-height: calc(13.55 * var(--pt)); }
+ul.subtoc > li { padding-left: calc(10.91 * var(--pt)); }
+ul.subtoc > li::before { left: calc(3.2 * var(--pt)); top: calc(5.4 * var(--pt)); width: calc(4.14 * var(--pt)); height: calc(4.14 * var(--pt)); }
+ul.subtoc > li + li { margin-top: 0; }
+ul.subtoc > li.shaded { opacity: .2; }
+/* the bibliography in \scriptsize: 8pt on 9.465pt, titles bold 8pt, a hanging indent of 10.38pt */
+.refs.scriptsize { line-height: calc(9.465 * var(--pt)); }
+.refs.scriptsize .bibitem { padding-left: calc(10.38 * var(--pt)); text-indent: calc(-10.38 * var(--pt)); margin-bottom: calc(5.15 * var(--pt)); }
+.refs.scriptsize .bib-title { font-size: calc(8 * var(--fs)); }
+/* listings: columns=fixed, each token in n boxes of 0.6 quad, its characters spread inside them;
+   frame=trBL, the bottom and left rules doubled; title above, \small */
+/* below it, \medskip less the 3pt a following list adds; the outer bottom rule, 3.19pt down, is in
+   TeX's box and so in the space it takes (measured) */
+.listing { position: relative; margin: calc(3 * var(--pt)) 0 calc(5.82 * var(--pt)); }
+.block-body > .listing:last-child { margin-bottom: calc(10.15 * var(--pt)); }
+.lst-title { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); text-align: center; }
+.lst-title.split { display: flex; justify-content: space-between; text-align: left; }
+.listing pre {
+	position: relative; margin: 0 calc(-2.1 * var(--pt)) 0 calc(-3.39 * var(--pt));
+	padding: var(--lst-top, calc(3.2 * var(--pt))) calc(1.7 * var(--pt)) var(--lst-bottom, calc(3.2 * var(--pt))) calc(2.99 * var(--pt));
+	border: calc(0.4 * var(--pt)) solid #000; background: #F0F7FF;
+	font-family: "LM Mono 8", monospace; font-size: calc(7.97 * var(--pt)); line-height: calc(9.465 * var(--pt));
+	white-space: pre; color: var(--text);
+}
+.listing pre::before {
+	content: ""; position: absolute; z-index: -1;
+	left: calc(-2.79 * var(--pt)); top: calc(2.79 * var(--pt)); right: calc(2.79 * var(--pt)); bottom: calc(-2.79 * var(--pt));
+	border-left: calc(0.4 * var(--pt)) solid #000; border-bottom: calc(0.4 * var(--pt)) solid #000; background: #F0F7FF;
+}
+.listing { isolation: isolate; }
+.listing.tiny pre { font-size: calc(5.98 * var(--pt)); line-height: calc(6.975 * var(--pt)); }
+.tok { letter-spacing: var(--s); padding-left: var(--s); }
+.sp { display: inline-block; width: calc(var(--n) * 0.6375em); }
+.listing .kw { color: #0000FF; }
+.listing .com { color: #009900; }
+.listing .str { color: #9400D1; }
+.listing.lang-solidity .id { color: #000000; }
+.listing.lang-solidity .kw2 { color: #008080; }
+.listing.lang-solidity .kw3 { color: #800080; }
+.listing.lang-solidity .com { color: #7F807F; }
+.listing.lang-solidity .str { color: #FF0000; }
+
+/* ----- printing: one page per frame, PDF-sized -------------------------- */
+@media print {
+	@page { size: 1024px 768px; margin: 0; }
+	html, body { background: none; height: auto; overflow: visible; }
+	.deck { position: static; }
+	.frame { display: block; position: relative; left: 0; top: 0; margin: 0; transform: none; break-after: page; }
+	* { print-color-adjust: exact; }
+}

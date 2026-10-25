@@ -2,13 +2,16 @@
 import re, unicodedata, difflib, html as H
 import pymupdf
 
-from deck import path, STYLE
+from deck import path, STYLE, CITES
 
 PDF = pymupdf.open(path('pdf'))
 BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th'}
 
+# Computer Modern's math symbols as the PDF names them -> as the page writes them
+SAME = str.maketrans({'∆': 'Δ'})
+
 def norm(c):
-    c = unicodedata.normalize('NFKC', c)
+    c = unicodedata.normalize('NFKC', c).translate(SAME)
     return c
 
 def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
@@ -17,7 +20,7 @@ def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
     for b in raw['blocks']:
         for l in b.get('lines', []):
             for sp in l['spans']:
-                cite = skip_cite and sp['size'] < 6.2 and sp['color'] == STYLE['cite']
+                cite = skip_cite and sp['size'] < 6.2 and sp['color'] in CITES
                 for ch in sp['chars']:
                     x, y = ch['origin']
                     if y < ytop or y > ybot or cite:
@@ -31,7 +34,7 @@ def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
 def html_chars(h):
     """visible non-space characters of an HTML fragment: (char, start, end, flow); and visible spaces"""
     chars, spaces = [], set()
-    i, flow, skip = 0, 0, []
+    i, flow, skip, boxes, fresh = 0, 0, [], [], 0
     while i < len(h):
         c = h[i]
         if c == '<':
@@ -41,6 +44,19 @@ def html_chars(h):
             closing = tag.startswith('/')
             if name in BLOCK or re.search(r'class="bib-', tag):
                 flow += 1
+            # the parts of a fraction, a stack, cases or an array sit on lines of their own: each is a
+            # flow of its own, and the text after it goes on in the flow before it
+            if boxes and name == boxes[-1][0]:
+                if closing:
+                    boxes[-1][1] -= 1
+                    if boxes[-1][1] == 0:
+                        flow = boxes.pop()[2]
+                elif not tag.endswith('/'):
+                    boxes[-1][1] += 1
+            if not closing and re.search(r'class="(?:num|den|over|rows|array|subsup)\b', tag):
+                boxes.append([name, 1, flow])
+                fresh += 1
+                flow = 10 ** 6 + fresh
             if skip:
                 if name == skip[-1][0]:
                     if closing:
@@ -116,10 +132,10 @@ def add_breaks(h, pn, report=True, **kw):
     for bl in PDF[pn - 1].get_text('rawdict')['blocks']:
         for l in bl.get('lines', []):
             for sp in l['spans']:
-                if sp['size'] < 6.2 and sp['color'] == STYLE['cite'] and sp['chars'] and sp['chars'][0]['c'] == '[':
+                if sp['size'] < 6.2 and sp['color'] in CITES and sp['chars'] and sp['chars'][0]['c'] == '[':
                     ch = sp['chars'][0]
                     cites.append(dict(x=ch['origin'][0], y=ch['origin'][1], x1=ch['bbox'][2]))
-    anchors = [m.start() for m in re.finditer(r'<a class="ccite"', h)]
+    anchors = [m.start() for m in re.finditer(r'<(?:a|span) class="ccite', h)]
     if len(anchors) == len(cites):
         done = {x[0] for x in inserts}
         for at, cq in zip(anchors, cites):
