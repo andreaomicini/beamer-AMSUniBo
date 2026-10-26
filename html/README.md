@@ -7,8 +7,9 @@ page for page, and the tools that do the mechanical part. None of this is in
 Since experiment 4 the same tools translate AMSBolognaFC decks too:
 `"style": "AMSBolognaFC"` in the deck's `deck.json` picks that style's theme,
 fonts, seal and measuring constants. Since experiment 5, AMSPurpleAndGold decks
-as well (`"style": "AMSPurpleAndGold"`), and since experiment 6 AMSSilverBlue
-ones (`"style": "AMSSilverBlue"`).
+as well (`"style": "AMSPurpleAndGold"`), since experiment 6 AMSSilverBlue ones
+(`"style": "AMSSilverBlue"`), and since experiment 7 AMSRedGrey ones
+(`"style": "AMSRedGrey"`).
 
 The page is a translation, not a conversion. The PDF is the reference: the text,
 its line breaks and its geometry are copied from it, and the result is checked
@@ -259,6 +260,20 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `\scriptsize`, and math beyond letters — scripts, fractions, `\stackrel`,
   `cases`, `array`. The other styles take it when a deck of theirs needs it.
 
+### AMSRedGrey
+
+* **AMSSilverBlue's profile in the old AMSCesena reds and greys.** The two
+  themes differ in colour names only; `theme-AMSRedGrey.css` is
+  AMSSilverBlue's CSS with the palette of `beamercolorthemeredgrey.sty`, and
+  two roles of their own: items (bullets, labels, balls) are `rgreddark`, not
+  the identity red, and a block body is `rgsilvertint`, not a red tint. The
+  balls take AMSSilverBlue's mixes, each from `sbblue` to `rgreddark`.
+* **What experiment 7's deck brought** is in this style's CSS, at its end:
+  `verbatim`, tables, `shrink`, the contents with subsections, `\huge`, the
+  deck's TikZ arrow, arrays of any column spec, `\big`/`\bigg`, `\widetilde`,
+  `\mathscr`, math `\dots`, `\scriptspace`, `\\[<len>]`, TeX's italic
+  corrections.
+
 ## the tools
 
 Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
@@ -329,7 +344,10 @@ not; a new deck may need it grown.
 generated page carries, the deck-size announcement included. What belongs to
 one deck lives in that deck, in `html/tex2html/`: `deck.json` (paths, names,
 short fields, alt texts, the deck's own name macros, `subtoc_title` and
-`toc_centred` for decks with subsections), `titlepage.html`, `deck.css` and
+`toc_centred` for decks with subsections, `toc_subsections` for contents that
+list them, `texmacros` for the deck's own TeX macros, expanded in the source,
+`shrink` for a frame TeX shrinks more than asked, `italic_corrections` for
+TeX's corrections after math letters), `titlepage.html`, `deck.css` and
 `nudges.json`, the per-frame corrections, which `nudge.py` writes: a shift per
 frame, margins keyed by element, and a `translate` per column. Listings are
 `listing.py`'s.
@@ -671,3 +689,86 @@ page 43's bottom (1.9pt).
   change only in the shared script; experiment 5 also gains a break before a
   citation of two keys, which its PDF has and its page had missed, and its
   corrections, keyed by element, would then need `--nudge`. None was replaced.
+
+### 7 — Labelled Variables @ CILC 2016, AMSRedGrey, 2026-10-26
+
+`labelledvariables-cilc2016-slides`: 31 pages on AMSRedGrey 1.2, a 2016 deck
+by four authors recovered with the skill `/recover-deck` — the first deck on
+this style. Nine `verbatim`s of Prolog and one fancyvrb `Verbatim`, a 5 × 23
+`tabular` in a frame shrunk by 40%, three frames shrunk by 20%, a contents
+frame listing subsections, an `array` with `\bigg` braces, `\mathscr`, a TikZ
+arrow, two pictures. Measured at the end, both engines: baselines within 1.6pt
+but page 18 (the origins of `\bigg{` and `⋀`, not errors) and page 19 (a
+prime, 2.6pt, and a 1.5pt drift in a shrunk block); left edges within 3.6pt
+but page 18's array (5.9pt) and page 28's bold-italic book title in WebKit
+(6.8pt, as experiment 6's); blocks within 1pt but page 18's two (1.9pt);
+footline exact.
+
+* **`verbatim` and `Verbatim`**: their bodies are taken out of the source
+  before anything parses it (comments included) and come back as a `<pre>` in
+  the size declared just before them — and only them: beamer's lists set their
+  own. cmtt's OT1 slots draw `` ` `` and `'` as ‘ and ’. With `commandchars`,
+  `\(..\)` is math. A line's own newline takes the PDF's break, also after
+  trailing spaces; `pre` is a block to the alignment, or the newline between two
+  of them became a `<br>` that WebKit and Firefox lay out differently.
+* **A paragraph ends where the next `verbatim` begins**: a `\scriptsize` before
+  that `verbatim` is already in force, so TeX sets the paragraph at
+  scriptsize's baselineskip, which `\lineskip` raises to 11.08pt for 10.95pt
+  text. One `deck.css` line.
+* **Tables**: `table` centred, `tabular` as a `<table>` with its column spec,
+  vertical rules and `\hline` above or below a row; `split_top` serves
+  commands, so `&` and `\\` have a splitter of their own. A cell is a flow of
+  its own to the alignment.
+* **`shrink=<n>`**: beamer sets the content at `\textwidth / f` and scales it
+  by `f = 1 - n/100`. CSS `zoom` on each child of the body does exactly that.
+  TeX may shrink more than asked; its log says so, and `deck.json`'s `shrink`
+  gives that page's real percentage. A block's depth measured on the PDF is
+  already scaled, so it goes in divided by `f`.
+* **Contents with subsections** (`toc_subsections`): beamer's
+  `\tableofcontents` puts `\vspace*{-.5em}` first, a `\vfill` before each
+  section and one after the last; the list's items become the body's flex
+  items, so those fills share the free space with the frame's own. Subsections
+  at 5ex, their ball 1ex before the text. A frame without a title starts under
+  the headline.
+* **Arrays**: any column spec as a grid of its columns, each cell aligned as
+  the spec says and on its row's baseline; a `\bigg` delimiter is a glyph 2.4
+  times the size across the axis, so it adds above and below its row what
+  TeX's does; a subsup's scripts add about 1pt. Corrections never go inside an
+  array. Experiment 6's `{rcl}` form is kept as it was.
+* **Widths TeX has and Unicode does not**: `\mathscr` takes rsfs10's advance
+  plus its italic correction (a math font, space 0); a math letter in the sans
+  italic takes cmssi10's italic correction unless a letter of the same font or
+  a subscript follows (`italic_corrections`); math `\dots` are three `\ldotp`
+  with a thin space after each; `\scriptspace` is 0.5pt; a binary operator
+  alone is an ordinary symbol.
+* **The font subsets**: Θ and Λ in the text faces; in LM Math the arrows and
+  operators of this deck, the script capitals and italic Greek. A character
+  missing from both falls back to a system font, different in each engine:
+  that, not the layout, was a 3pt difference between WebKit and Firefox.
+* **`depth.py` took a subscript's baseline for the last line's**: the line is
+  now its largest characters' baseline, and its depth the lowest any of its
+  characters reaches, scripts included.
+* **`\\` followed by a `}`** was read as an escaped brace by `read_group`,
+  and `\\[<len>]` printed its length: both fixed; a negative length pulls the
+  next line up. `\center{...}`, `\huge`, `$$ $$`, `equation*`, `\mbox`,
+  `\textasciicircum`, a size before `\frametitle`, frame options with spaces
+  after their commas — all were new.
+* **Not everything is automatic**: `nudges.json` was set by hand for pages 11,
+  18, 19, 27 and 30, now 28 (shifts, and a margin the corrections kept
+  misplacing on a page with two lines starting with "where"); `deck.css` holds
+  the title page,
+  the footline's number box (31.55pt), and pages 6, 11 and 27.
+* **The footline**: with no short institute, infolines prints the author alone
+  (`\ifblank`), not "Author ()"; `script.js` now does the same.
+* Pages of the experiments before, rebuilt with these tools: experiments 2 and 4
+  change only in the shared script; experiment 5 as after experiment 6;
+  experiment 6 loses a `<br>` that the alignment had put inside the superscript
+  of page 43's `∑` — right now, but that page's hand-set corrections were made
+  around it and would need checking. None was replaced.
+* **The closing as the style's template has it**, at Andrea's word on the day:
+  numbering ends on the repeated title page, the references come after it,
+  `noframenumbering`. Moving frames moves page numbers: `nudges.json` is keyed
+  by page, so re-key it (here old 28–31 → 30, 31, 28, 29), set `totalframes`,
+  and re-nudge alone the pages whose frame options changed (`[t,c]` → `[t]`).
+  The same for experiment 6, re-keyed only: its page 43, rebuilt with these
+  tools, measures as before.

@@ -86,12 +86,17 @@ def container(s, ind, mode='body'):
             flush_text(s[i:])
             break
         # only top-level environments: skip ones inside a brace group
-        flush_text(s[i:m.start()])
         env = m.group(1)
+        pre, size = s[i:m.start()], ''
+        if env in ('verbatim', 'Verbatim'):
+            q = re.search(r'\\(tiny|scriptsize|footnotesize|small|normalsize)(?![A-Za-z])\s*$', pre)
+            if q:
+                pre, size = pre[:q.start()], q.group(1).replace('normalsize', '')
+        flush_text(pre)
         a, b = find_end(s, m.end(), env)
         inner = s[m.end():a]
         i = b
-        items.append(('raw', env_html(env, inner, ind)))
+        items.append(('raw', verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim') else env_html(env, inner, ind)))
 
     # side by side: consecutive minipages are one line of boxes
     grouped = []
@@ -122,7 +127,7 @@ def container(s, ind, mode='body'):
         first = False
     return lines, flags
 
-BEGIN = re.compile(r'\\begin\{([a-z]+)\}')
+BEGIN = re.compile(r'\\begin\{([a-z]+\*?|Verbatim)\}')
 def next_env(s, i):
     """the next \\begin{env} at i or after it that is text, not inside math"""
     while True:
@@ -241,7 +246,79 @@ def env_html(env, inner, ind):
         n, j = read_group(inner, skip_ws(inner, 0))
         body, flags = container(inner[j:], ind + T, 'body')
         return '\n'.join([f'{ind}<div class="multicols" style="--cols: {n}">'] + body + [f'{ind}</div>'])
+    if env == 'table':   # beamer centres a table; a size declared around the tabular sizes it
+        s0 = inner.strip()
+        m = re.fullmatch(r'\{\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])(.*)\}', s0, re.S)
+        size, s0 = (m.group(1), m.group(2)) if m else ('', s0)
+        body, flags = container(s0, ind + T, 'center')
+        out = '\n'.join([f'{ind}<div class="table{" " + size if size else ""}">'] + body + [f'{ind}</div>'])
+        return out
+    if env == 'tabular':
+        return tabular(inner, ind)
+    if env in ('equation*', 'displaymath'):   # unnumbered: a display, as \[ \]
+        return ind + C.inline('\\[' + inner + '\\]').strip('\x00').removeprefix('disp:')
     raise ValueError('env ' + env)
+
+def split_cells(s, sep):
+    """split a tabular body at top-level \\\\ (sep '\\\\') or & (sep '&'): not in a group, not in math"""
+    parts, depth, math, last, i = [], 0, False, 0, 0
+    while i < len(s):
+        c = s[i]
+        if c == '\\':
+            if sep == '\\\\' and s.startswith('\\\\', i) and depth == 0 and not math:
+                parts.append(s[last:i]); i += 2; last = i
+                continue
+            i += 2
+            continue
+        if c == '$':
+            math = not math
+        elif c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+        elif c == '&' and sep == '&' and depth == 0 and not math:
+            parts.append(s[last:i]); last = i + 1
+        i += 1
+    parts.append(s[last:])
+    return parts
+
+def tabular(inner, ind):
+    """a tabular: the column spec's alignments and vertical rules, \\hline (single or double) above or
+    below a row, cells through the inline converter"""
+    spec, j = read_group(inner, skip_ws(inner, 0))
+    cols, vl = [], [0]
+    for c in spec.replace(' ', ''):
+        if c == '|':
+            vl[-1] += 1
+        elif c in 'lcr':
+            cols.append(c); vl.append(0)
+    rows, hl = [], 0
+    for r in split_cells(inner[j:], '\\\\'):
+        r = r.strip()
+        top = 0
+        while True:
+            m = re.match(r'\\hline\s*', r)
+            if not m:
+                break
+            top += 1; r = r[m.end():]
+        if rows and top:
+            rows[-1]['below'] = top
+        if r:
+            rows.append(dict(above=top if not rows else 0, cells=split_cells(r, '&'), below=0))
+        elif not rows:
+            hl = top
+    if rows and hl:
+        rows[0]['above'] = hl
+    out = [f'{ind}<table class="tabular">']
+    for k, row in enumerate(rows):
+        cls = ([f'hl{row["above"]}'] if row['above'] else []) + ([f'hb{row["below"]}'] if row['below'] else [])
+        out.append(f'{ind}{T}<tr{" class=" + chr(34) + " ".join(cls) + chr(34) if cls else ""}>')
+        for q, c in enumerate(row['cells'][:len(cols)]):
+            cc = [cols[q]] + (['vl'] if vl[q] else []) + (['vr'] if vl[q + 1] else [])
+            out.append(f'{ind}{T}{T}<td class="{" ".join(cc)}">{C.inline(c.strip()).strip()}</td>')
+        out.append(f'{ind}{T}</tr>')
+    out.append(f'{ind}</table>')
+    return '\n'.join(out)
 
 def itemize(inner, ind, tag='ul'):
     parts = split_top(inner, 'item')
@@ -387,8 +464,70 @@ def distribute(items, pn, k):
             where[a] = free[0] if free else prev
     return where
 
+VERBATIM = []   # the bodies of verbatim and Verbatim, taken out before anything parses the source
+VERB = re.compile(r'\\begin\{(verbatim|Verbatim)\}(\[[^\]\n]*\])?(.*?)\\end\{\1\}', re.S)
+
+def keep_verbatim(src):
+    def put(m):
+        VERBATIM.append((m.group(1), m.group(2) or '', m.group(3)))
+        return '\\begin{%s}%d\\end{%s}' % (m.group(1), len(VERBATIM) - 1, m.group(1))
+    return VERB.sub(put, src)
+
+def verbatim_html(env, ind, size):
+    """a verbatim body as a <pre>, in its size: cmtt's OT1 slots draw ` and ' as curly quotes; with
+    fancyvrb's commandchars, \\(..\\) is math"""
+    kind, opt, body = VERBATIM[int(env)]
+    body = body[1:] if body.startswith('\n') else body
+    body = body.rstrip(' \t')
+    body = body[:-1] if body.endswith('\n') else body
+    def text(x):
+        return esc(x).replace('`', '\u2018').replace("'", '\u2019')
+    if kind == 'Verbatim' and 'commandchars' in opt:
+        parts = re.split(r'(\\\(.*?\\\))', body)
+        h = ''.join(C.inline('$' + q[2:-2] + '$') if q.startswith('\\(') else text(q) for q in parts)
+    else:
+        h = text(body)
+    return f'{ind}<pre class="verbatim{" " + size if size else ""}">{h}</pre>'
+
+def expand_macros(s):
+    """deck.json's "texmacros": {name: [number of arguments, body with #1 #2 ...]}, expanded in the source
+    the way TeX does, before anything reads it: macros the deck defines and the converter need not know"""
+    defs = CFG.get('texmacros', {})
+    if not defs:
+        return s
+    pat = re.compile(r'\\(' + '|'.join(sorted(map(re.escape, defs), key=len, reverse=True)) + r')(?![A-Za-z])')
+    for _ in range(10):   # bodies may use one another
+        out, i, changed = [], 0, False
+        for m in pat.finditer(s):
+            if m.start() < i:
+                continue
+            n, body = defs[m.group(1)]
+            j, args = m.end(), []
+            for _a in range(n):
+                g, j = read_arg(s, j)
+                args.append(g)
+            for k, g in enumerate(args, 1):
+                body = body.replace('#%d' % k, g)
+            if n == 0 and j < len(s) and s[j] == ' ':
+                pass
+            out.append(s[i:m.start()] + '{' + body + '}' if n else s[i:m.start()] + body + (' ' if re.match(r'[A-Za-z]', s[j:j + 1]) else ''))
+            i, changed = j, True
+        out.append(s[i:])
+        s = ''.join(out)
+        if not changed:
+            break
+    return s
+
+def shrinkage(opts):
+    """beamer's shrink=<n>: the percentage the frame's content is shrunk by, at least; 0 when absent"""
+    for o in opts:
+        m = re.fullmatch(r'shrink(?:=(\d+(?:\.\d+)?))?', o)
+        if m:
+            return float(m.group(1) or 0)
+    return 0
+
 def pages():
-    src = strip_comments(open(path('tex')).read())
+    src = expand_macros(strip_comments(keep_verbatim(open(path('tex')).read())))
     doc = src[src.index('\\begin{document}') + 16:src.index('\\end{document}')]
     subtocs = '\\AtBeginSubsection' in src[:src.index('\\begin{document}')]
     # the sections, and their subsections, for the contents frames
@@ -437,14 +576,14 @@ def pages():
             subno = 0
             if not m.group(2):
                 secno += 1
-                out.append(dict(kind='toc', section=section, current=secno, secs=secs))
+                out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs))
             continue
         if m.group(4) == 'titlepage':
             out.append(dict(kind='titlepage', section=section, subsection=subsection))
             i = m.end()
             continue
         if m.group(4) == 'tableofcontents':
-            out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs))
+            out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs, subs=subs))
             i = m.end()
             continue
         # a frame
@@ -460,10 +599,15 @@ def pages():
                 continue
         opts, j = read_opt(fr, 0)
         j = skip_ws(fr, j)
+        lead = ''   # a size declared before \frametitle sizes the body, not the title
+        q = re.match(r'\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])\s*(?=\\frametitle)', fr[j:])
+        if q:
+            lead, j = fr[j:j + q.end()], j + q.end()
         if fr.startswith('\\frametitle', j):
             j += len('\\frametitle')
         title, j = read_group(fr, skip_ws(fr, j))
-        opts = (opts or '').split(',')
+        fr = fr[:j] + lead + fr[j:]
+        opts = [o.strip() for o in (opts or '').split(',')]
         nonum = 'noframenumbering' in opts or nonumber
         broken = 'allowframebreaks' in opts
         parts = split_top(fr[j:], 'framebreak') if broken else [fr[j:]]
@@ -490,7 +634,7 @@ def pages():
                 roman += 1
                 out.append(dict(kind='frame', section=section, subsection=subsection,
                                 title=t + (' ' + ROMAN[roman] if broken else ''), body=g, flags=flags,
-                                top='t' in opts, nonum=nonum, shrink='shrink' in opts))
+                                top='t' in opts, nonum=nonum, shrink=shrinkage(opts)))
     return out
 
 if __name__ == '__main__':

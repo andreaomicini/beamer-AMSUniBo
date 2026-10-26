@@ -79,6 +79,19 @@ def toc(n, p, title=True):
     if title:
         out.append(f'{T}<h2 class="frametitle">{CFG["toc_title"]}</h2>')
     out.append(f'{T}<div class="body"{bst}>')
+    if CFG.get('toc_subsections'):
+        # beamer's \tableofcontents: \vspace*{-.5em}, a \vfill before each section and one after the
+        # last; each section followed by its subsections, shaded with it when it is not the current one
+        out.append(f'{T}{T}<ol class="toc fills">')
+        out.append(f'{T}{T}{T}<li class="tocfill first"></li>')
+        for k, s in enumerate(p['secs'], 1):
+            sh = ' class="shaded"' if title and k != p['current'] else ''
+            subs = p.get('subs', [[]] * len(p['secs']))[k - 1]
+            sub = ('<ul class="tocsub">' + ''.join(f'<li>{x}</li>' for x in subs) + '</ul>') if subs else ''
+            out.append(f'{T}{T}{T}<li{sh}>{s}{sub}</li>')
+            out.append(f'{T}{T}{T}<li class="tocfill"></li>')
+        out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
+        return '\n'.join(out)
     out.append(f'{T}{T}<ol class="toc">')
     for k, s in enumerate(p['secs'], 1):
         sh = ' class="shaded"' if title and k != p['current'] else ''
@@ -129,8 +142,9 @@ def quirks(h):
             lines[i] = f'{m.group(1)}<li{attrs}>{m.group(3)}'
     return '\n'.join(lines)
 
-def block_depths(n, h):
-    """each block body ends where TeX's last line ends: shallower than a 'g', less padding"""
+def block_depths(n, h, f=1):
+    """each block body ends where TeX's last line ends: shallower than a 'g', less padding. In a shrunk
+    frame (zoom f) the depth measured on the PDF is already scaled: it goes in divided by f"""
     ds = depths(n)
     parts = h.split('<div class="block-body')
     if len(parts) - 1 != len(ds):
@@ -140,7 +154,7 @@ def block_depths(n, h):
     for d, rest in zip(ds, parts[1:]):
         if abs(d) >= 0.05:
             q = rest.index('"')
-            rest = rest[:q + 1] + f' style="padding-bottom: {pt(round(STYLE["bottom"] + d, 2))}"' + rest[q + 1:]
+            rest = rest[:q + 1] + f' style="padding-bottom: {pt(round(STYLE["bottom"] + d / f, 2))}"' + rest[q + 1:]
         out += '<div class="block-body' + rest
     return out
 
@@ -150,10 +164,13 @@ def frame(n, p):
     body = quirks(body)
     body = margins(n, body)
     body = columns(n, body)
-    body = block_depths(n, body)
-    head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if p.get('shrink') else ''),
-                             secname(p['section']), ' data-noframenumbering' if p['nonum'] else '',
-                             centred=not p['top'], sub=p['subsection'])
+    # shrink: beamer sets the content at \textwidth / f and scales it by f = 1 - n/100; TeX may shrink further
+    # than asked ("shrunk by a factor of ... instead of ..."), which deck.json's "shrink" gives per page
+    sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
+    body = block_depths(n, body, 1 - sh / 100)
+    extra = (' data-noframenumbering' if p['nonum'] else '') + (f' style="--shrink: {round(1 - sh / 100, 5)}"' if sh else '')
+    head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if sh else ''),
+                             secname(p['section']), extra, centred=not p['top'], sub=p['subsection'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
     return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
                       f'{T}</div>', '</section>'])

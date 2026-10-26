@@ -5,7 +5,7 @@ import pymupdf
 from deck import path, STYLE, CITES
 
 PDF = pymupdf.open(path('pdf'))
-BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th'}
+BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th', 'pre'}
 
 # Computer Modern's math symbols as the PDF names them -> as the page writes them
 SAME = str.maketrans({'∆': 'Δ'})
@@ -53,7 +53,9 @@ def html_chars(h):
                         flow = boxes.pop()[2]
                 elif not tag.endswith('/'):
                     boxes[-1][1] += 1
-            if not closing and re.search(r'class="(?:num|den|over|rows|array|subsup)\b', tag):
+            # so are an array's cells, each a flow of its own, and the two scripts of a subsup
+            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr])\b', tag)
+                                or (name in ('sub', 'sup') and re.search(r'class="subsup"', h[max(0, i - 200):i]) and h.rfind('</span>', 0, i) < h.rfind('class="subsup"', 0, i))):
                 boxes.append([name, 1, flow])
                 fresh += 1
                 flow = 10 ** 6 + fresh
@@ -120,7 +122,11 @@ def add_breaks(h, pn, report=True, **kw):
         if not newline(p, q):
             continue
         gap = [k for k in range(hc[i][2], hc[i + 1][1]) if k in spaces]
-        if gap:
+        # in a <pre>, the line's own newline, after any trailing spaces
+        nl = [k for k in gap if h[k] == '\n' and h.rfind('<pre', 0, k) > h.rfind('</pre>', 0, k)]
+        if nl:
+            inserts.append((nl[0], nl[0] + 1, '<br>'))
+        elif gap:
             inserts.append((gap[0], gap[0] + 1, '<br>'))
         else:
             between = b[match[i] + 1:match[i + 1]]

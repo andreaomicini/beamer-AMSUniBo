@@ -2,6 +2,23 @@
 import re, html as H
 from deck import CFG, ROOT, path
 
+# \mathcal: Unicode's mathematical script capitals, but for the eight it keeps in Letterlike Symbols
+# cmssi10's italic corrections, in em (tftopl cmssi10): the deck's math letters are sans italic
+CMSSI_IC = {'B': 0.0829, 'C': 0.1198, 'D': 0.0755, 'E': 0.1198, 'F': 0.1337, 'G': 0.1198, 'H': 0.0809, 'I': 0.1337,
+            'J': 0.0809, 'K': 0.1198, 'M': 0.0809, 'N': 0.0809, 'O': 0.0755, 'P': 0.0829, 'Q': 0.0755, 'R': 0.0829,
+            'S': 0.0921, 'T': 0.1337, 'U': 0.0809, 'V': 0.1615, 'W': 0.1615, 'X': 0.1337, 'Y': 0.1726, 'Z': 0.1198,
+            'a': 0.0098, 'b': 0.0306, 'c': 0.0834, 'd': 0.0948, 'e': 0.0678, 'f': 0.2171, 'g': 0.1084, 'h': 0.0178,
+            'i': 0.0972, 'j': 0.0916, 'k': 0.0834, 'l': 0.0948, 'm': 0.0178, 'n': 0.0178, 'o': 0.0661, 'p': 0.0389,
+            'q': 0.0417, 'r': 0.1084, 's': 0.0778, 't': 0.0722, 'u': 0.0417, 'v': 0.1084, 'w': 0.1084, 'x': 0.0917,
+            'y': 0.1084, 'z': 0.0875}
+# rsfs10's advance widths plus italic corrections, in em (tftopl rsfs10): a math font (space 0), so TeX
+# adds each letter's italic correction
+RSFS = {'A': 1.0318, 'B': 0.9484, 'C': 0.8351, 'D': 0.8681, 'E': 0.7475, 'F': 1.0318, 'G': 0.7828, 'H': 1.2661,
+        'I': 1.001, 'J': 1.2435, 'K': 1.2262, 'L': 1.0656, 'M': 1.2401, 'N': 1.254, 'O': 0.8187, 'P': 1.0934,
+        'Q': 0.9159, 'R': 0.9126, 'S': 1.0596, 'T': 1.0378, 'U': 1.0581, 'V': 0.8973, 'W': 1.0805, 'X': 1.2045,
+        'Y': 1.0035, 'Z': 1.0616}
+MATHCAL = {'B': 'ℬ', 'E': 'ℰ', 'F': 'ℱ', 'H': 'ℋ', 'I': 'ℐ', 'L': 'ℒ', 'M': 'ℳ', 'R': 'ℛ'}
+
 def esc(s):
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
@@ -17,17 +34,19 @@ def skip_ws(s, i):
 def read_group(s, i):
     """s[i] == '{': return (inner, index after the closing brace)"""
     assert s[i] == '{', s[i:i + 40]
-    depth = 0
-    for j in range(i, len(s)):
+    depth, j = 0, i
+    while j < len(s):
         c = s[j]
-        if c == '\\':
+        if c == '\\':               # an escape takes the next character with it: \{ \} and \\ alike
+            j += 2
             continue
-        if c == '{' and (j == 0 or s[j - 1] != '\\'):
+        if c == '{':
             depth += 1
-        elif c == '}' and s[j - 1] != '\\':
+        elif c == '}':
             depth -= 1
             if depth == 0:
                 return s[i + 1:j], j + 1
+        j += 1
     raise ValueError('unbalanced ' + s[i:i + 60])
 
 def read_arg(s, i):
@@ -147,12 +166,16 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
 # ---------------------------------------------------------------- the converter
 # math symbols: relations, binary operators, ordinary symbols
 MATHREL = {'approx': '≈', 'longrightarrow': '⟶', 'mapsto': '↦', 'neq': '≠', 'ne': '≠', 'geq': '≥', 'ge': '≥', 'leq': '≤',
-           'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈'}
-MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨'}
+           'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈',
+           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑'}
+MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond': '⋄'}
 MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': '∞', 'Delta': 'Δ', 'Xi': 'Ξ',
-           'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ'}
+           'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ',
+           'Theta': 'Θ', 'ell': 'ℓ', 'wp': '℘', 'exists': '∃', 'cdots': '⋯', 'dots': '…', 'bigwedge': '⋀',
+           'beta': '\U0001D6FD', 'theta': '\U0001D703', 'omega': '\U0001D714', 'sigma': '\U0001D70E',
+           '{': '{', '}': '}'}
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
-SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'smaller'}
+SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'huge', 'smaller'}
 
 class Conv:
     def __init__(self):
@@ -208,6 +231,9 @@ class Conv:
         lone = {'=': '=', '+': '+', '\\times': '×'}
         if s in lone:
             return lone[s]
+        m = re.fullmatch(r'\\([A-Za-z]+)', s)   # a binary operator alone is an ordinary symbol: no spaces
+        if m and m.group(1) in MATHBIN:
+            return MATHBIN[m.group(1)]
         out, i = [], 0
         while i < len(s):
             c = s[i]
@@ -220,9 +246,28 @@ class Conv:
                     out.append(self.inline(g))
                 elif name == 'mid':
                     out.append('<span class="rel thick">|</span>')
+                elif name in ('big', 'Big', 'bigg', 'Bigg'):   # a delimiter at 1.2, 1.8, 2.4, 3 times its size
+                    m2 = re.match(r'\s*(?:\\([A-Za-z]+|.)|(.))', s[i:])
+                    i += len(m2.group(0))
+                    d = (MATHORD.get(m2.group(1), m2.group(1)) if m2.group(1) else m2.group(2)) or ''
+                    out.append(f'<span class="delim {name}">{esc(d)}</span>' if d != '.' else '')
+                elif name == 'hspace':
+                    g, i = read_arg(s, i)
+                    out.append(f'<span class="mspace" style="--w: {g}"></span>')
+                elif name == 'widetilde':
+                    g, i = read_arg(s, i)
+                    out.append(f'<span class="wtilde">{self.math(g)}</span>')
+                elif name in ('arrowdown', 'arrowup', 'arrowleft'):   # the deck's TikZ arrows
+                    out.append(f'<span class="{name}"></span>')
+                elif name == 'mathscr':   # rsfs: Unicode's script capitals in rsfs10's widths
+                    g, i = read_arg(s, i)
+                    out.append(''.join(f'<span class="mscr" style="width: {RSFS[c]}em">'
+                                       f'{MATHCAL.get(c, chr(0x1D49C + ord(c) - 65))}</span>' if c in RSFS else c for c in g))
+                elif name in ('dots', 'ldots', 'cdots'):   # \mathinner of three \ldotp or \cdotp: punctuation, a thin space after each
+                    out.append(f'<span class="mdots">{"..." if name != "cdots" else "⋅⋅⋅"}</span>')
                 elif name == 'mathcal':
                     g, i = read_arg(s, i)
-                    out.append(''.join({'A': '𝒜', 'C': '𝒞', 'L': 'ℒ'}[c] for c in g))
+                    out.append(''.join(MATHCAL.get(c, chr(0x1D49C + ord(c) - 65) if 'A' <= c <= 'Z' else c) for c in g))
                 elif name == 'times':
                     out.append('<span class="rel">×</span>')
                 elif name in ('rightarrow', 'to'):
@@ -269,11 +314,20 @@ class Conv:
                     a, b = find_end(s, i, env)
                     inner = s[i:a]
                     i = b
+                    spec = ''
                     if env == 'array':
-                        _, inner = read_arg(inner, 0)[0], inner[read_arg(inner, 0)[1]:]
+                        spec, k = read_arg(inner, 0)
+                        inner = inner[k:]
                     rows = [r for r in re.split(r'\\\\', inner) if r.strip()]
                     cells = [[self.math(c) for c in r.split('&')] for r in rows]
-                    if env == 'cases':
+                    cols = [c for c in spec if c in 'lcr']
+                    if env == 'array' and cols != ['r', 'c', 'l']:
+                        # any column spec: a grid of its columns, each aligned as the spec says; a short
+                        # row's missing cells are empty (the {rcl} form below is experiment 6's)
+                        body = ''.join(f'<span class="a{cols[q]}">{r[q] if q < len(r) else ""}</span>'
+                                       for r in cells for q in range(len(cols)))
+                        out.append(f'<span class="array cols" style="--cols: {len(cols)}">{body}</span>')
+                    elif env == 'cases':
                         body = '<br>'.join(''.join(r) for r in cells)
                         out.append(f'<span class="cases" style="--rows: {len(rows)}"><span class="brace">{{</span><span class="rows">{body}</span></span>')
                     else:
@@ -323,7 +377,14 @@ class Conv:
                 i += 1
             else:
                 out.append(esc(c)); i += 1
-        return ''.join(out)
+        h = ''.join(out)
+        if CFG.get('italic_corrections'):
+            # TeX's italic correction after a math letter in a text font (space > 0, cmssi here): kept unless
+            # another letter of the font follows it (one word) or a subscript sits under it
+            h = re.sub(r'<i>([A-Za-z])</i>(?!<i>|<sub>|<span class="subsup">)',
+                       lambda m: f'<i class="ic" style="--ic: {CMSSI_IC[m.group(1)]}em">{m.group(1)}</i>'
+                       if m.group(1) in CMSSI_IC else m.group(0), h)
+        return h
 
     # ---- inline text
     def inline(self, s):
@@ -339,6 +400,10 @@ class Conv:
             elif c == '{':
                 g, i = read_group(s, i)
                 out.append(self.group(g))
+            elif s.startswith('$$', i):   # plain TeX's display, as \[ \]
+                j = s.index('$$', i + 2)
+                out.append(f'\x00disp:<div class="displaymath">{self.math(s[i + 2:j])}</div>\x00')
+                i = j + 2
             elif c == '$':
                 j = s.index('$', i + 1)
                 out.append(self.math(s[i + 1:j]))
@@ -385,6 +450,12 @@ class Conv:
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
                   '\\ldots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
                   '\\refname': 'References', '\\par': '\n\n', '\\relax': ''}
+        if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
+            o, j = read_opt(s, i)
+            m = re.fullmatch(r'\s*(-?[0-9.]+)\s*(cm|mm|pt|em|ex)\s*', o or '')
+            if m:
+                v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
+                return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
         if name in simple:
             if name == '\\ldots' and s.startswith('{}', i):
                 i += 2
@@ -423,6 +494,16 @@ class Conv:
             u, i = A()
             g, i = read_arg(s, i)
             return f'<a class="hhref" href="{H.escape(u.replace(chr(92), ""))}">{self.inline(g)}</a>', i
+        if n == 'mbox':
+            g, i = A()
+            return self.inline(g), i
+        if n == 'center':   # \center{...} as a command: the center environment's list, its text centred
+            g, i = A()
+            return f'\x00disp:<p class="center">{self.inline(g)}</p>\x00', i
+        if n == 'textasciicircum':
+            if s.startswith('{}', i):
+                i += 2
+            return '^', i
         if n == 'hint':   # the deck's: \hfill{\scriptsize \alert{!} {\color{gray}#1}}
             g, i = A()
             return f'\x00disp:<p class="hint"><span class="alert">!</span> <span class="grey">{self.inline(g)}</span></p>\x00', i

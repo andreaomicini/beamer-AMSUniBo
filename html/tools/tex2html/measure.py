@@ -58,6 +58,8 @@ JS = r'''() => {
         if (getComputedStyle(e).display.startsWith('inline')) continue;
         // never inside multicols: a margin there rebalances the columns
         if (e.parentElement.closest('.multicols')) continue;
+        // never inside an array: its cells are a grid, a margin there moves a whole row of it
+        if (e.parentElement.closest('.array')) continue;
         const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let t0;
         while ((t0 = w.nextNode()) && !/\S/.test(t0.data));

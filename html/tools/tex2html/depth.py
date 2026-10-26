@@ -69,8 +69,13 @@ def depths(n):
                 prev = [c for c in above if abs(c[0] - max(x[0] for x in above)) < 0.5]
                 out.append(round(-(-ymin(prev[0][2], 'g') * max(c[3] for c in prev)), 2))
                 continue
-        size = max(c[3] for c in last)
-        deep = max(max(0.0, -ymin(face, c)) * s for _, _, face, s, c, _ in last)
-        g = -ymin(last[0][2], 'g') * size
+        # the last line is its largest characters' baseline; its subscripts, lower, belong to it: the
+        # depth is the lowest any of them reaches below that baseline (experiment 7)
+        line = [c for c in inside if c[0] > base - 4.5]
+        size = max(c[3] for c in line)
+        main = [c for c in line if abs(c[3] - size) < 0.01]
+        lb = max(c[0] for c in main)
+        deep = max(y - lb + max(0.0, -ymin(face, c)) * s for y, _, face, s, c, _ in line)
+        g = -ymin(main[0][2], 'g') * size
         out.append(round(deep - g, 2))
     return out

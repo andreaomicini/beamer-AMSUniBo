@@ -43,6 +43,14 @@ STYLES = {
         titles=[rgb('003F66'), rgb('0073BA'), rgb('DCDCDC')],
         bodies=[rgb('EBF4F9'), rgb('DEEDF6'), rgb('F1F1F1')],
         faces={}),
+    # AMSSilverBlue's theme in the reds of the old AMSCesena: the titles rgreddeep, rgred and
+    # rgsilverborder over the bodies rgsilvertint (the theme's own, not a red tint), rgredfill, rgsilverfill
+    'AMSRedGrey': dict(
+        theme='theme-AMSRedGrey.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbfbfbf,
+        cites=[0xbfbfbf, 0xececec],   # \ccite and \cccite
+        titles=[rgb('850011'), rgb('CC001A'), rgb('DCDCDC')],
+        bodies=[rgb('F2F2F2'), rgb('F8DEE1'), rgb('F1F1F1')],
+        faces={}),
 }
 STYLE = STYLES[CFG.get('style', 'AMSUniBo')]
 CITES = STYLE.get('cites', [STYLE['cite']])   # the colours of the citation commands

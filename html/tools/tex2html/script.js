@@ -17,7 +17,8 @@
 		// infolines' ~~ as two spaces kept as they are: Latin Modern's no-break space is wider than its
 		// space, and Firefox draws it where WebKit does not
 		foot.children[0].style.whiteSpace = 'pre';
-		foot.children[0].textContent = `${d.shortauthor}  (${d.shortinstitute})`;
+		// infolines prints "~~(institute)" only when there is one: \ifblank{\beamer@shortinstitute}
+		foot.children[0].textContent = d.shortinstitute ? `${d.shortauthor}  (${d.shortinstitute})` : d.shortauthor;
 		foot.children[1].textContent = d.shorttitle;
 		foot.children[2].textContent = d.shortdate;
 		const number = document.createElement('span');
