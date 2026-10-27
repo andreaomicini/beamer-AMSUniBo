@@ -1,1 +1,1 @@
-A simple Beamer-LaTeX style for Alma Mater Studiorum presentations, in the colours of the AMSUniBo theme for the APICe wiki
+Beamer style with the colours of AMS for presentations by AMS people
