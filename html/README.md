@@ -181,7 +181,7 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `amsred` Inconsolata at 8pt; in the bibliography the APICe marker is
   `amsgreendark` and `.dddoi`/`.uuurl` are `amsgreyline` at 6pt. In a block or alert
   title they turn `amsgreybg`, and `.alert`/`.aalert` `amsgreyline`; in the
-  example title `.ccite` is `amsgreymid`.
+  example title `.ccite`, `.uuurl` and `.dddoi` are `amsgreymid`.
 * **Bibliography colours by block**: label `amsgreymid`, authors `amstext`,
   title `amsred` bold, location `amsgreymid`, note `amsgreendark`. The hanging
   indent is 11.75pt.

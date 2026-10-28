@@ -143,7 +143,8 @@ never picks a command for its background.
 * **On a light surface** URLs, DOIs, APICe addresses and `\alert` are
   `amsred`, their doubled forms quiet `amsgreyline`, as in the references;
   `\aalert` is `amsgreymid`, italic; citations are faint `amsgreyline`, as
-  under AMSBolognaFC, and `amsgreymid` on the tinted example title.
+  under AMSBolognaFC. On the tinted example title, citations and the doubled
+  forms are `amsgreymid` (since 1.8.1), so that they still read.
 * **On a dark surface** URLs, DOIs, APICe addresses and citations are
   `amsgreybg`; `\alert` and `\aalert` are `amsgreyline`, `\aalert` italic.
 * `\ccite` and `\cccite` are the same command: no legible size is left below a

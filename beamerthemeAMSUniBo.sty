@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{8}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-%\newcommand{\stylepatch}{0}
+\newcommand{\stylepatch}{1}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -142,8 +142,8 @@
 %% (and quiet grey on a light surface)
 \newif\ifams@dark
 \newcommand{\ams@onsurface}[2]{\ifams@dark#2\else#1\fi}% light, dark
-%% a citation is faint on white, darker on the tinted example title
-\newcommand{\ams@cite@light}{amsgreyline}
+%% the quiet colour: faint on white, darker on the tinted example title
+\newcommand{\ams@quiet}{amsgreyline}
 %% paired commands -- see README.md
 %% citation: faint on a light surface, light on a dark one; \cccite = \ccite
 %% #1 colour, #2 optional note (-NoValue- when absent), #3 keys.  \cite[]{...}
@@ -152,8 +152,8 @@
 \newcommand{\ams@cite}[3]{%
   \textcolor{#1}{\textsuperscript{\tiny\IfNoValueTF{#2}{\cite{#3}}{\cite[#2]{#3}}}}%
 }
-\NewDocumentCommand{\ccite}{o m}{\ams@cite{\ams@onsurface{\ams@cite@light}{amsgreybg}}{#1}{#2}}
-\NewDocumentCommand{\cccite}{o m}{\ams@cite{\ams@onsurface{\ams@cite@light}{amsgreybg}}{#1}{#2}}
+\NewDocumentCommand{\ccite}{o m}{\ams@cite{\ams@onsurface{\ams@quiet}{amsgreybg}}{#1}{#2}}
+\NewDocumentCommand{\cccite}{o m}{\ams@cite{\ams@onsurface{\ams@quiet}{amsgreybg}}{#1}{#2}}
 %% the address of a URL or a DOI is stringed before it is used, so that a special
 %% character in it needs no escaping: \_ and a bare _ alike give one underscore.
 %% #1 receives #2 as a string with every backslash dropped -- see README.md
@@ -170,14 +170,14 @@
 \newcommand{\uurl}[1]{{\ams@link@string\ams@link@arg{#1}%
   \textcolor{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize\expandafter\url\expandafter{\ams@link@arg}}}}
 \newcommand{\uuurl}[1]{{\ams@link@string\ams@link@arg{#1}%
-  \textcolor{\ams@onsurface{amsgreyline}{amsgreybg}}{\tiny\expandafter\url\expandafter{\ams@link@arg}}}}
+  \textcolor{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny\expandafter\url\expandafter{\ams@link@arg}}}}
 %% DOI: likewise. https://doi.org is the current resolver; dx.doi.org is a
 %% deprecated alias, and the .bst reaches these through \dddoi, so this is the
 %% only place the resolver is named
 \newcommand{\ddoi}[1]{{\ams@link@string\ams@link@arg{#1}%
   \textcolor{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
 \newcommand{\dddoi}[1]{{\ams@link@string\ams@link@arg{#1}%
-  \textcolor{\ams@onsurface{amsgreyline}{amsgreybg}}{\tiny\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
+  \textcolor{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny\href{https://doi.org/\ams@link@arg}{DOI:\ams@link@arg}}}}
 %% APICe addresses, printed short and linked: \apice{<kind>}{<Name>} for an
 %% object, \apicesite{<alias>} for an alias host, \apicepage{<Space/Page>} for any
 %% other page; [<text>] in front prints the text instead. Colour from the
@@ -205,19 +205,19 @@
   {\expandafter\ams@apice@show\expandafter{\ams@apice@addr}}%
   {\expandafter\ams@apice@text\expandafter{\ams@apice@addr}{#3}}}}
 \NewDocumentCommand{\apice}{o m m}{{\ams@apice@obj{#2}{#3}\ams@apice@link{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize}{#1}}}
-\NewDocumentCommand{\aapice}{o m m}{{\ams@apice@obj{#2}{#3}\ams@apice@link{\ams@onsurface{amsgreyline}{amsgreybg}}{\tiny}{#1}}}
+\NewDocumentCommand{\aapice}{o m m}{{\ams@apice@obj{#2}{#3}\ams@apice@link{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny}{#1}}}
 \NewDocumentCommand{\apicesite}{o m}{{\ams@link@string\ams@link@arg{#2}%
   \edef\ams@apice@addr{\ams@link@arg.apice.unibo.it}%
   \ams@apice@link{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize}{#1}}}
 \NewDocumentCommand{\aapicesite}{o m}{{\ams@link@string\ams@link@arg{#2}%
   \edef\ams@apice@addr{\ams@link@arg.apice.unibo.it}%
-  \ams@apice@link{\ams@onsurface{amsgreyline}{amsgreybg}}{\tiny}{#1}}}
+  \ams@apice@link{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny}{#1}}}
 \NewDocumentCommand{\apicepage}{o m}{{\ams@link@string\ams@link@arg{#2}%
   \edef\ams@apice@addr{apice.unibo.it/bin/view/\ams@link@arg}%
   \ams@apice@link{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize}{#1}}}
 \NewDocumentCommand{\aapicepage}{o m}{{\ams@link@string\ams@link@arg{#2}%
   \edef\ams@apice@addr{apice.unibo.it/bin/view/\ams@link@arg}%
-  \ams@apice@link{\ams@onsurface{amsgreyline}{amsgreybg}}{\tiny}{#1}}}
+  \ams@apice@link{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny}{#1}}}
 %% emph -- in a block title, the title's own colour: italic only
 %% block and alerted block titles are dark surfaces, the example one light
 \def\ams@emph@colour{amsgreendark}
@@ -226,8 +226,8 @@
   {\def\ams@emph@colour{amsgreendark}\ams@darkfalse\setbeamercolor{alerted text}{fg=amsred}}
 \addtobeamertemplate{block alerted begin}{\def\ams@emph@colour{.}\ams@darktrue\setbeamercolor{alerted text}{fg=amsgreyline}}
   {\def\ams@emph@colour{amsgreendark}\ams@darkfalse\setbeamercolor{alerted text}{fg=amsred}}
-\addtobeamertemplate{block example begin}{\def\ams@emph@colour{.}\def\ams@cite@light{amsgreymid}}
-  {\def\ams@emph@colour{amsgreendark}\def\ams@cite@light{amsgreyline}}
+\addtobeamertemplate{block example begin}{\def\ams@emph@colour{.}\def\ams@quiet{amsgreymid}}
+  {\def\ams@emph@colour{amsgreendark}\def\ams@quiet{amsgreyline}}
 %% alert: amsred, light on a dark surface (the hooks above); aalert: quiet, italic
 %\renewcommand{\alert}[1]{\textcolor{amsred}{#1}}
 \newcommand{\aalert}[1]{\textcolor{\ams@onsurface{amsgreymid}{amsgreyline}}{\it#1}}

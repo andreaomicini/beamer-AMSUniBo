@@ -76,7 +76,7 @@ p { margin: 0; }
 /* surfaces, as in the theme: block and alerted titles dark, the example title tinted */
 .block:not(.example) > .block-title :is(.ccite, .uurl, .uuurl, .dddoi, .apice) { color: var(--amsgreybg); }
 .block:not(.example) > .block-title :is(.alert, .aalert) { color: var(--amsgreyline); }
-.block.example > .block-title .ccite { color: var(--amsgreymid); }
+.block.example > .block-title :is(.ccite, .uuurl, .dddoi) { color: var(--amsgreymid); }
 
 /* ----- infolines: head and foot ----------------------------------------- */
 .headline, .footline { position: absolute; left: 0; width: 100%; display: flex; font-size: calc(6 * var(--fs)); }
