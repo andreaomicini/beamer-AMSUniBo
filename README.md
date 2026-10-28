@@ -430,6 +430,33 @@ the translations, `externallabel`, `slideshare`, `prezi`—is left unprinted.
 detail (session, room, chair) belongs in `annote`, which no style prints. A
 record with no `date` simply ends its venue line earlier.
 
+### journal issues
+
+Since 1.8.2 `apalike-AMS.bst` has an `issue` entry type, for a whole journal
+issue cited by its editors—a special issue, typically—which no classical type
+holds: `article` has authors and no editors, and `proceedings` drops `number`
+whenever `volume` is there.
+
+<!-- markdownlint-disable MD013 -->
+
+| BibTeX field | printed as |
+|---|---|
+| `editor`, `year` | label, sort key and the names, with *editors*, as for `proceedings` |
+| `title` | the issue's title, bold, sentence case as for papers |
+| `journal`, `volume`, `number`, `pages` | as in `article`: *Journal*, 14(1) |
+| `publisher` | after the volume |
+| `note`, `doi`, `url`, `apice` | as for every other type |
+
+<!-- markdownlint-enable MD013 -->
+
+So `@issue{…, editor = {Weyns, Danny and Parunak, H. Van Dyke}, title =
+{Environments for Multi-Agent Systems}, journal = {Autonomous Agents and
+Multi-Agent Systems}, volume = 14, number = 1, publisher = {Springer}, year =
+2007}` reads *Weyns, D. and Parunak, H. V. D., editors (2007)* **Environments
+for multi-agent systems** *Autonomous Agents and Multi-Agent Systems, 14(1),
+Springer*. Other styles do not know the type: BibTeX warns and falls back to
+`misc`.
+
 ### theses
 
 APICe's Theses write `@phdthesis` and `@mastersthesis`, the classical types,

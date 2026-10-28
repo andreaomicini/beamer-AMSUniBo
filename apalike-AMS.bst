@@ -1004,6 +1004,24 @@ FUNCTION {proceedings}
   fin.entry
 }
 
+FUNCTION {issue}                % AMS extension: a whole journal issue, by its editors
+{ output.bibitem
+  format.editors "editor" output.check
+  editor format.key output                              % special for
+  output.year.check                                     % apalike
+  new.block
+  format.title "title" output.check
+  new.block
+  journal emphasize "journal" output.check
+  format.vol.num.pages output
+  publisher output
+  new.block
+  note output
+  new.block		% AMS style extensions 
+  format.ams	% AMS style extensions 
+  fin.entry
+}
+
 FUNCTION {techreport}
 { output.bibitem
   format.authors "author" output.check
@@ -1186,6 +1204,7 @@ FUNCTION {calc.label}
   or
     'author.editor.key.label
     { type$ "proceedings" =
+      type$ "issue" = or
         'editor.key.label                       % apalike ignores organization
         'author.key.label                       % for labeling and sorting
       if$
@@ -1289,6 +1308,7 @@ FUNCTION {presort}
   or
     'author.editor.sort
     { type$ "proceedings" =
+      type$ "issue" = or
         'editor.sort
         'author.sort
       if$
