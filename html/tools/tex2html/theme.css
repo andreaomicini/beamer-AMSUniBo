@@ -58,6 +58,7 @@ body { overflow: hidden; }
 /* \emph \alert \aalert \textbf \textsc \texttt, and math */
 b { font-weight: 700; }
 em { font-style: italic; color: var(--amsgreendark); }
+.block-title em { color: inherit; }   /* \emph in a block title: italic only, as in the PDF */
 .alert { color: var(--amsred); }
 .aalert { font-style: italic; font-weight: 300; color: var(--amsgreyline); }
 .sc { font-variant-caps: small-caps; }

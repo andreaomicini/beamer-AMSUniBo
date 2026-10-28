@@ -88,6 +88,7 @@ body { overflow: hidden; }
 /* \emph \alert \aalert \textbf \textsc \texttt \it, and math */
 b { font-weight: 700; }
 em { font-style: italic; color: var(--emph); }
+.block-title em { color: inherit; }   /* \emph in a block title: italic only, as in the PDF */
 .alert { color: var(--alert); }
 .aalert { font-style: italic; color: var(--aalert); }
 .it { font-style: italic; }

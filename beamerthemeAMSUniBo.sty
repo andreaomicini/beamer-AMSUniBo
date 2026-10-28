@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{7}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{3}
+\newcommand{\stylepatch}{4}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -211,8 +211,12 @@
 \NewDocumentCommand{\aapicepage}{o m}{{\ams@link@string\ams@link@arg{#2}%
   \edef\ams@apice@addr{apice.unibo.it/bin/view/\ams@link@arg}%
   \ams@apice@link{amsgreyline}{\tiny}{#1}}}
-%% emph
-\renewcommand{\emph}[1]{\textcolor{amsgreendark}{\textit{#1}}}
+%% emph -- in a block title, the title's own colour: italic only
+\def\ams@emph@colour{amsgreendark}
+\renewcommand{\emph}[1]{\textcolor{\ams@emph@colour}{\textit{#1}}}
+\addtobeamertemplate{block begin}{\def\ams@emph@colour{.}}{\def\ams@emph@colour{amsgreendark}}
+\addtobeamertemplate{block alerted begin}{\def\ams@emph@colour{.}}{\def\ams@emph@colour{amsgreendark}}
+\addtobeamertemplate{block example begin}{\def\ams@emph@colour{.}}{\def\ams@emph@colour{amsgreendark}}
 %% alert -- light, for dark surfaces
 %\renewcommand{\alert}[1]{\textcolor{amsred}{#1}}
 \newcommand{\aalert}[1]{\textcolor{amsgreyline}{\it#1}}

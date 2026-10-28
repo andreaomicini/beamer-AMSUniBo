@@ -144,6 +144,10 @@ that style to this one changes hue and nothing else:
   dark-then-light: the plain one for light surfaces, the doubled one for dark.
 * `\aalert` is light, for dark surfaces. `\sspeaker` used to be, and is not any
   more: see [typography](#typography).
+* `\emph` needs no twin. It is italic in `amsgreendark` everywhere except in a
+  block title, whose background is that same green: there, since 1.7.4, it is
+  italic in the title's own colour. The same holds for alerted and example
+  blocks.
 
 ### APICe addresses
 
