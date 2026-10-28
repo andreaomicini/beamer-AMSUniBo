@@ -122,28 +122,35 @@ Beyond the beamer furniture, the theme defines:
 | command | for |
 | --- | --- |
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
-| `\ccite` `\cccite` | superscript citations, in two weights; both take `\cite`'s optional note, as in `\ccite[p.~42]{key}` |
+| `\ccite` | superscript citations; takes `\cite`'s optional note, as in `\ccite[p.~42]{key}`. `\cccite` is the same, kept for existing decks |
 | `\uurl` `\uuurl` | URLs, in two sizes; since 1.6.2 no character in the address needs escaping |
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
 | `\apicepubpar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\apice` `\aapice` | an APICe object — publication, talk, course, event — by its kind and its page name, printed as its short address and linked; since 1.7 |
 | `\apicesite` `\aapicesite` | an APICe alias host, such as `andreaomicini.apice.unibo.it`; since 1.7 |
 | `\apicepage` `\aapicepage` | any other APICe page, by its space and page path; since 1.7 |
-| `\aalert` | a quieter alternative to `\alert` |
+| `\aalert` | a quiet alert, italic |
 
 <!-- markdownlint-enable MD013 -->
 
-The pairs keep the weights AMSBolognaFC gives them, so that a deck moved from
-that style to this one changes hue and nothing else:
+Since 1.8 the commands take their **colour from the surface** they land on, and
+the doubled form means **smaller and quieter**: `\uurl` is `\scriptsize`,
+`\uuurl` `\tiny` — and so `\ddoi`/`\dddoi` and the three APICe pairs. A deck
+never picks a command for its background.
 
-* `\ccite` and `\cccite` are **both light**, because a citation marker's usual
-  home is a block header, which is dark in both styles. `\cccite` is the lighter
-  of the two, for the loudest surfaces. In running text both are faint on
-  purpose — as they are under AMSBolognaFC.
-* `\uurl`/`\uuurl`, `\ddoi`/`\dddoi` and the three APICe pairs go
-  dark-then-light: the plain one for light surfaces, the doubled one for dark.
-* `\aalert` is light, for dark surfaces. `\sspeaker` used to be, and is not any
-  more: see [typography](#typography).
+* **Surfaces**: the titles of `block` and `alertblock` are dark; running text,
+  block bodies and the `exampleblock` title are light.
+* **On a light surface** URLs, DOIs, APICe addresses and `\alert` are
+  `amsred`, their doubled forms quiet `amsgreyline`, as in the references;
+  `\aalert` is `amsgreymid`, italic; citations are faint `amsgreyline`, as
+  under AMSBolognaFC, and `amsgreymid` on the tinted example title.
+* **On a dark surface** URLs, DOIs, APICe addresses and citations are
+  `amsgreybg`; `\alert` and `\aalert` are `amsgreyline`, `\aalert` italic.
+* `\ccite` and `\cccite` are the same command: no legible size is left below a
+  `\tiny` superscript. Until 1.8 they were two shades, and the doubled URL,
+  DOI and APICe commands were light, for dark surfaces: existing decks build
+  as before, and on a light surface look as before.
+* `\sspeaker` inherits its surface's colour: see [typography](#typography).
 * `\emph` needs no twin. It is italic in `amsgreendark` everywhere except in a
   block title, whose background is that same green: there, since 1.7.4, it is
   italic in the title's own colour. The same holds for alerted and example
@@ -471,8 +478,8 @@ headings, tabs.
 | `amsgreentint2` | `#CCE4E1` | `@ams-green-tint2`, selected tabs | foot line, frame title right |
 | `amsgrey` | `#464A51` | `@ams-grey` | institute |
 | `amsgreymid` | `#535353` | `@ams-grey-mid`, `breadcrumb-color` | secondary text, footnotes, subtitle, date |
-| `amsgreyline` | `#C7C9CB` | `@ams-grey-line`, `table-border-color` | `\ccite`, `\uuurl`, `\dddoi`, `\aalert` — the light-on-dark commands |
-| `amsgreybg` | `#F0F1F1` | `@ams-grey-bg` | `\cccite`, the lightest of the pair |
+| `amsgreyline` | `#C7C9CB` | `@ams-grey-line`, `table-border-color` | `\ccite` and the doubled URL, DOI and APICe commands on a light surface, `\alert` and `\aalert` on a dark one |
+| `amsgreybg` | `#F0F1F1` | `@ams-grey-bg` | citations, URLs, DOIs, APICe addresses on a dark surface |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -486,12 +493,12 @@ pairing the wiki uses for its own success alerts, `amsgreenborder` over
 Two contrast facts inherited from the web theme, and observed here: **white on
 `#56A49A` is 2.93:1 and fails WCAG AA**, so every full-green surface carries dark
 text instead; white on `#BB2E29` is 5.94:1 and passes. Every text-on-fill pair in
-this style is at AA or better, except the deliberately quiet light-on-dark
-commands — `\ccite` is 3.82:1 on a block header and `\aalert` likewise, while
-`\cccite` reaches 5.61:1. `\sspeaker` was in that set until 1.2 and is no longer:
-it now inherits its surface's colour, which *raises* its contrast to whatever the
-surrounding text has. Citations in running text are fainter
-still, which is how AMSBolognaFC renders them too.
+this style is at AA or better, except the deliberately quiet `\alert` and
+`\aalert` on a block header, 3.82:1; citations and addresses there reach
+5.61:1. `\sspeaker` was in that set until 1.2 and is no longer: it now inherits
+its surface's colour, which *raises* its contrast to whatever the surrounding
+text has. Citations in running text are fainter still, which is how
+AMSBolognaFC renders them too.
 
 ### where the colours come from
 

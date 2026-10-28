@@ -60,7 +60,7 @@ b { font-weight: 700; }
 em { font-style: italic; color: var(--amsgreendark); }
 .block-title em { color: inherit; }   /* \emph in a block title: italic only, as in the PDF */
 .alert { color: var(--amsred); }
-.aalert { font-style: italic; font-weight: 300; color: var(--amsgreyline); }
+.aalert { font-style: italic; font-weight: 300; color: var(--amsgreymid); }
 .sc { font-variant-caps: small-caps; }
 code, .tt { font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(10.95 * var(--pt)); font-feature-settings: "ss01", "ss03"; }
 i { font-style: italic; font-weight: 300; }
@@ -73,6 +73,10 @@ p { margin: 0; }
 .ccite { color: var(--amsgreyline); font-size: calc(6 * var(--fs)); line-height: 0; vertical-align: calc(3.3 * var(--pt)); }
 .url { font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
 .uurl, .apice { color: var(--amsred); font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
+/* surfaces, as in the theme: block and alerted titles dark, the example title tinted */
+.block:not(.example) > .block-title :is(.ccite, .uurl, .uuurl, .dddoi, .apice) { color: var(--amsgreybg); }
+.block:not(.example) > .block-title :is(.alert, .aalert) { color: var(--amsgreyline); }
+.block.example > .block-title .ccite { color: var(--amsgreymid); }
 
 /* ----- infolines: head and foot ----------------------------------------- */
 .headline, .footline { position: absolute; left: 0; width: 100%; display: flex; font-size: calc(6 * var(--fs)); }

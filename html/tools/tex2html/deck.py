@@ -20,6 +20,7 @@ def rgb(h):
 STYLES = {
     'AMSUniBo': dict(
         theme='theme.css', bottom=2.8, head=12.9, title=37.2, foot=262.0, cite=0xc7c9cb,
+        cites=[0xc7c9cb, 0xf0f1f1],   # \ccite on white and on a dark title (amsgreymid, on the example title, is \aalert's too)
         titles=[(0.212, 0.408, 0.38), (0.733, 0.18, 0.161), (0.698, 0.843, 0.824)],
         bodies=[(0.867, 0.929, 0.922), (0.965, 0.851, 0.847), (0.882, 0.937, 0.929)],
         faces={'MerriwthrSans-Light': 'MerriweatherSans-Light', 'MerriwthrSans-LightItali': 'MerriweatherSans-LightItalic',

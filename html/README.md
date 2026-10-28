@@ -176,10 +176,12 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   block has 7.5pt above it, 4pt below, and 7pt before a list that follows it.
 * **Balls**: radial-gradient spheres in `amsred`, 5.2pt at the first level, 4pt
   at the second. Enumerate balls are 8.4pt with the number in white bold.
-* **Paired commands keep their weights**: `.ccite` is `amsgreyline`, `\tiny`,
-  raised 3.3pt; `.uurl` and `.apice` are `amsred` Inconsolata at 8pt; in the
-  bibliography the APICe marker is `amsgreendark` and `.dddoi`/`.uuurl` are
-  `amsgreyline` at 6pt.
+* **Paired commands take the surface's colour**, as in the theme since 1.8:
+  `.ccite` is `amsgreyline`, `\tiny`, raised 3.3pt; `.uurl` and `.apice` are
+  `amsred` Inconsolata at 8pt; in the bibliography the APICe marker is
+  `amsgreendark` and `.dddoi`/`.uuurl` are `amsgreyline` at 6pt. In a block or alert
+  title they turn `amsgreybg`, and `.alert`/`.aalert` `amsgreyline`; in the
+  example title `.ccite` is `amsgreymid`.
 * **Bibliography colours by block**: label `amsgreymid`, authors `amstext`,
   title `amsred` bold, location `amsgreymid`, note `amsgreendark`. The hanging
   indent is 11.75pt.
