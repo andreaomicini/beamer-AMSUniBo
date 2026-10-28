@@ -176,7 +176,8 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   block has 7.5pt above it, 4pt below, and 7pt before a list that follows it.
 * **Balls**: radial-gradient spheres in `amsred`, 5.2pt at the first level, 4pt
   at the second. Enumerate balls are 8.4pt with the number in white bold.
-* **Paired commands take the surface's colour**, as in the theme since 1.8:
+* **Paired commands take the surface's colour**, as in the theme since 1.8 (and
+  in the four families' CSS since their 1.11/1.3):
   `.ccite` is `amsgreyline`, `\tiny`, raised 3.3pt; `.uurl` and `.apice` are
   `amsred` Inconsolata at 8pt; in the bibliography the APICe marker is
   `amsgreendark` and `.dddoi`/`.uuurl` are `amsgreyline` at 6pt. In a block or alert
@@ -253,9 +254,9 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   in `sbblue` from the same mixes.
 * **Head and foot**: the section on `sbblue` in white, the subsection on
   `sbsilvertint2`; the author on `sbbluedeep`, the title on `sbsilvertint2`, the
-  date on `sbsilvertint`. Two citation colours, `\ccite` in `sbgreyline` and
-  `\cccite` in `sbgreybg`: the profile's `cites` lists both, and the tools that
-  leave citations out of the alignment read it.
+  date on `sbsilvertint`. Two citation colours, `\ccite` in `sbgreyline` on a light
+  surface and `sbgreybg` on a dark title: the profile's `cites` lists both,
+  and the tools that leave citations out of the alignment read it.
 * **What experiment 6's deck brought** is in this style's CSS only, at its end:
   listings, beamer's columns, figures and captions, `multicols`, `\hint`,
   `\hhref`, the contents frame of a subsection, the bibliography in

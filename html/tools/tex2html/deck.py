@@ -28,19 +28,21 @@ STYLES = {
                'MerriwthrSans-BoldItalic': 'MerriweatherSans-BoldItalic', 'Inconsolatazi4-Regular': 'Inconsolatazi4-Regular'}),
     'AMSBolognaFC': dict(
         theme='theme-AMSBolognaFC.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbdbdbd,
+        cites=[0xbdbdbd, 0xececec],   # \ccite on white and on a dark title
         titles=[rgb('142336'), rgb('091019'), rgb('BAC1C8')],
         bodies=[rgb('FAFBFB'), rgb('F4F5F6'), rgb('EFF0F2')],
         faces={}),
     # AMSBolognaFC's theme and geometry in the old Cesena purple and gold (experiment 5)
     'AMSPurpleAndGold': dict(
         theme='theme-AMSPurpleAndGold.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbeba89,
+        cites=[0xbeba89, 0xede8ab],   # \ccite on white and on a dark title
         titles=[rgb('660066'), rgb('380038'), rgb('D1B2D1')],
         bodies=[rgb('F4EDF4'), rgb('F9F5E5'), rgb('F4EDF4')],
         faces={}),
     # the same again in the old Cesena blue and silver (experiment 6)
     'AMSSilverBlue': dict(
         theme='theme-AMSSilverBlue.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbfbfbf,
-        cites=[0xbfbfbf, 0xececec],   # \ccite and \cccite
+        cites=[0xbfbfbf, 0xececec],   # \ccite on white and on a dark title
         titles=[rgb('003F66'), rgb('0073BA'), rgb('DCDCDC')],
         bodies=[rgb('EBF4F9'), rgb('DEEDF6'), rgb('F1F1F1')],
         faces={}),
@@ -48,7 +50,7 @@ STYLES = {
     # rgsilverborder over the bodies rgsilvertint (the theme's own, not a red tint), rgredfill, rgsilverfill
     'AMSRedGrey': dict(
         theme='theme-AMSRedGrey.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbfbfbf,
-        cites=[0xbfbfbf, 0xececec],   # \ccite and \cccite
+        cites=[0xbfbfbf, 0xececec],   # \ccite on white and on a dark title
         titles=[rgb('850011'), rgb('CC001A'), rgb('DCDCDC')],
         bodies=[rgb('F2F2F2'), rgb('F8DEE1'), rgb('F1F1F1')],
         faces={}),

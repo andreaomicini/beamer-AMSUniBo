@@ -263,6 +263,11 @@ img.figure { display: block; margin: 0 auto; }
 .apicepubpar { color: var(--aalert); font-size: calc(6.6 * var(--fs)); margin-right: calc(9 * var(--pt)); }
 .dddoi { color: var(--cite); font-size: calc(6.6 * var(--fs)); }
 .uuurl { color: var(--cite); font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(6 * var(--pt)); }
+/* surfaces, as in the theme since 1.11: block and alert titles dark, the example title tinted */
+.aalert { color: #676C72; }   /* bolognafcblue!25!gray, the quiet alert on a light surface */
+.block:not(.example) > .block-title :is(.ccite, .uurl, .uuurl, .dddoi, .apice) { color: #ECECEC; }   /* bolognafcsilver */
+.block:not(.example) > .block-title :is(.alert, .aalert) { color: var(--aalert); }
+.block.example > .block-title :is(.ccite, .uuurl, .dddoi) { color: #676C72; }   /* bolognafcblue!25!gray */
 
 /* ----- printing: one page per frame, PDF-sized -------------------------- */
 @media print {

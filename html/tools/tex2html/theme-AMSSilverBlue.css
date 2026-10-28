@@ -271,12 +271,16 @@ img.figure { display: block; margin: 0 auto; }
 .apicepubpar { color: var(--apice-marker); font-size: calc(6.6 * var(--fs)); margin-right: calc(9 * var(--pt)); }
 .dddoi { color: var(--cite); font-size: calc(6.6 * var(--fs)); }
 .uuurl { color: var(--cite); font-family: "LM Mono 8", monospace; font-weight: 400; font-size: calc(6 * var(--pt)); }
+/* surfaces, as in the theme since 1.3: block and alert titles dark, the example title tinted */
+.aalert { color: #5A5A5A; }   /* sbgreymid, the quiet alert on a light surface */
+.block:not(.example) > .block-title :is(.ccite, .uurl, .uuurl, .dddoi, .apice) { color: #ECECEC; }   /* sbgreybg */
+.block:not(.example) > .block-title :is(.alert, .aalert) { color: var(--aalert); }
+.block.example > .block-title :is(.ccite, .uuurl, .dddoi) { color: #5A5A5A; }   /* sbgreymid */
 
 /* ----- what experiment 6's deck brought: listings, columns, figures, math -- */
 /* the headline's right half carries the subsection */
 .headline .subsection { text-align: left; }
 /* \cccite: the lighter grey */
-.ccite.cccite { color: var(--ccite); }
 /* a math sans letter, \mathsf; \symBTC, a B with two short bars above and below */
 .msf { font-style: normal; }
 .btc { position: relative; }
