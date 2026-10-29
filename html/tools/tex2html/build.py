@@ -223,7 +223,10 @@ def wrap_title(n, t):
     word, read on the PDF (C4a); the theme's two-line title then applies"""
     if '<br>' in t:
         return t
-    ws = [w for w in PDF[n - 1].get_text('words') if 42 < w[3] < 56 and w[1] > 35]
+    # in the first line's size: a first body line can sit in the same band (C7)
+    words = PDF[n - 1].get_text('words')
+    th = max((w[3] - w[1] for w in words if w[3] < 36 and w[1] > 18), default=0)
+    ws = [w for w in words if 42 < w[3] < 56 and w[1] > 35 and w[3] - w[1] > 0.9 * th]
     if not ws:
         return t
     w = min(ws, key=lambda x: x[0])[4]
@@ -244,8 +247,13 @@ def frame(n, p):
         body = processed(n, p)
     # shrink: beamer sets the content at \textwidth / f and scales it by f = 1 - n/100; TeX may shrink further
     # than asked ("shrunk by a factor of ... instead of ..."), which deck.json's "shrink" gives per page
+    # The text is set \textwidth / f wide for the f asked, but scaled by the f TeX took: --shrinkr, their ratio,
+    # narrows the body so (beamerbaseframe.sty widens \hsize by the asked factor only)
     sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
-    extra = (' data-noframenumbering' if p['nonum'] else '') + (f' style="--shrink: {round(1 - sh / 100, 5)}"' if sh else '')
+    req = p.get('shrink') or sh
+    r = round((1 - sh / 100) / (1 - req / 100), 5) if sh else 1
+    extra = (' data-noframenumbering' if p['nonum'] else '') + (
+        f' style="--shrink: {round(1 - sh / 100, 5)}{f"; --shrinkr: {r}" if r != 1 else ""}"' if sh else '')
     head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if sh else ''),
                              secname(p['section']), extra, centred=not p['top'], sub=p['subsection'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')

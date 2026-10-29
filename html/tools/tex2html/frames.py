@@ -365,6 +365,8 @@ def env_html(env, inner, ind):
         figs = CFG.get('figures', [])
         n = figs[k] if k < len(figs) else f'fig-{k}'
         return f'{ind}<img class="figure tikz fig-{n}" data-asset="{n}" alt="ALT-{n}">'
+    if env in ('eqnarray', 'eqnarray*'):   # numbers are not drawn: no deck numbers its displays
+        return ind + C.eqnarray(inner)
     if env in ('equation*', 'displaymath'):   # unnumbered: a display, as \[ \]
         return ind + C.inline('\\[' + inner + '\\]').strip('\x00').removeprefix('disp:')
     raise ValueError('env ' + env)
@@ -797,7 +799,13 @@ def expand_macros(s):
                 body = body.replace('#%d' % k, g)
             if n == 0 and j < len(s) and s[j] == ' ':
                 pass
-            out.append(s[i:m.start()] + '{' + body + '}' if n else s[i:m.start()] + body + (' ' if re.match(r'[A-Za-z]', s[j:j + 1]) else ''))
+            # grouped, so that a script after it takes it whole; but not when it holds alignment marks, which a
+            # group would hide from the alignment (TeX itself never groups a macro's body)
+            top = re.sub(r"\\[{}]", "", body)   # \{ \} are not groups
+            while re.search(r'\{[^{}]*\}', top):
+                top = re.sub(r'\{[^{}]*\}', '', top)
+            grp = n and not re.search(r'(?<!\\)&|\\\\', top)
+            out.append(s[i:m.start()] + '{' + body + '}' if grp else s[i:m.start()] + body + (' ' if re.match(r'[A-Za-z]', s[j:j + 1]) else ''))
             i, changed = j, True
         out.append(s[i:])
         s = ''.join(out)

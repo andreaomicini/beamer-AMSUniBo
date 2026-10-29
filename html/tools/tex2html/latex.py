@@ -81,6 +81,134 @@ def find_end(s, i, env):
             return m.start(), m.end()
     raise ValueError('no end for ' + env)
 
+DELIMS = {'{': '{', '}': '}', 'lbrace': '{', 'rbrace': '}', 'langle': '⟨', 'rangle': '⟩', '|': '‖', 'Vert': '‖',
+          'vert': '|', 'lfloor': '⌊', 'rfloor': '⌋', 'lceil': '⌈', 'rceil': '⌉'}
+
+def read_delim(s, i):
+    """the delimiter after \\left, \\right or \\big: (its text, index after it); '.' is none"""
+    m = re.match(r'\s*(?:\\([A-Za-z]+|.)|(.))', s[i:])
+    if not m:
+        return '', i
+    d = DELIMS.get(m.group(1), '') if m.group(1) else ('' if m.group(2) == '.' else m.group(2))
+    return esc(d), i + len(m.group(0))
+
+def skip_verb(s, i):
+    """s[i:] starts with \\verb: the index after its closing delimiter"""
+    j = i + 5 + (s[i + 5:i + 6] == '*')
+    return s.index(s[j], j + 1) + 1
+
+def match_right(s, i):
+    """the \\right that closes a \\left whose body starts at i: (its index, index after the word)"""
+    depth, j = 1, i
+    while j < len(s):
+        if s.startswith('\\verb', j):
+            j = skip_verb(s, j)
+            continue
+        m = re.match(r'\\(left|right)(?![A-Za-z])', s[j:])
+        if m:
+            depth += 1 if m.group(1) == 'left' else -1
+            if depth == 0:
+                return j, j + len(m.group(0))
+            j += len(m.group(0))
+            continue
+        j += 2 if s[j] == '\\' else 1
+    raise ValueError('no \\right for ' + s[i:i + 40])
+
+def split_align(s):
+    """an alignment's body (array, eqnarray) as rows: each {'cells': [...], 'pre': [...], 'after': len or None,
+    'end': bool}; 'pre' holds what comes before the row: 'hline', or ('vskip', len) from \\noalign{\\vskip ...};
+    'end' is whether the row ended with \\\\ (whose [len] is 'after'). Split at the top level only: not in a
+    group, a nested environment or a \\verb"""
+    rows, i = [], 0
+    while True:
+        pre = []
+        while True:   # the row's leading \hline and \noalign
+            i = skip_ws(s, i)
+            if re.match(r'\\hline(?![A-Za-z])', s[i:]):
+                pre.append('hline'); i += 6
+            elif re.match(r'\\noalign(?![A-Za-z])', s[i:]):
+                g, i = read_arg(s, i + 8)
+                m = re.fullmatch(r'\s*\\vskip\s*(.*?)\s*', g)
+                if m:
+                    pre.append(('vskip', m.group(1)))
+            else:
+                break
+        cells, last, depth, envd, j, end, after = [], i, 0, 0, i, False, None
+        while j < len(s):
+            c = s[j]
+            if c == '\\':
+                if s.startswith('\\verb', j):
+                    j = skip_verb(s, j); continue
+                if s.startswith('\\begin{', j):
+                    envd += 1
+                elif s.startswith('\\end{', j):
+                    envd -= 1
+                elif s.startswith('\\\\', j) and depth == 0 and envd == 0:
+                    cells.append(s[last:j]); j += 2; end = True
+                    if j < len(s) and s[j] == '*':
+                        j += 1
+                    if s[skip_ws(s, j):skip_ws(s, j) + 1] == '[':
+                        after, j = read_opt(s, j)
+                    break
+                j += 2; continue
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+            elif c == '&' and depth == 0 and envd == 0:
+                cells.append(s[last:j]); last = j + 1
+            j += 1
+        else:
+            cells.append(s[last:])
+        i = j
+        if not end and not ''.join(cells).strip() and len(cells) == 1:
+            if pre:
+                rows.append({'cells': [], 'pre': pre, 'after': None, 'end': False})
+            break
+        rows.append({'cells': cells, 'pre': pre, 'after': after, 'end': end})
+        if not end:
+            break
+    return rows
+
+def at_width(x):
+    """the width of an @{...} that holds only spaces (~, \\ , \\, \\; \\quad \\qquad), in em; None for anything else"""
+    w = {'~': 0.3333, '\\ ': 0.3333, '\\,': 0.1667, '\\;': 0.2778, '\\:': 0.2222, '\\quad': 1, '\\qquad': 2}
+    toks = re.findall(r'\\[A-Za-z]+|\\.|\S', x)
+    return sum(w[t] for t in toks) if all(t in w for t in toks) else None
+
+def array_spec(spec):
+    """a column spec as columns: [{'al': l|c|r, 'pl': css, 'pr': css, 'bl': bool, 'br': bool}], each with
+    \\arraycolsep on either side unless an @{...} stands there, and its vertical rules"""
+    while '*{' in spec:   # *{n}{cols}
+        m = re.search(r'\*\{(\d+)\}', spec)
+        g, k = read_group(spec, m.end())
+        spec = spec[:m.start()] + g * int(m.group(1)) + spec[k:]
+    cols, i, pending_at, pending_bar = [], 0, None, False
+    sep = 'calc(5 * var(--pt))'
+    while i < len(spec):
+        c = spec[i]
+        if c in 'lcrp':
+            if c == 'p':
+                _, i = read_group(spec, i + 1); i -= 1; c = 'l'
+            cols.append({'al': c, 'pl': pending_at if pending_at is not None else sep, 'pr': sep,
+                         'bl': pending_bar, 'br': False})
+            pending_at, pending_bar = None, False
+        elif c == '|':
+            if cols and pending_at is None and not pending_bar:
+                cols[-1]['br'] = True
+            else:
+                pending_bar = True
+        elif c == '@':
+            g, i = read_group(spec, i + 1); i -= 1
+            w = at_width(g)
+            css = f'{w:g}em' if w is not None else '0px'
+            if cols and pending_at is None and not pending_bar and cols[-1]['pr'] == sep and not cols[-1]['br']:
+                cols[-1]['pr'] = css
+            else:
+                pending_at = css
+        i += 1
+    return cols
+
 def split_top(s, cmd):
     """split s at top-level occurrences of \\cmd (not inside groups or nested envs)"""
     parts, depth, envd, last, i = [], 0, 0, 0, 0
@@ -169,8 +297,34 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
 # math symbols: relations, binary operators, ordinary symbols
 MATHREL = {'approx': '≈', 'longrightarrow': '⟶', 'mapsto': '↦', 'neq': '≠', 'ne': '≠', 'geq': '≥', 'ge': '≥', 'leq': '≤',
            'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈',
-           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑'}
-MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond': '⋄'}
+           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑', 'downarrow': '↓'}
+MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond': '⋄', 'rhd': '⊳', 'lhd': '⊲', 'land': '∧',
+           'lor': '∨', 'cup': '∪', 'cap': '∩', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗'}
+# lowercase Greek: Unicode's mathematical italic, in TeX's order (\epsilon and \phi are the variant forms)
+GREEK = {g: chr(0x1D6FC + k) for k, g in enumerate(
+    'alpha beta gamma delta varepsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho varsigma '
+    'sigma tau upsilon varphi chi psi omega'.split())}
+GREEK.update({'epsilon': '\U0001D716', 'vartheta': '\U0001D717', 'phi': '\U0001D719', 'varrho': '\U0001D71A',
+              'varpi': '\U0001D71B'})
+# capital Greek, upright as TeX sets them; a few more ordinary symbols
+GREEK.update({g: c for g, c in zip('Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega'.split(), 'ΓΔΘΛΞΠΣΥΦΨΩ')})
+GREEK.update({'bot': '⊥', 'top': '⊤', 'forall': '∀', 'neg': '¬', 'lnot': '¬', 'partial': '∂', 'nabla': '∇', '_': '_',
+              '#': '#', '&': '&amp;', '$': '$'})
+# \mathbb: Unicode's double-struck capitals, seven of them in Letterlike Symbols
+MATHBB = {'C': 'ℂ', 'H': 'ℍ', 'N': 'ℕ', 'P': 'ℙ', 'Q': 'ℚ', 'R': 'ℝ', 'Z': 'ℤ'}
+
+def mathbb(c):
+    return MATHBB.get(c) or (chr(0x1D538 + ord(c) - 65) if 'A' <= c <= 'Z' else c)
+
+def tex_len(v):
+    """a TeX length as CSS: pt, mm, cm, in in var(--pt); em and ex in the font's own, as TeX's are"""
+    m = re.fullmatch(r'\s*(-?[0-9]*\.?[0-9]+)\s*(pt|mm|cm|in|bp|em|ex)\s*', v or '')
+    if not m:
+        return None
+    x, u = float(m.group(1)), m.group(2)
+    if u in ('em', 'ex'):
+        return f'{x:g}{u}'
+    return f'calc({x * {"pt": 1, "mm": 2.84528, "cm": 28.4528, "in": 72.27, "bp": 1.00375}[u]:.2f} * var(--pt))'
 MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': '∞', 'Delta': 'Δ', 'Xi': 'Ξ',
            'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ',
            'Theta': 'Θ', 'ell': 'ℓ', 'wp': '℘', 'exists': '∃', 'cdots': '⋯', 'dots': '…', 'bigwedge': '⋀',
@@ -227,6 +381,68 @@ class Conv:
         inner = ', '.join(f'<a href="#cite-{k}">{l}</a>' for k, l in zip(keys, labs))
         return f'<span class="{cls}">[{inner}]</span>'
 
+    # ---- alignments
+    def alignment(self, rows, cols, kind):
+        """an array or an eqnarray as a grid of its columns: \\hline as a rule across them (two, \\doublerulesep
+        apart), \\noalign{\\vskip} and \\\\[<len>] as space between rows; an eqnarray adds \\jot after every
+        \\\\ (latex.ltx), and sets its middle column in the text style"""
+        sep, two, none = 'calc(5 * var(--pt))', 'calc(10 * var(--pt))', '0px'
+        if kind == 'eqnarray':   # latex.ltx: \hskip 2\arraycolsep before the second and the third column
+            cols = [{'al': a, 'pl': pl, 'pr': none, 'bl': False, 'br': False} for a, pl in zip(cols, (none, two, two))]
+        elif cols and isinstance(cols[0], str):   # \arraycolsep on either side
+            cols = [{'al': a, 'pl': sep, 'pr': sep, 'bl': False, 'br': False} for a in cols]
+        n, body, mt = len(cols), [], []
+        for r in rows:
+            k = 0
+            while k < len(r['pre']):
+                if r['pre'][k] == 'hline':
+                    two = k + 1 < len(r['pre']) and r['pre'][k + 1] == 'hline'
+                    body.append(f'<span class="hline{" double" if two else ""}"></span>')
+                    k += 2 if two else 1
+                    continue
+                v = tex_len(r['pre'][k][1])
+                if v and not v.startswith('-'):
+                    body.append(f'<span class="vskip" style="height: {v}"></span>')
+                elif v:
+                    mt.append(v)
+                k += 1
+            if not r['cells']:
+                continue
+            after = tex_len(r['after']) if r['after'] else None
+            if kind == 'eqnarray' and r['end']:
+                after = f'calc(3 * var(--pt) + {after})' if after else 'calc(3 * var(--pt))'
+            st = ([f'margin-top: {" + ".join(mt) if len(mt) == 1 else "calc(" + " + ".join(mt) + ")"}'] if mt else []) + (
+                [f'margin-bottom: {after}'] if after else [])
+            st = f' style="{"; ".join(st)}"' if st else ''
+            mt = []
+            q = 0
+            for c in r['cells'] + [''] * n:
+                if q >= n:
+                    break
+                m = re.match(r'\s*\\multicolumn\s*\{(\d+)\}', c)
+                if m:   # \multicolumn{k}{spec}{text}: one cell over k columns, aligned and ruled as its spec says
+                    k = int(m.group(1))
+                    sp, j = read_group(c, skip_ws(c, m.end()))
+                    g, _ = read_group(c, skip_ws(c, j))
+                    mc = array_spec(sp)[0]
+                    pad = f'padding: 0 {mc["pr"]} 0 {mc["pl"]}'
+                    body.append(f'<span class="a{mc["al"]}" style="grid-column: span {k}; {pad}{st[8:-1] and "; " + st[8:-1]}">{self.math(g)}</span>')
+                    q += k
+                    continue
+                col = cols[q]
+                cs = [f'padding: 0 {col["pr"]} 0 {col["pl"]}']
+                cs += ['border-left: calc(0.4 * var(--pt)) solid'] if col['bl'] else []
+                cs += ['border-right: calc(0.4 * var(--pt)) solid'] if col['br'] else []
+                st2 = st[:-1] + '; ' + '; '.join(cs) + '"' if st and cs else (f' style="{"; ".join(cs)}"' if cs else st)
+                body.append(f'<span class="a{col["al"]}"{st2}>{self.math(c)}</span>')
+                q += 1
+        cls = 'array cols tex' + (' eqnarray' if kind == 'eqnarray' else '')
+        return f'<span class="{cls}" style="--cols: {n}">{"".join(body)}</span>'
+
+    def eqnarray(self, inner):
+        """eqnarray(*): a display of three columns, right, centre, left, 2\\arraycolsep apart"""
+        return f'<div class="displaymath">{self.alignment(split_align(inner), ["r", "c", "l"], "eqnarray")}</div>'
+
     # ---- math
     def math(self, s):
         s = s.strip()
@@ -247,6 +463,41 @@ class Conv:
                 if name == 'text':
                     g, i = read_arg(s, i)
                     out.append(self.inline(g))
+                elif name in ('textrm', 'textit', 'textbf', 'textsf', 'texttt', 'mbox'):   # text in math, as in text
+                    g, i = read_arg(s, i)
+                    out.append(self.inline(g) if name == 'mbox' else self.inline(f'\\{name}{{{g}}}'))
+                elif name == 'verb':   # \verb|...|: the text as it is, in the typewriter face
+                    k = s.index(s[i], i + 1)
+                    out.append(f'<code>{esc(s[i + 1:k])}</code>')
+                    i = k + 1
+                elif name == 'left':   # \left ... \right: an inner atom, its delimiters at their natural size
+                    d1, i = read_delim(s, i)
+                    a, b = match_right(s, i)
+                    d2, b = read_delim(s, b)
+                    out.append(f'<span class="minner">{d1}{self.math(s[i:a])}{d2}</span>')
+                    i = b
+                elif name == 'kern':   # \kern<len>: that much space, or less
+                    m2 = re.match(r'\s*(-?[0-9]*\.?[0-9]+\s*(?:pt|mm|cm|em|ex))', s[i:])
+                    if m2:
+                        i += len(m2.group(0))
+                        out.append(f'<span class="mkern" style="margin-left: {tex_len(m2.group(1))}"></span>')
+                elif name == 'not':   # a negated relation: Unicode's own where it has one, else a slash over it
+                    m2 = re.match(r'\s*(?:\\([A-Za-z]+)|(.))', s[i:])
+                    i += len(m2.group(0))
+                    neg = {'rightarrow': '↛', 'to': '↛', 'leftarrow': '↚', 'in': '∉', 'equiv': '≢', 'subseteq': '⊈',
+                           'models': '⊭', '=': '≠', 'sim': '≁'}
+                    k2 = m2.group(1) or m2.group(2)
+                    out.append(f'<span class="rel">{neg.get(k2) or (MATHREL.get(k2, k2) + chr(0x338))}</span>')
+                elif name in ('xrightarrow', 'xleftarrow'):   # amsmath's: an arrow as long as its label, the label over it
+                    _, i = read_opt(s, i)
+                    g, i = read_arg(s, i)
+                    out.append(f'<span class="rel"><span class="xarrow"><span class="over">{self.math(g)}</span>'
+                               f'<span class="xa {name[1:5]}">{"→" if name == "xrightarrow" else "←"}</span></span></span>')
+                elif name in ('quad', 'qquad'):   # 1em, 2em
+                    out.append(f'<span class="mspace" style="--w: {1 if name == "quad" else 2}em"></span>')
+                elif name in ('hline', 'noalign'):   # outside an alignment: nothing to draw
+                    if name == 'noalign':
+                        _, i = read_arg(s, i)
                 elif name == 'mid':
                     out.append('<span class="rel thick">|</span>')
                 elif name in ('big', 'Big', 'bigg', 'Bigg'):   # a delimiter at 1.2, 1.8, 2.4, 3 times its size
@@ -283,20 +534,29 @@ class Conv:
                     out.append(f'<span class="bin">{MATHBIN[name]}</span>')
                 elif name in MATHORD:
                     out.append(MATHORD[name])
+                elif name in GREEK:
+                    out.append(GREEK[name])
                 elif name == 'implies':
                     out.append('<span class="rel implies">⟹</span>' if out else '⟹')
                 elif name in ('mathbb', 'mathtt', 'mathsf', 'mathit', 'mathrm', 'terminal', 'variable'):
                     g, i = read_arg(s, i)
                     if name == 'mathbb':
-                        out.append(''.join({'P': 'ℙ', 'E': '𝔼', 'N': 'ℕ', 'R': 'ℝ'}[c] for c in g.strip()))
-                    elif name in ('mathtt', 'terminal'):
-                        out.append(f'<code>{esc(g)}</code>')
+                        out.append(''.join(mathbb(c) for c in g if not c.isspace()))
+                    elif name in ('mathtt', 'terminal'):   # typewriter, but for the math inside it, \mathit{t} say
+                        for part in re.split(r'(\\math(?:it|rm|sf|bf|tt)\s*\{[^{}]*\})', g):
+                            if part.startswith('\\math'):
+                                out.append(self.math(part))
+                            elif part:
+                                out.append(f'<code>{esc(re.sub(r"\\([_{}%&#$])", r"\1", part))}</code>')
                     elif name == 'mathsf':
                         out.append(f'<span class="msf">{self.math(g)}</span>')
                     elif name == 'variable':   # the deck's \left\langle{#1\/}\right\rangle
                         out.append(f'⟨{self.math(g.replace(chr(92) + "/", ""))}⟩')
-                    else:
-                        out.append(self.math(g))
+                    else:   # \mathit, \mathrm: a word in a text font, its letters not math letters
+                        h = re.sub(r'<i(?: class="ic" style="[^"]*")?>([A-Za-z])</i>', r'\1', self.math(g))
+                        # \mathit sets the letters in the text italic, as words; anything else keeps its math font
+                        out.append(re.sub(r'(?<![<&#/])\b([A-Za-z]+)\b(?![^<]*>)', r'<i class="mit">\1</i>', h) if name == 'mathit'
+                                   else f'<span class="mrm">{h}</span>')
                 elif name in ('frac',):
                     a, i = read_arg(s, i)
                     b, i = read_arg(s, i)
@@ -319,28 +579,33 @@ class Conv:
                     i = b
                     spec = ''
                     if env == 'array':
-                        spec, k = read_arg(inner, 0)
+                        _, k = read_opt(inner, 0)
+                        spec, k = read_arg(inner, k)
                         inner = inner[k:]
-                    rows = [r for r in re.split(r'\\\\', inner) if r.strip()]
-                    cells = [[self.math(c) for c in r.split('&')] for r in rows]
-                    cols = [c for c in spec if c in 'lcr']
-                    if env == 'array' and cols != ['r', 'c', 'l']:
+                    al = split_align(inner)
+                    rows = [r for r in al if ''.join(r['cells']).strip()]
+                    cells = lambda: [[self.math(c) for c in r['cells']] for r in rows]
+                    cs = array_spec(spec) if env == 'array' else []
+                    cols = [c['al'] for c in cs]
+                    plain = all(c['pl'] == c['pr'] == 'calc(5 * var(--pt))' and not c['bl'] and not c['br'] for c in cs)
+                    if env == 'array' and (cols != ['r', 'c', 'l'] or not plain or any(r['pre'] or r['after'] for r in al)):
                         # any column spec: a grid of its columns, each aligned as the spec says; a short
                         # row's missing cells are empty (the {rcl} form below is experiment 6's)
-                        body = ''.join(f'<span class="a{cols[q]}">{r[q] if q < len(r) else ""}</span>'
-                                       for r in cells for q in range(len(cols)))
-                        out.append(f'<span class="array cols" style="--cols: {len(cols)}">{body}</span>')
+                        out.append(self.alignment(al, cs, 'array'))
                     elif env == 'cases':
-                        body = '<br>'.join(''.join(r) for r in cells)
+                        body = '<br>'.join(''.join(r) for r in cells())
                         out.append(f'<span class="cases" style="--rows: {len(rows)}"><span class="brace">{{</span><span class="rows">{body}</span></span>')
                     else:
-                        out.append('<span class="array">' + ''.join(f'<span>{c}</span>' for r in cells for c in r) + '</span>')
-                elif name in (',', ';', ' ', '!', 'quad'):
-                    out.append({',': '\u2009', ';': '\u2005', ' ': ' ', '!': '', 'quad': '\u2003'}[name])
+                        out.append('<span class="array">' + ''.join(f'<span>{c}</span>' for r in cells() for c in r) + '</span>')
+                elif name in (',', ';', ' ', '!'):
+                    out.append({',': '\u2009', ';': '\u2005', ' ': ' ', '!': ''}[name])
                 else:
                     self.unknown.add('math\\' + name)
             elif c in '_^':
                 g, i = read_arg(s, i + 1)
+                if re.fullmatch(r'\\(math[a-z]+|text[a-z]*|mbox)', g):   # _\mathbb{C}: the command takes its argument
+                    g2, i = read_arg(s, i)
+                    g += '{' + g2 + '}'
                 g = self.math(g)
                 tag = 'sub' if c == '_' else 'sup'
                 # both: TeX stacks them after the base
@@ -349,6 +614,8 @@ class Conv:
                     g2, i = read_arg(s, nxt + 1)
                     sub, sup = (g, self.math(g2)) if c == '_' else (self.math(g2), g)
                     out.append(f'<span class="subsup"><sup>{sup}</sup><sub>{sub}</sub></span>')
+                elif out and re.fullmatch(r'<span class="rel[^"]*">.*</span>', out[-1], re.S) and out[-1].count('<span') == out[-1].count('</span>'):
+                    out[-1] = out[-1][:-7] + f'<{tag}>{g}</{tag}></span>'   # a script on a relation: inside its spacing
                 else:
                     out.append(f'<{tag}>{g}</{tag}>')
             elif c == '{':
@@ -368,8 +635,11 @@ class Conv:
                 out[-1] = out[-1][:-7] + '=</span>'; i += 1   # consecutive relations: one spacing, as ::=
             elif c == ':' and out and re.fullmatch(r'<span class="rel">[^<]*</span>', out[-1]):
                 out[-1] = out[-1][:-7] + ':</span>'; i += 1
+            elif c == ':' and not out:   # relations opening a formula: no space before them, none between them
+                m2 = re.match(r'[:=]+', s[i:])
+                out.append(m2.group(0)); i += len(m2.group(0))
             elif c == ':':
-                out.append('<span class="rel">:</span>' if out else ':'); i += 1
+                out.append('<span class="rel">:</span>'); i += 1
             elif c == '=':
                 out.append('<span class="rel">=</span>'); i += 1
             elif c == '+':
@@ -378,6 +648,8 @@ class Conv:
                 out.append(f'<i>{c}</i>'); i += 1
             elif c in ' \t\n':
                 i += 1
+            elif c == '~':   # \nobreakspace: the text font's interword space
+                out.append('\u00a0'); i += 1
             else:
                 out.append(esc(c)); i += 1
         h = ''.join(out)
@@ -463,7 +735,7 @@ class Conv:
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
                   '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
-                  '\\refname': 'References', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '',
+                  '\\refname': 'References', '\\/': '', '\\allowbreak': '<wbr>', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '',
                   '\\beamertemplatebookbibitems': '', '\\beamertemplatearticlebibitems': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
             o, j = read_opt(s, i)
@@ -516,6 +788,11 @@ class Conv:
                     i += 1
             return simple[name], i
         n = name[1:]
+        if n == 'textit' and re.search(r'\\/\s*$', read_arg(s, i)[0]):   # \textit{...\/}: the last letter's italic correction
+            g, i = A()
+            g = re.sub(r'\\/\s*$', '', g)
+            ic = CMSSI_IC.get(g[-1:])
+            return (f'<i class="ic" style="--ic: {ic}em">' if ic else '<i>') + self.inline(g) + '</i>', i
         if n in ('emph', 'alert', 'aalert', 'textbf', 'textsc', 'texttt', 'textit', 'textsf', 'textrm'):
             g, i = A()
             t = {'emph': ('<em>', '</em>'), 'alert': ('<span class="alert">', '</span>'),

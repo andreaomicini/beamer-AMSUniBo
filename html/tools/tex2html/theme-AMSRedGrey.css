@@ -441,8 +441,9 @@ table.tabular tr.hb1 > td { border-bottom: calc(0.4 * var(--pt)) solid var(--tex
 table.tabular tr.hl2 > td { border-top: calc(2.8 * var(--pt)) double var(--text); }
 table.tabular tr.hb2 > td { border-bottom: calc(2.8 * var(--pt)) double var(--text); }
 /* shrink=<n>: beamer sets the content at \textwidth / f and scales it by f; zoom lays each child out
-   so, on the frame's own width */
+   so, on the frame's own width; when TeX shrinks more than asked, the body narrower by their ratio */
 .frame.shrink .body > * { zoom: var(--shrink); }
+.frame.shrink .body { width: calc(342.295 * var(--shrinkr, 1) * var(--pt)); }
 /* \huge: cmss17 at 20.74pt, baselineskip 25pt */
 .huge { font-family: "LM Sans 17", "LM Math"; font-size: calc(20.74 * var(--fs)); line-height: calc(25 * var(--pt)); }
 /* \mathcal, \mathscr: Unicode's script capitals, from LM Math */
@@ -501,3 +502,28 @@ i.ic { padding-right: var(--ic); }
 .frame sub, .frame sup { margin-right: calc(0.5 * var(--pt)); }
 .frame .subsup > sub, .frame .subsup > sup { margin-right: 0; }
 .frame .subsup { margin-right: calc(0.5 * var(--pt)); }
+/* alignments (array, eqnarray): each cell padded as TeX's preamble pads it (\arraycolsep, @{...},
+   2\arraycolsep), no gap; \hline a rule across, 0.4pt, two of them \doublerulesep (2pt) apart;
+   \noalign{\vskip} a gap; a nested array centred on the line */
+.array.cols.tex { column-gap: 0; }
+.array.cols > .hline { grid-column: 1 / -1; height: calc(0.4 * var(--pt)); background: currentColor; }
+.array.cols > .hline.double { height: calc(2.4 * var(--pt)); background: none; box-sizing: border-box;
+	border-top: calc(0.4 * var(--pt)) solid; border-bottom: calc(0.4 * var(--pt)) solid; }
+.array.cols > .vskip { grid-column: 1 / -1; }
+.array.cols .array.cols { vertical-align: middle; }
+/* an eqnarray's rows \baselineskip apart, as TeX's, whatever fonts their delimiters and \verb take */
+.array.cols.eqnarray > * * { line-height: 0; }
+.array.cols code, .array.cols .minner { line-height: 0; }
+/* \left ... \right: an inner atom, a thin space (3mu) on each side but at the formula's edges */
+.minner { margin: 0 0.1667em; }
+.minner:first-child { margin-left: 0; }
+.minner:last-child { margin-right: 0; }
+.mkern { display: inline-block; }
+/* \xrightarrow: the arrow as long as its label with 5mu before and 9mu after it, in the script size,
+   and at least its own width; the label's baseline 0.62em over the line's (measured), its height the row's */
+.xarrow { display: inline-block; text-align: center; min-width: 1em; }
+.xarrow > .over { display: block; font-size: 73%; line-height: 1; padding: 0 0.5em 0 0.278em; }
+.xarrow > .xa { display: block; line-height: 1; margin-top: -0.32em; text-align: right; white-space: nowrap; }
+.xarrow > .xa::before { content: ""; display: inline-block; width: calc(100% - 0.5em); margin-right: -0.5em; height: 0; border-top: 0.04em solid; vertical-align: 0.23em; }
+/* in the script styles TeX spaces neither relations nor binary operators */
+sub .rel, sup .rel, sub .bin, sup .bin, .subsup .rel, .subsup .bin, .xarrow > .over .rel, .xarrow > .over .bin { margin: 0; }

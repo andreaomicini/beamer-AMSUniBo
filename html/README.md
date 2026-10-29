@@ -804,8 +804,8 @@ repository of many decks through the tools and the first decks with overlays.
 Every page is checked as before, deck by deck; the decks' own numbers are in
 the repository's `CLAUDE.md`. Fourteen decks have pages, 1,966 pages in all,
 within 1–5pt in both engines on almost every page; the exceptions are logged
-there. C7 (`eqnarray*` grammars) and S6 (inference rules in arrays) need the
-tools' mathematics grown.
+there. C7 (`eqnarray*` grammars) and S6 (inference rules in arrays) needed the
+tools' mathematics grown: experiment 9.
 
 * **AMSCesena is AMSRedGrey's profile in the blues of CesenaSMA2006**: the
   same theme file with the palette of `beamercolorthemeorchidwhale.sty`, and a
@@ -857,3 +857,56 @@ tools' mathematics grown.
   `deck.json`'s `shrink`.
 * **Runs of ties** (`~~~`) are kept spaces: Latin Modern's no-break space is
   wider in Firefox than in WebKit, 7pt over three.
+
+### 9 — SMA-LS C7 and S6: alignments and more mathematics, 2026-10-29
+
+The last two SMA-LS decks: C7, 468 pages with sixteen `eqnarray*` grammars
+and two tables in arrays, and S6, 26 pages with a grammar in `array`s and
+inference rules. What the converter learnt is general, in `latex.py`,
+`frames.py`, `build.py` and the AMSCesena and AMSRedGrey themes (the two
+with mathematics); the decks' own macros are in their `deck.json`
+(`texmacros`). Every value is TeX's, read in `latex.ltx`, `beamerbaseframe.sty`
+or the PDF.
+
+* **Alignments, one reader for all**: rows split at the top level only (not
+  in a group, a nested environment or a `\verb`), with their `\\[<len>]`,
+  `\hline`, `\hline\hline` and `\noalign{\vskip}`; cells split the same way.
+  `array` takes its column spec as TeX's preamble does: `l c r p{}`, `|`,
+  `@{...}` (spaces only), `*{n}{...}`, each cell padded with `\arraycolsep`
+  (5pt) or its `@{}`, no grid gap; `\multicolumn{k}{spec}{...}` spans its
+  columns. `\hline` is a 0.4pt rule across, two of them `\doublerulesep` (2pt)
+  apart; a nested array is centred on its row (`infrule`).
+* **`eqnarray` and `eqnarray*`**: three columns right, centre, left, with
+  2`\arraycolsep` before the second and the third, `\jot` (3pt) after every
+  `\\` plus its `[<len>]` (`latex.ltx`). Rows are their strut apart, as TeX's
+  `\baselineskip`: what is inside a row takes no line height, so a delimiter
+  or `\verb` in another font does not push it down. No numbers are drawn.
+* **`\left` … `\right`** is an inner atom: its delimiters, `.` for none, and a
+  thin space on either side but at the formula's edges. **`\xrightarrow`**
+  (amsmath) is an arrow as long as its label with 5mu and 9mu around it,
+  the label's baseline 0.62em over the line's (measured), its height the
+  row's; a script after a relation stays inside its spacing.
+* **More of TeX's maths**: `\verb` and `\textrm`/`\textit`/`\texttt` in
+  maths, `\textit{...\/}` with its italic correction, `~` as the text
+  font's space, `\kern`, `\quad` and `\qquad` as measured spaces, `\not`,
+  every `\mathbb` capital, lowercase and capital Greek, `\bot`, `\land`,
+  `\rhd`, `\downarrow`, `\mathtt` holding `\mathit{t}`, `\mathit` setting
+  only letters, as words, a script's `\mathbb{C}` taking its argument, `::=`
+  opening a cell. In scripts TeX spaces neither relations nor binary
+  operators, and now neither does the page.
+* **A macro body holding `&` or `\\` is not grouped** by `texmacros`: TeX
+  never groups a body, and the group would hide the marks from the
+  alignment (`\infrulelab`).
+* **TeX shrinking more than asked**: beamer widens `\hsize` by the factor
+  asked and scales by the one TeX took (`beamerbaseframe.sty`), so the body
+  is narrowed by their ratio (`--shrinkr`). This fixes the centring off on
+  C3b's shrunk tables (28pt before, 13.6pt now) and C7's grammar (17.6pt
+  before, 1.8pt now).
+* **A frame title's second line** is read only in the title's size: a first
+  body line can sit in the same band (C7).
+
+Results are in `smals0607-slides`' `CLAUDE.md`. Of the other fourteen SMA-LS
+pages only C3b's changes (rebuilt); CILC 2016's page, rebuilt and re-tuned with
+these tools, measures as before but for page 18, 14.9pt instead of 12.9pt,
+a difference that comes from the re-tuning and is not the new rules: its
+committed page is left as it was.
