@@ -52,6 +52,7 @@ ENTRY
     amseprint    % AMS extension: an AMS Laurea e-print number, from APICe's Theses
     amsphdeprint % AMS extension: an AMS Dottorato e-print number, from APICe's Theses
     apice   % AMS extension
+    articleno % AMS extension: an article number, printed when there are no pages
     author
     booktitle
     chapter
@@ -456,7 +457,11 @@ FUNCTION {multi.page.check}
 
 FUNCTION {format.pages}
 { pages empty$
-    { "" }
+    { articleno empty$                          % AMS extension: the article
+        { "" }                                  % number stands in for pages
+        { "article" articleno tie.or.space.connect }
+      if$
+    }
     { pages multi.page.check
         { "pages" pages n.dashify tie.or.space.connect }
         { "page" pages tie.or.space.connect }
@@ -477,7 +482,15 @@ FUNCTION {format.vol.num.pages}
     }
   if$
   pages empty$
-    'skip$
+    { articleno empty$                          % AMS extension: the article
+        'skip$                                  % number stands in for pages
+        { duplicate$ empty$
+            { pop$ format.pages }
+            { ", " * format.pages * }
+          if$
+        }
+      if$
+    }
     { duplicate$ empty$
         { pop$ format.pages }
         { ":" * pages n.dashify * }

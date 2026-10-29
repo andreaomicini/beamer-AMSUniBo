@@ -409,7 +409,7 @@ mean what they mean elsewhere, and two of its own:
 <!-- markdownlint-disable MD013 -->
 
 | BibTeX field | from APICe's Talks | printed as |
-|---|---|---|
+| --- | --- | --- |
 | `author`, `year` | authors, the date's year | label, sort key and the year after the names, as everywhere |
 | `title` | title | bold, sentence case as for papers—protect capitals with braces, `{FIPA}` |
 | `type` | the sort's label | the venue line's first word: *Talk*, *Invited Talk*, *Tutorial*, … |
@@ -440,7 +440,7 @@ whenever `volume` is there.
 <!-- markdownlint-disable MD013 -->
 
 | BibTeX field | printed as |
-|---|---|
+| --- | --- |
 | `editor`, `year` | label, sort key and the names, with *editors*, as for `proceedings` |
 | `title` | the issue's title, bold, sentence case as for papers |
 | `journal`, `volume`, `number`, `pages` | as in `article`: *Journal*, 14(1) |
@@ -457,6 +457,14 @@ for multi-agent systems** *Autonomous Agents and Multi-Agent Systems, 14(1),
 Springer*. Other styles do not know the type: BibTeX warns and falls back to
 `misc`.
 
+### article numbers
+
+Since 1.8.3 `apalike-AMS.bst` reads `articleno`, the article number APICe gives
+journals that number their articles instead of paging them. It is printed only
+when there are no `pages`, as APICe's own page does: *Journal*, 32(1es), article
+20 for an `article`, and article 20 where the pages would go for any other type.
+With `pages` present, the pages print and the number does not.
+
 ### theses
 
 APICe's Theses write `@phdthesis` and `@mastersthesis`, the classical types,
@@ -467,7 +475,7 @@ carries.
 <!-- markdownlint-disable MD013 -->
 
 | BibTeX field | from APICe's Theses | printed as |
-|---|---|---|
+| --- | --- | --- |
 | `title` | title | as written, bold—bold italic for a PhD; never put into sentence case |
 | `translatedtitle` | translated title | after the title, in brackets |
 | `type` | the cycle's wording | *Bachelor's thesis*, *Master's thesis*, *PhD thesis*, as written |
