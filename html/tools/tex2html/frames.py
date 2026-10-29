@@ -92,11 +92,18 @@ def container(s, ind, mode='body'):
             q = re.search(r'\\(tiny|scriptsize|footnotesize|small|normalsize)(?![A-Za-z])\s*$', pre)
             if q:
                 pre, size = pre[:q.start()], q.group(1).replace('normalsize', '')
+        # \setbeamerfont{itemize/enumerate body|subbody}{size=\<size>} before a list: its items' sizes
+        fonts = dict(re.findall(r'\\setbeamerfont\{itemize/enumerate (body|subbody)\}\{size=\\(\w+)\}%?', pre))
+        pre = re.sub(r'\\setbeamerfont\{[^}]*\}\{[^}]*\}%?', '', pre)
         flush_text(pre)
         a, b = find_end(s, m.end(), env)
         inner = s[m.end():a]
         i = b
-        items.append(('raw', verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim') else env_html(env, inner, ind)))
+        h = verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim') else env_html(env, inner, ind)
+        if fonts and env in ('itemize', 'enumerate'):
+            cl = ' '.join(f'{"sub" if k == "subbody" else ""}body-{v}' for k, v in fonts.items())
+            h = re.sub(r'<(ul|ol)( class="([^"]*)")?', lambda q: f'<{q.group(1)} class="{(q.group(3) + " ") if q.group(3) else ""}{cl}"', h, count=1)
+        items.append(('raw', h))
 
     # side by side: consecutive minipages are one line of boxes
     grouped = []
@@ -515,11 +522,36 @@ def verbatim_html(env, ind, size):
     def text(x):
         return esc(x).replace('`', '\u2018').replace("'", '\u2019')
     if kind == 'Verbatim' and 'commandchars' in opt:
-        parts = re.split(r'(\\\(.*?\\\))', body)
-        h = ''.join(C.inline('$' + q[2:-2] + '$') if q.startswith('\\(') else text(q) for q in parts)
+        # \(..\) is math, and a command with its group (\textit{...}, S4) is TeX's
+        parts = re.split(r'(\\\(.*?\\\)|\\[A-Za-z]+\{[^{}\n]*\})', body)
+        unesc = lambda q: text(re.sub(r'\\([{}\\])', r'\1', q))   # \{ \} \\ are the characters themselves
+        h = ''.join(C.inline('$' + q[2:-2] + '$') if q.startswith('\\(') else C.inline(q) if re.match(r'\\[A-Za-z]', q) else unesc(q)
+                    for q in parts)
     else:
         h = text(body)
-    return f'{ind}<pre class="verbatim{" " + size if size else ""}">{h}</pre>'
+    cls, style = [], ''
+    if kind == 'Verbatim':   # fancyvrb: the deck's \fvset, then this one's options
+        fv = dict(FVSET)
+        fv.update(fv_options(opt.strip('[]')))
+        if fv.get('fontsize'):
+            size = fv['fontsize'].lstrip('\\').replace('normalsize', '')
+        if fv.get('frame') == 'single':
+            cls.append('fv-frame')
+        m = re.fullmatch(r'([0-9.]+)(em|pt)', fv.get('xleftmargin', ''))
+        if m:
+            style = f' style="margin-left: calc({float(m.group(1)) * (10.95 if m.group(2) == "em" else 1):g} * var(--pt))"'
+    cl = ' '.join([size] + cls if size else cls)
+    return f'{ind}<pre class="verbatim{" " + cl if cl else ""}"{style}>{h}</pre>'
+
+FVSET = {}   # fancyvrb's defaults, from the deck's \fvset{...}
+
+def fv_options(o):
+    out = {}
+    for part in re.split(r',(?![^{]*\})', o):
+        if '=' in part:
+            k, v = part.split('=', 1)
+            out[k.strip()] = v.strip()
+    return out
 
 def expand_macros(s):
     """deck.json's "texmacros": {name: [number of arguments, body with #1 #2 ...]}, expanded in the source
@@ -560,6 +592,9 @@ def shrinkage(opts):
 
 def pages():
     src = strip_comments(keep_verbatim(open(path('tex')).read()))
+    fvs = re.search(r'\\fvset\{(.*)\}\s*$', src[:src.index('\\begin{document}')], re.M)
+    if fvs:
+        FVSET.update(fv_options(fvs.group(1)))
     for old, new in CFG.get('replace', []):   # deck.json's literal rewrites, for what texmacros cannot say
         src = src.replace(old, new)
     src = expand_macros(src)

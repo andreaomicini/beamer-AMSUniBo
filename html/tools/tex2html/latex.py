@@ -458,6 +458,11 @@ class Conv:
             if m:
                 v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
                 return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
+        if name == '\\textcolor':   # a palette colour of the theme, by its name: var(--<name>)
+            c, i = read_arg(s, i)
+            g, i = read_arg(s, i)
+            c = re.sub(r'[^A-Za-z0-9]', '', c)
+            return f'<span style="color: var(--{c})">{self.inline(g)}</span>', i
         if name == '\\verb' and i < len(s):   # \verb|...|: the text as it is, in the typewriter face
             k = s.index(s[i], i + 1)
             return f'<code>{esc(s[i + 1:k])}</code>', k + 1

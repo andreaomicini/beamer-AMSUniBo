@@ -8,6 +8,23 @@
 	--owblue: #3333B2;
 	--owbluedeep: #262686;
 	--owwhite: #FFFFFF;
+	--owbluedark: #1A1A59;     /* the rest of beamercolorthemeorchidwhale.sty, for \textcolor */
+	--owbluelight: #C2C2E8;
+	--owbluetint: #E9E9F3;
+	--owbluepale: #EBEBF7;
+	--owbluemid: #9999D9;
+	--owred: #FF0000;
+	--owreddeep: #BF0000;
+	--owredfill: #F9E6E6;
+	--owgreen: #008000;
+	--owgreendeep: #006000;
+	--owgreenfill: #E6EFE6;
+	--owblack: #000000;
+	--owtext: #000000;
+	--owgrey: #404040;
+	--owgreymid: #5A5A5A;
+	--owgreyline: #BFBFBF;
+	--owgreybg: #ECECEC;
 	--text: #000000;           /* owtext, normal text */
 	--emph: #262686;           /* owbluedeep, \emph */
 	--alert: #FF0000;          /* owred, alerted text */
@@ -135,6 +152,10 @@ p { margin: 0; }
 	font-size: calc(13.97 * var(--pt)); line-height: calc(27.89 * var(--pt));
 }
 .frametitle .ccite { font-size: calc(6.6 * var(--pt)); }
+/* a frame title of two lines (\\ in \frametitle, S4): the second 17.93pt under the first, the band
+   and the body below it as much lower (measured) */
+.frametitle:has(br) { height: calc(45.82 * var(--pt)); line-height: calc(17.93 * var(--pt)); padding-top: calc(4.98 * var(--pt)); }
+.frametitle:has(br) + .body { top: calc(56.85 * var(--pt)); }
 .body {
 	position: absolute; top: calc(38.92 * var(--pt)); bottom: calc(8.64 * var(--pt));
 	left: calc(10.909 * var(--pt)); width: calc(342.295 * var(--pt));
@@ -193,6 +214,11 @@ ol > li::before {
 	color: var(--owwhite); background: var(--ball); box-shadow: 0.4px 0.6px 0.8px rgba(0, 0, 0, .3);
 }
 ul.tight { --itemsep: calc(1 * var(--pt)); --topsep: calc(2 * var(--pt)); }
+/* \setbeamerfont{itemize/enumerate body|subbody}{size=...} before a list (S4): its items, then its sub-items */
+ul.body-small > li { font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+ul.body-footnotesize > li { font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(11 * var(--pt)); }
+ul.subbody-footnotesize li ul { font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(11 * var(--pt)); }
+ul.subbody-scriptsize li ul { font-family: "LM Sans 8", "LM Math"; font-size: calc(8 * var(--fs)); line-height: calc(9.5 * var(--pt)); }
 /* a fourth level (deck.json "lists": {"<env>": "four"}), as the SMA-LS decks define it: \list with
    leftmargin 1.1em and labelwidth .6em of the third level's 9pt, no item or top skip, \scriptsize text,
    a \tiny \textbullet in the item colour */
@@ -461,6 +487,10 @@ pre.verbatim.scriptsize { font-family: "LM Mono 8", monospace; font-size: calc(7
 /* a verbatim inside a body or block set in a smaller size takes that size (C6) */
 .small pre.verbatim { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
 .footnotesize pre.verbatim { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
+/* fancyvrb's frame=single (S4's \fvset): a 0.4pt rule in owbluedeep, framesep 2mm, 341.01pt wide (measured) */
+pre.verbatim.fv-frame { box-sizing: border-box; width: calc(341.01 * var(--pt)); border: calc(0.398 * var(--pt)) solid var(--owbluedeep);
+	padding: calc(5.69 * var(--pt)); }
+pre.verbatim.tiny { font-family: "LM Mono 8", monospace; font-size: calc(5.98 * var(--pt)); line-height: calc(7 * var(--pt)); }
 pre.verbatim.small { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
 pre.verbatim.footnotesize { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
 pre.verbatim .rel, pre.verbatim .bin { font-family: "LM Math"; }
