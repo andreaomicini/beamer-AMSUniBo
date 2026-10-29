@@ -158,6 +158,27 @@ em { font-style: italic; color: var(--emph); }
 .artitem::before { content: ""; position: absolute; left: calc(2.1 * var(--pt)); top: calc(-8.5 * var(--pt));
 	width: calc(9 * var(--pt)); height: calc(11.5 * var(--pt)); border: calc(0.5 * var(--pt)) solid var(--owgreymid);
 	background: linear-gradient(var(--owbluepale), var(--owwhite)); border-radius: 0 calc(3 * var(--pt)) 0 0; }
+/* beamer's bibliography items holding a \bibentry (C3a since its references are APICe records): author and
+   title run on, the rest one block a line; beamer's \newblock shifts the colours a block on: title black,
+   location owblue, note owgreymid */
+.artitem.bibentry > .bib-author, .artitem.bibentry > .bib-title { display: inline; }
+.artitem.bibentry .bib-title { color: var(--text); font-size: inherit; }
+.artitem.bibentry .bib-location { color: var(--owblue); }
+.artitem.bibentry .bib-note { color: var(--owgreymid); }
+.nbstrut { display: inline-block; height: calc(1.5em + 1 * var(--pt)); }   /* beamer's \newblock: \hbox{} with \ht 1.5em, and TeX's \lineskip */
+.artitem.bibentry { margin-bottom: calc(3.04 * var(--pt)); }   /* the links a line as any other, then beamer's \itemsep */
+.artitem.bibentry .apicepubpar { margin-right: calc(11.11 * var(--pt)); }   /* measured: \apicepubpar's gap at \normalsize */
+/* the icons hang from the author's first line, whose baseline the 1.5em box may lower; measured on C3a's PDF:
+   the article 8 x 11pt from 9.5pt above the baseline, the book (a red book, drawn after it) 12.4 x 9.4pt from 8.45pt */
+.artitem.bibentry { --asc: 0.88em; }   /* the author's content box, top to baseline */
+.artitem.bibentry::before { content: none; }
+.artitem.bibentry > .bib-author { position: relative; }
+.artitem.bibentry > .bib-author::before { content: ""; position: absolute; left: calc(-16.43 * var(--pt));
+	top: calc(var(--asc) - 9.5 * var(--pt)); width: calc(8 * var(--pt)); height: calc(11 * var(--pt)); box-sizing: border-box;
+	border: calc(0.5 * var(--pt)) solid var(--owgreymid); border-radius: 0 calc(2.5 * var(--pt)) 0 0;
+	background: linear-gradient(var(--owbluepale), var(--owwhite)); }
+.artitem.book > .bib-author::before { left: calc(-18.83 * var(--pt)); top: calc(var(--asc) - 8.45 * var(--pt));
+	width: calc(12.4 * var(--pt)); height: calc(9.4 * var(--pt)); border: 0; border-radius: 0; background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 18'><path d='M1 7 L9 1 L25 9 L17 16 Z' fill='%23A8243A' stroke='%23333' stroke-width='1.2' stroke-linejoin='round'/><path d='M1 7 L1 10 L17 18 L17 16 Z' fill='%23CCC' stroke='%23333' stroke-width='1.2' stroke-linejoin='round'/><path d='M17 16 L25 9 L25 11.5 L17 18 Z' fill='%23999' stroke='%23333' stroke-width='1.2' stroke-linejoin='round'/></svg>") center / 100% 100% no-repeat; }
 .rm { font-family: "LM Roman", serif; }   /* \textrm: Computer Modern Roman (C4b) */
 /* footnotes: the mark a letter in owblue, the text in owgreymid at the frame's foot, \footnotesize
    (C5; the position measured on its PDF, at shrink=20) */

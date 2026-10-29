@@ -115,7 +115,7 @@ def container(s, ind, mode='body'):
         if fonts and env in ('itemize', 'enumerate'):
             cl = ' '.join(f'{"sub" if k == "subbody" else ""}body-{v}' for k, v in fonts.items())
             h = re.sub(r'<(ul|ol)( class="([^"]*)")?', lambda q: f'<{q.group(1)} class="{(q.group(3) + " ") if q.group(3) else ""}{cl}"', h, count=1)
-        if env == 'thebibliography':   # each entry an item of its own, for allowframebreaks (C3a)
+        if env == 'thebibliography' or h.lstrip().startswith('<p class="artitem bibentry'):   # each entry an item of its own, for allowframebreaks (C3a)
             items.extend(('raw', l) for l in h.split('\n') if l.strip())
         else:
             items.append(('raw', h))
@@ -449,6 +449,17 @@ def itemize(inner, ind, tag='ul'):
     if cov:
         inner = inner[cov.end():]
     parts = split_top(inner, 'item')
+    reading = [re.fullmatch(r'\s*\[\\usebeamertemplate\*\{bibliography item\}\]\s*\\bibentry\{([^}]*)\}\s*(\\beamertemplate(book|article)bibitems)?\s*', p, re.S)
+               for p in parts[1:]]
+    if reading and all(reading):   # beamer's bibliography items, each a \bibentry: one element per entry, for
+        from bib import bibentry   # allowframebreaks; the icon as the last \beamertemplate...bibitems before it (C3a)
+        book = re.search(r'\\beamertemplate(book|article)bibitems\s*$', parts[0])
+        book, out = bool(book and book.group(1) == 'book'), []
+        for m in reading:
+            out.append(f'{ind}{bibentry(m.group(1), book)}')
+            if m.group(3):
+                book = m.group(3) == 'book'
+        return '\n'.join(out)
     parts[0] = re.sub(r'\\par\b', '', parts[0])   # a blank line before the first item (C3a)
     assert not parts[0].strip(), parts[0]
     out = [f'{ind}<{tag}{style}{" class=" + chr(34) + "covered" + chr(34) if cov else ""}>']
@@ -685,6 +696,28 @@ def distribute(items, pn, k):
             where[a] = free[0] if free else prev
     return where
 
+def split_entries(items, pn, k):
+    """a \\bibentry item TeX broke across pages: cut between its blocks, the rest on the next page, no icon (C3a)"""
+    bodies = [pdf_body(q) for q in range(pn, pn + k)]
+    out, cur = [], 0
+    for h in items:
+        m = re.match(r'(\s*<p class="artitem bibentry[^"]*">)(.*)</p>\s*$', h, re.S)
+        if not m:
+            out.append(h)
+            continue
+        blocks = [x for x in re.split(r'(?=<span class="bib-)', m.group(2)) if x]
+        pages = []
+        for x in blocks:
+            t = plain(x)
+            hit = next((q for w in (t[:24], t[:10]) if len(w) >= 4 for q in range(cur, k) if w in bodies[q]), None)
+            cur = hit if hit is not None else cur
+            pages.append(cur)
+        for q in sorted(set(pages)):
+            body = ''.join(x for x, w in zip(blocks, pages) if w == q).strip()
+            head = m.group(1) if q == pages[0] else m.group(1).replace('bibentry', 'bibentry cont', 1)
+            out.append(f'{head}{body}</p>')
+    return out
+
 VERBATIM = []   # the bodies of verbatim and Verbatim, taken out before anything parses the source
 VERB = re.compile(r'\\begin\{(verbatim|Verbatim)\}(\[[^\]\n]*\])?(.*?)\\end\{\1\}', re.S)
 
@@ -799,12 +832,12 @@ def expand_macros(s):
                 body = body.replace('#%d' % k, g)
             if n == 0 and j < len(s) and s[j] == ' ':
                 pass
-            # grouped, so that a script after it takes it whole; but not when it holds alignment marks, which a
-            # group would hide from the alignment (TeX itself never groups a macro's body)
+            # grouped, so that a script after it takes it whole; but not when it holds alignment marks or an \item,
+            # which a group would hide from the alignment or the list (TeX itself never groups a macro's body)
             top = re.sub(r"\\[{}]", "", body)   # \{ \} are not groups
             while re.search(r'\{[^{}]*\}', top):
                 top = re.sub(r'\{[^{}]*\}', '', top)
-            grp = n and not re.search(r'(?<!\\)&|\\\\', top)
+            grp = n and not re.search(r'(?<!\\)&|\\\\|\\item(?![A-Za-z])', top)
             out.append(s[i:m.start()] + '{' + body + '}' if grp else s[i:m.start()] + body + (' ' if re.match(r'[A-Za-z]', s[j:j + 1]) else ''))
             i, changed = j, True
         out.append(s[i:])
@@ -927,6 +960,7 @@ def pages():
     raw = re.sub(r'(\\begin\{semiverbatim\})(.*?)(\\end\{semiverbatim\})',
                  lambda m: m.group(1) + re.sub(r'(?<!\\)%', r'\\%', m.group(2)) + m.group(3), raw, flags=re.S)
     src = strip_comments(raw)
+    src = re.sub(r'\\nobibliography\*', '', src)   # bibentry reads the .bbl here: nothing printed (C3a)
     # thebibliography inside frames (C3a): numbered labels, each environment from 1
     for tb in re.finditer(r'\\begin\{thebibliography\}.*?\\end\{thebibliography\}', src, re.S):
         for k, key in enumerate(re.findall(r'\\bibitem(?:\[[^\]]*\])?\{([^}]*)\}', tb.group(0)), 1):
@@ -989,7 +1023,7 @@ def pages():
         '\\AtBeginSection' in f.read_text(errors='replace') for f in (ROOT / 'sty').glob('*.sty'))
     # the sections, and their subsections, for the contents frames
     secs, subs = [], []
-    for m in re.finditer(r'\\(sub)?section(\*?)(\[[^]]*\])?\{', doc):
+    for m in re.finditer(r'\\(sub)?section(?:<presentation>)?(\*?)(\[[^]]*\])?\{', doc):   # <presentation>: C3a's appendix
         g, _ = read_group(doc, m.end() - 1)
         C.reset()
         if m.group(2):
@@ -1003,7 +1037,7 @@ def pages():
     out = []
     section = subsection = ''
     i = 0
-    tok = re.compile(r'\\(sub)?section(\*?)(?:\[([^]]*)\])?\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
+    tok = re.compile(r'\\(sub)?section(?:<presentation>)?(\*?)(?:\[([^]]*)\])?\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
                      r'|\\frame(?![A-Za-z])(\[[^]]*\])?\s*(?=\{)'
                      r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
     nonumber = False
@@ -1116,6 +1150,7 @@ def pages():
                 pn = len(out) + 1
                 n = broken_pages(pn)
                 if n > 1:
+                    body = split_entries(body, pn, n)
                     where = distribute(body, pn, n)
                     groups = [[h for h, w in zip(body, where) if w == q] for q in range(n)]
                     groups = [g for g in groups if g] or [body]

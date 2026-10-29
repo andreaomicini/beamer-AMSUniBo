@@ -42,7 +42,7 @@ def html_chars(h):
             tag = h[i + 1:j]
             name = re.match(r'/?([a-z0-9]+)', tag).group(1)
             closing = tag.startswith('/')
-            if (name in BLOCK and 'class="pgfimage"' not in tag) or re.search(r'class="bib-', tag):   # \pgfuseimage is inline
+            if (name in BLOCK and 'class="pgfimage"' not in tag) or (re.search(r'class="bib-', tag) and 'data-runon' not in tag):   # \pgfuseimage is inline; a \bibentry's title runs on
                 flow += 1
             # the parts of a fraction, a stack, cases or an array sit on lines of their own: each is a
             # flow of its own, and the text after it goes on in the flow before it

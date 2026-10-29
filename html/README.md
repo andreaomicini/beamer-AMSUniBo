@@ -910,3 +910,41 @@ pages only C3b's changes (rebuilt); CILC 2016's page, rebuilt and re-tuned with
 these tools, measures as before but for page 18, 14.9pt instead of 12.9pt,
 a difference that comes from the re-tuning and is not the new rules: its
 committed page is left as it was.
+
+### 10 — SMA-LS C3a: references as `\bibentry`, 2026-10-29
+
+C3a's eight *For Further Reading* frames no longer hold hand-typed
+`thebibliography` entries. Each item is now `\readingitem{key}`: an `\item`
+labelled with beamer's article or book icon, followed by `\bibentry` of an
+APICe record (`bibentry`, `\nobibliography*`). The closing references are the
+house frame. What the tools learnt:
+
+* **`\bibentry` as a bibliography item.** An `itemize` whose items are all
+  `[\usebeamertemplate*{bibliography item}]\bibentry{key}` becomes one element
+  per entry, so `allowframebreaks` can distribute them. The entry's spans come
+  from `bib.py` (as the references), and the icon follows the last
+  `\beamertemplate{article,book}bibitems`. `\nobibliography*` prints nothing.
+* **Beamer's `\newblock` outside `thebibliography`** (`beamerbaselocalstructure`)
+  sets each block in the colours of the block before it: the title black, the
+  location in the title colour, the note in the location colour. Its first
+  `\newblock` adds an empty box 1.5em high. The title therefore runs on after
+  the author, behind that box (`.nbstrut`, plus TeX's 1pt `\lineskip`), and
+  TeX either keeps it on the author's line or starts a taller line with it.
+  `align.py` treats a title marked `data-runon` as part of the author's flow,
+  so the page breaks the line where the PDF does. Between entries there is
+  only beamer's 3pt `\itemsep`, and the links are a line like any other.
+* **An entry TeX breaks across pages** is cut between its blocks at the PDF's
+  page break (`split_entries`); the rest continues on the next page without an
+  icon.
+* **The icons** hang from the author span, so they follow its baseline wherever
+  the 1.5em box puts it. The book icon (`\beamertemplatebookbibitems`), new
+  here, is an inline SVG drawn after the PDF's.
+* **`\section<presentation>*`**, the appendix's, is now read as a section: the
+  headline shows *Appendix · For Further Reading*. Before, it went on showing
+  the last section (*ADELFE*), in the page of experiment 8 too.
+  `\appendixname` is *Appendix*.
+* **A macro body holding `\item`** is not grouped by `texmacros`, for the same
+  reason as `&`: the group would hide it from the list.
+* **A `[c]` references frame** has its nudged shift applied as centred
+  (`bib_pages` passed `centred=False`, so the shift landed 0.6 short). This
+  holds for AGoT's references too, the next time that page is rebuilt.

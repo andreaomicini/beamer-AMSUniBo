@@ -292,7 +292,7 @@ def bib_pages(n0, p):
         body, probs, nb = add_breaks(body, pn, skip_cite=False)
         body = margins(pn, body)
         head, bst = section_open(pn, 'frame' + (' top' if p.get('top', True) else ''), secname(p['section']),
-                                 ' data-noframenumbering' if p.get('nonum', True) else '', centred=False)
+                                 ' data-noframenumbering' if p.get('nonum', True) else '', centred=not p.get('top', True))
         out.append('\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]} {ROMAN[pn - n0 + 1]}</h2>',
                               f'{T}<div class="body {p.get("size", "tiny")} refs"{bst}>', body, f'{T}</div>', '</section>']))
     return out
