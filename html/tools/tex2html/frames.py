@@ -214,6 +214,9 @@ def env_html(env, inner, ind):
     if env == 'indquotation':
         body, flags = container(inner, ind + T, 'quote')
         return '\n'.join([f'{ind}<div class="quote">'] + body + [f'{ind}</div>'])
+    if env == 'centering':   # \centering in a group: the paragraph centred, no space around it
+        body, flags = container(inner, ind + T, 'center')
+        return '\n'.join([f'{ind}<div class="centering">'] + body + [f'{ind}</div>'])
     if env == 'center':
         body, flags = container(inner, ind + T, 'center')
         return '\n'.join([f'{ind}<div class="center">'] + body + [f'{ind}</div>'])
