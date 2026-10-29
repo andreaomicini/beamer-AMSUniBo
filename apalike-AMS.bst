@@ -52,7 +52,7 @@ ENTRY
     amseprint    % AMS extension: an AMS Laurea e-print number, from APICe's Theses
     amsphdeprint % AMS extension: an AMS Dottorato e-print number, from APICe's Theses
     apice   % AMS extension
-    articleno % AMS extension: an article number, printed when there are no pages
+    articleno % AMS extension: an article number, printed in place of pages
     author
     booktitle
     chapter
@@ -69,6 +69,7 @@ ENTRY
 %    month              not used in apalike
     note
     number
+    numpages % AMS extension: an article's page count, after its number
     organization
     pages
     publisher
@@ -456,15 +457,25 @@ FUNCTION {multi.page.check}
 }
 
 FUNCTION {format.pages}
-{ pages empty$
-    { articleno empty$                          % AMS extension: the article
-        { "" }                                  % number stands in for pages
-        { "article" articleno tie.or.space.connect }
+{ articleno empty$                              % AMS extension: the article
+    { pages empty$                              % number replaces the pages,
+        { "" }                                  % with its page count
+        { pages multi.page.check
+            { "pages" pages n.dashify tie.or.space.connect }
+            { "page" pages tie.or.space.connect }
+          if$
+        }
       if$
     }
-    { pages multi.page.check
-        { "pages" pages n.dashify tie.or.space.connect }
-        { "page" pages tie.or.space.connect }
+    { "article" articleno tie.or.space.connect
+      numpages empty$
+        'skip$
+        { ", " * numpages *
+          numpages "1" =
+            { " page" * }
+            { " pages" * }
+          if$
+        }
       if$
     }
   if$
@@ -481,19 +492,19 @@ FUNCTION {format.vol.num.pages}
       if$
     }
   if$
-  pages empty$
-    { articleno empty$                          % AMS extension: the article
-        'skip$                                  % number stands in for pages
+  articleno empty$                              % AMS extension: the article
+    { pages empty$                              % number replaces the pages
+        'skip$
         { duplicate$ empty$
             { pop$ format.pages }
-            { ", " * format.pages * }
+            { ":" * pages n.dashify * }
           if$
         }
       if$
     }
     { duplicate$ empty$
         { pop$ format.pages }
-        { ":" * pages n.dashify * }
+        { ", " * format.pages * }
       if$
     }
   if$
@@ -507,7 +518,7 @@ FUNCTION {format.chapter.pages}
         { type "l" change.case$ }
       if$
       chapter tie.or.space.connect
-      pages empty$
+      pages empty$ articleno empty$ and
         'skip$
         { ", " * format.pages * }
       if$

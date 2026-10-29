@@ -460,10 +460,11 @@ Springer*. Other styles do not know the type: BibTeX warns and falls back to
 ### article numbers
 
 Since 1.8.3 `apalike-AMS.bst` reads `articleno`, the article number APICe gives
-journals that number their articles instead of paging them. It is printed only
-when there are no `pages`, as APICe's own page does: *Journal*, 32(1es), article
-20 for an `article`, and article 20 where the pages would go for any other type.
-With `pages` present, the pages print and the number does not.
+journals that number their articles instead of paging them. Since 1.8.4 the
+number replaces `pages` whenever it is there, since such pages count from 1
+inside the article, and `numpages` follows it: *ACM Computing Surveys*, 47(3),
+article 42, 36 pages for an `article`, and article 42, 36 pages where the pages
+would go for any other type. Without `articleno`, `pages` print as before.
 
 ### theses
 
