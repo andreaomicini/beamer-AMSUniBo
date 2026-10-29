@@ -78,6 +78,8 @@ def container(s, ind, mode='body'):
                     flags.add(h)
             elif kind == 'p':
                 h2 = h.replace('\x00hfill\x00', '')
+                if re.fullmatch(r'\s*(<br>\s*)+', h2):   # a \\ alone between two boxes ends their line, no more (C3b)
+                    continue
                 items.append(('p', h2))
 
     while True:
@@ -388,7 +390,7 @@ def tabular(inner, ind):
             cols.append(c); vl.append(0)
     rows, hl = [], 0
     for r in split_cells(inner[j:], '\\\\'):
-        r = r.strip()
+        r = re.sub(r'^(\s*\\par\b)+', '', r.strip()).strip()   # a blank line before \hline (C3b)
         top = 0
         while True:
             m = re.match(r'\\hline\s*', r)

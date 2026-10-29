@@ -395,8 +395,8 @@ class Conv:
         while i < len(s):
             c = s[i]
             if c == '\\':
-                m = re.match(r'\\([A-Za-z]+\*?|.)', s[i:])
-                name = m.group(0)
+                m = re.match(r'\\([A-Za-z]+\*?|.)', s[i:], re.S)   # a backslash before a newline is a control space (C3b)
+                name = m.group(0) if m.group(0) != '\\\n' else '\\ '
                 i += len(name)
                 r, i = self.command(name, s, i)
                 out.append(r)
@@ -495,9 +495,13 @@ class Conv:
         if name == '\\color':   # \color{c} outside a group: what follows in the container, in that colour
             c, i = read_arg(s, i)
             return f'<span style="color: var(--{c})">' + self.inline(s[i:]) + '</span>', len(s)
-        if name == '\\textcolor':   # a palette colour of the theme, by its name: var(--<name>)
+        if name == '\\textcolor':   # a palette colour of the theme, by its name: var(--<name>); or [rgb]{r,g,b} (C3b)
+            model, i = read_opt(s, i) if s.startswith('[', i) else (None, i)
             c, i = read_arg(s, i)
             g, i = read_arg(s, i)
+            if model == 'rgb':
+                r, gg, b = (round(float(x) * 255) for x in c.split(','))
+                return f'<span style="color: rgb({r}, {gg}, {b})">{self.inline(g)}</span>', i
             c = re.sub(r'[^A-Za-z0-9]', '', c)
             return f'<span style="color: var(--{c})">{self.inline(g)}</span>', i
         if name == '\\verb' and i < len(s):   # \verb|...|: the text as it is, in the typewriter face

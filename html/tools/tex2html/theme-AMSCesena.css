@@ -448,7 +448,8 @@ ul > li.lbl-btc::after {
 	clip-path: polygon(0 0, 100% 0, 100% 18%, 0 18%, 0 82%, 100% 82%, 100% 100%, 0 100%);
 }
 /* figure: centred, its caption \small with the label in structure colour */
-.figure { text-align: center; margin: calc(6 * var(--pt)) 0; }
+.figure { text-align: center; margin: calc(6 * var(--pt)) 0 calc(8.5 * var(--pt)); }   /* bottom: C3b's tables, measured */
+.figure > table.tabular { margin: 0 auto; }   /* a tabular in a figure is centred (C3b) */
 .caption { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); white-space: nowrap; }
 .caption-label { color: var(--emph); }
 /* a caption over more than one line is set flush left, as the caption package does */
