@@ -156,6 +156,8 @@ def next_env(s, i):
             return m
         i = inside
 
+TIKZ = [0]   # tikzpictures met so far, in source order
+
 def env_html(env, inner, ind):
     if env in ('itemize', 'enumerate'):
         m = re.match(r'\s*\\setcounter\{enumi\}\{(\d+)\}', inner)
@@ -173,6 +175,8 @@ def env_html(env, inner, ind):
         return h
     if env == 'description':
         return description(inner, ind)
+    if env in CFG.get('lists', {}):   # a list environment of the deck's own: an itemize with a class (deck.json "lists")
+        return re.sub(r'<ul', f'<ul class="{CFG["lists"][env]}"', itemize(inner, ind, 'ul'), count=1)
     if env == 'minipage':
         w, j = read_group(inner, skip_ws(inner, 0))
         frac = float(w.replace('\\textwidth', '').replace('\\linewidth', '') or 1)
@@ -255,6 +259,11 @@ def env_html(env, inner, ind):
         return out
     if env == 'tabular':
         return tabular(inner, ind)
+    if env == 'tikzpicture':   # externalised by externalize.sh in source order: fig-<k>, or deck.json's "figures" name
+        k = TIKZ[0]; TIKZ[0] += 1
+        figs = CFG.get('figures', [])
+        n = figs[k] if k < len(figs) else f'fig-{k}'
+        return f'{ind}<img class="figure tikz fig-{n}" data-asset="{n}" alt="ALT-{n}">'
     if env in ('equation*', 'displaymath'):   # unnumbered: a display, as \[ \]
         return ind + C.inline('\\[' + inner + '\\]').strip('\x00').removeprefix('disp:')
     raise ValueError('env ' + env)
@@ -321,9 +330,17 @@ def tabular(inner, ind):
     return '\n'.join(out)
 
 def itemize(inner, ind, tag='ul'):
+    # \setlength{\itemsep}{<len>} before the first item: the list's own item spacing, plus beamer's 3pt
+    # \parsep-free default is replaced; ex is cmss's x-height at 10.95pt
+    sep = re.match(r'\s*\\setlength\{\\itemsep\}\{([0-9.]+)(ex|pt|em)\}', inner)
+    style = ''
+    if sep:
+        inner = inner[sep.end():]
+        v = float(sep.group(1)) * {'ex': 4.867, 'em': 10.95, 'pt': 1}[sep.group(2)]
+        style = f' style="--itemsep: calc({v:g} * var(--pt))"'
     parts = split_top(inner, 'item')
     assert not parts[0].strip(), parts[0]
-    out = [f'{ind}<{tag}>']
+    out = [f'{ind}<{tag}{style}>']
     for p in parts[1:]:
         lab, j = read_opt(p, 0)
         attr = ''
@@ -353,9 +370,13 @@ def itemize(inner, ind, tag='ul'):
     return '\n'.join(out)
 
 def description(inner, ind):
+    # description[<widest label>]: the labels' column as wide as that label, set in a hidden first row
+    wide, j = read_opt(inner, skip_ws(inner, 0)) if inner.lstrip().startswith('[') else (None, 0)
+    inner = inner[j:]
     parts = split_top(inner, 'item')
     assert not parts[0].strip(), parts[0]
-    out = [f'{ind}<dl>']
+    out = [f'{ind}<dl>'] if wide is None else [
+        f'{ind}<dl class="widest">', f'{ind}{T}<div class="ditem sizer"><dt>{C.inline(wide).strip()}</dt><dd></dd></div>']
     for p in parts[1:]:
         lab, j = read_opt(p, 0)
         body, flags = container(p[j:], ind + T * 2, 'li')
@@ -527,12 +548,18 @@ def shrinkage(opts):
     return 0
 
 def pages():
-    src = expand_macros(strip_comments(keep_verbatim(open(path('tex')).read())))
+    src = strip_comments(keep_verbatim(open(path('tex')).read()))
+    for old, new in CFG.get('replace', []):   # deck.json's literal rewrites, for what texmacros cannot say
+        src = src.replace(old, new)
+    src = expand_macros(src)
     doc = src[src.index('\\begin{document}') + 16:src.index('\\end{document}')]
     subtocs = '\\AtBeginSubsection' in src[:src.index('\\begin{document}')]
+    # a contents frame at each section only where the deck asks for one (every deck before experiment 8 did)
+    sectocs = '\\AtBeginSection' in src[:src.index('\\begin{document}')] or any(
+        '\\AtBeginSection' in f.read_text(errors='replace') for f in (ROOT / 'sty').glob('*.sty'))
     # the sections, and their subsections, for the contents frames
     secs, subs = [], []
-    for m in re.finditer(r'\\(sub)?section(\*?)\{', doc):
+    for m in re.finditer(r'\\(sub)?section(\*?)(\[[^]]*\])?\{', doc):
         g, _ = read_group(doc, m.end() - 1)
         C.reset()
         if m.group(2):
@@ -546,7 +573,7 @@ def pages():
     out = []
     section = subsection = ''
     i = 0
-    tok = re.compile(r'\\(sub)?section(\*?)\{|\\frame(\[[a-z,]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
+    tok = re.compile(r'\\(sub)?section(\*?)(?:\[([^]]*)\])?\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
                      r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
     nonumber = False
     secno = subno = 0
@@ -571,18 +598,19 @@ def pages():
         if m.group(0).startswith('\\section'):
             g, i = read_group(doc, m.end() - 1)
             C.reset()
-            section = C.inline(g)
+            section = C.inline(m.group(3) if m.group(3) is not None else g)   # the headline takes the short title
             subsection = ''
             subno = 0
             if not m.group(2):
                 secno += 1
-                out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs))
+                if sectocs:
+                    out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs))
             continue
-        if m.group(4) == 'titlepage':
+        if m.group(5) == 'titlepage':
             out.append(dict(kind='titlepage', section=section, subsection=subsection))
             i = m.end()
             continue
-        if m.group(4) == 'tableofcontents':
+        if m.group(5) == 'tableofcontents':
             out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs, subs=subs))
             i = m.end()
             continue
@@ -616,9 +644,11 @@ def pages():
             C.reset()
             part = re.sub(r'^\{\}', '', part.strip())
             if '\\bibliography{' in part:
-                sz = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])', part)
+                # the size declared anywhere before \bibliography (after \bibliographystyle in experiment 4);
+                # none at all is \normalsize (experiment 8)
+                sz = re.search(r'\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])', part[:part.index('\\bibliography{')])
                 out.append(dict(kind='bib', section=section, subsection=subsection, title=C.inline(title),
-                                nonum=nonum, top='t' in opts, size=sz.group(1) if sz else 'tiny'))
+                                nonum=nonum, top='t' in opts, size=sz.group(1) if sz else 'normalsize'))
                 continue
             t = C.inline(title)
             body, flags = container(part, T * 2, 'body')

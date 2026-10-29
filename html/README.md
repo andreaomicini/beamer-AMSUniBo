@@ -8,8 +8,9 @@ Since experiment 4 the same tools translate AMSBolognaFC decks too:
 `"style": "AMSBolognaFC"` in the deck's `deck.json` picks that style's theme,
 fonts, seal and measuring constants. Since experiment 5, AMSPurpleAndGold decks
 as well (`"style": "AMSPurpleAndGold"`), since experiment 6 AMSSilverBlue ones
-(`"style": "AMSSilverBlue"`), and since experiment 7 AMSRedGrey ones
-(`"style": "AMSRedGrey"`).
+(`"style": "AMSSilverBlue"`), since experiment 7 AMSRedGrey ones
+(`"style": "AMSRedGrey"`), and since experiment 8 AMSCesena ones
+(`"style": "AMSCesena"`).
 
 The page is a translation, not a conversion. The PDF is the reference: the text,
 its line breaks and its geometry are copied from it, and the result is checked
@@ -277,6 +278,23 @@ The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
   `\mathscr`, math `\dots`, `\scriptspace`, `\\[<len>]`, TeX's italic
   corrections.
 
+### AMSCesena
+
+* **AMSRedGrey's profile in the blues of CesenaSMA2006.** The theme is
+  AMSRedGrey's file with the palette of `beamercolorthemeorchidwhale.sty`;
+  `theme-AMSCesena.css` is AMSRedGrey's CSS with that palette, named after it,
+  and the balls take AMSSilverBlue's mixes from `sbblue` to `owblue`.
+* **Roles of its own**: items are `owblue`; the frame title is `owblue` on
+  white; head and foot are whale's black and blues with white text — section
+  and author on `owblack`, subsection and title on `owbluedeep`, date on
+  `owblue`; the title page is a blue box with white title and subtitle; all
+  three block titles are dark (`owbluedeep`, `owreddeep`, `owgreendeep`), so
+  the example title takes the dark surface's quiet colours too.
+* **What experiment 8's decks brought** is in this style's CSS: `\ldots` with
+  its kerns for every deck, `description[<widest>]`, a fourth list level of
+  the deck's own, the bibliography at `\normalsize`, and a `tikzpicture` at
+  its natural size.
+
 ## the tools
 
 Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
@@ -350,10 +368,12 @@ short fields, alt texts, the deck's own name macros, `subtoc_title` and
 `toc_centred` for decks with subsections, `toc_subsections` for contents that
 list them, `texmacros` for the deck's own TeX macros, expanded in the source,
 `shrink` for a frame TeX shrinks more than asked, `italic_corrections` for
-TeX's corrections after math letters), `titlepage.html`, `deck.css` and
-`nudges.json`, the per-frame corrections, which `nudge.py` writes: a shift per
-frame, margins keyed by element, and a `translate` per column. Listings are
-`listing.py`'s.
+TeX's corrections after math letters, `replace` for literal rewrites of the
+source that `texmacros` cannot express — a macro with `\ifnum`, say —, `lists`
+for the deck's own list environments, each an `itemize` with a class),
+`titlepage.html`, `deck.css` and `nudges.json`, the per-frame corrections,
+which `nudge.py` writes: a shift per frame, margins keyed by element, and a
+`translate` per column. Listings are `listing.py`'s.
 
 ```sh
 export TEX2HTML_DECK=html/tex2html

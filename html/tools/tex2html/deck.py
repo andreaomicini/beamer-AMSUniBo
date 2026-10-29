@@ -54,6 +54,14 @@ STYLES = {
         titles=[rgb('850011'), rgb('CC001A'), rgb('DCDCDC')],
         bodies=[rgb('F2F2F2'), rgb('F8DEE1'), rgb('F1F1F1')],
         faces={}),
+    # AMSRedGrey's theme in the blues of CesenaSMA2006: the titles owbluedeep, owreddeep and owgreendeep
+    # (all three dark) over owbluetint, owredfill, owgreenfill
+    'AMSCesena': dict(
+        theme='theme-AMSCesena.css', bottom=3.58, head=11.1, title=38.92, foot=263.4, cite=0xbfbfbf,
+        cites=[0xbfbfbf, 0xececec],   # \ccite on white and on a dark title
+        titles=[rgb('262686'), rgb('BF0000'), rgb('006000')],
+        bodies=[rgb('E9E9F3'), rgb('F9E6E6'), rgb('E6EFE6')],
+        faces={}),
 }
 STYLE = STYLES[CFG.get('style', 'AMSUniBo')]
 CITES = STYLE.get('cites', [STYLE['cite']])   # the colours of the citation commands

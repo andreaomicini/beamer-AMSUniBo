@@ -172,7 +172,7 @@ MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond'
 MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': '∞', 'Delta': 'Δ', 'Xi': 'Ξ',
            'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ',
            'Theta': 'Θ', 'ell': 'ℓ', 'wp': '℘', 'exists': '∃', 'cdots': '⋯', 'dots': '…', 'bigwedge': '⋀',
-           'beta': '\U0001D6FD', 'theta': '\U0001D703', 'omega': '\U0001D714', 'sigma': '\U0001D70E',
+           'pi': '\U0001D70B', 'beta': '\U0001D6FD', 'theta': '\U0001D703', 'omega': '\U0001D714', 'sigma': '\U0001D70E',
            '{': '{', '}': '}'}
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
 SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'huge', 'smaller'}

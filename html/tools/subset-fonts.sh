@@ -1,11 +1,11 @@
 #!/bin/sh
-# subset-fonts.sh <outdir> [AMSUniBo|AMSBolognaFC|AMSPurpleAndGold|AMSSilverBlue|AMSRedGrey] -- the faces the style sets, as WOFF2, from TeX Live's own OTFs
+# subset-fonts.sh <outdir> [AMSUniBo|AMSBolognaFC|AMSPurpleAndGold|AMSSilverBlue|AMSRedGrey|AMSCesena] -- the faces the style sets, as WOFF2, from TeX Live's own OTFs
 set -e
 OUT="$1"; STYLE="${2:-AMSUniBo}"; mkdir -p "$OUT"
 SUBSET="${PYFTSUBSET:-pyftsubset}"
 TEXT="U+0020-007E,U+00A0-017F,U+2000-2044,U+2190-21FF,U+2200-22FF"
 FEAT="kern,liga,onum,pnum,lnum,tnum,smcp,c2sc,ss01,ss02,ss03"
-case "$STYLE" in AMSBolognaFC|AMSPurpleAndGold|AMSSilverBlue|AMSRedGrey)
+case "$STYLE" in AMSBolognaFC|AMSPurpleAndGold|AMSSilverBlue|AMSRedGrey|AMSCesena)
 	# Computer Modern Sans, as cm-super sets it: Latin Modern, one optical size per TeX size
 	for f in lmsans8-regular lmsans8-oblique lmsans9-regular lmsans9-oblique lmsans10-regular lmsans10-oblique \
 	         lmsans10-bold lmsans10-boldoblique lmsans12-regular lmsans12-oblique lmsans17-regular lmsans17-oblique \
