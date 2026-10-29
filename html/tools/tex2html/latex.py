@@ -476,7 +476,7 @@ class Conv:
             self.footnotes.append((mark, self.inline(g).strip(), name == '\\FOOTNOTECOV'))
             return f'<sup class="fnmark">{mark}</sup>', i
         if name == '\\SVNL':   # a line of a semiverbatim
-            return '\x00svnl\x00', i
+            return '\x00svnl\x00', i + 2 if s.startswith('{}', i) else i
         if name == '\\NOALERT':   # \alert<...> off this slide: a span still, so the slides' elements line up
             g, i = read_arg(s, i)
             return f'<span class="noalert">{self.inline(g)}</span>', i

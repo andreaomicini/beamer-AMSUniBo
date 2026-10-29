@@ -88,7 +88,7 @@ def container(s, ind, mode='body'):
         # only top-level environments: skip ones inside a brace group
         env = m.group(1)
         pre, size = s[i:m.start()], ''
-        if env in ('verbatim', 'Verbatim'):
+        if env in ('verbatim', 'Verbatim', 'semiverbatim'):
             q = re.search(r'\\(tiny|scriptsize|footnotesize|small|normalsize)(?![A-Za-z])\s*$', pre)
             if q:
                 pre, size = pre[:q.start()], q.group(1).replace('normalsize', '')
@@ -103,6 +103,12 @@ def container(s, ind, mode='body'):
         inner = s[m.end():a]
         i = b
         h = verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim', 'lstlisting') else env_html(env, inner, ind)
+        if env == 'semiverbatim' and size and not size.startswith('fs:'):   # the size declared just before it (S5)
+            h = h.replace('<pre class="verbatim semi">', f'<pre class="verbatim semi {size}">', 1)
+        elif env == 'semiverbatim' and size:   # \fontsize{s}{b}\selectfont before it
+            _, a, b = size.split(':')
+            h = h.replace('<pre class="verbatim semi">', f'<pre class="verbatim semi" style="font-size: calc({a} * var(--pt)); '
+                          f'line-height: calc({b} * var(--pt))">', 1)
         if fonts and env in ('itemize', 'enumerate'):
             cl = ' '.join(f'{"sub" if k == "subbody" else ""}body-{v}' for k, v in fonts.items())
             h = re.sub(r'<(ul|ol)( class="([^"]*)")?', lambda q: f'<{q.group(1)} class="{(q.group(3) + " ") if q.group(3) else ""}{cl}"', h, count=1)
@@ -215,7 +221,8 @@ def env_html(env, inner, ind):
         body = inner[1:] if inner.startswith('\n') else inner
         body = body.rstrip(' \t')
         body = body[:-1] if body.endswith('\n') else body
-        body = body.replace(' ', ' ').replace('\n', '\\SVNL ')
+        body = re.sub(r'\\\((.*?)\\\)', r'$\1$', body)   # \(...\) is math (S5)
+        body = body.replace(' ', ' ').replace('\n', '\\SVNL{}')
         h = C.inline(body).replace('\x00svnl\x00', '\n')
         return f'{ind}<pre class="verbatim semi">{h}</pre>'
     if env == 'fcbox':   # \fcolorbox around a minipage: a 0.4pt rule, the fill, \fboxsep 3pt; centred as a box
@@ -524,6 +531,43 @@ def includegraphics_hook():
                 f = float(fw.group(1) or 1)
                 return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
                         f'style="width: calc({round(342.295 * f, 3)} * var(--pt))">\x00'), i
+        if name == '\\SETBOX':
+            n, i = read_arg(s, i)
+            k, i = read_arg(s, i)
+            CURBOX[n] = int(k)
+            return '', i
+        if name == '\\usebox':   # the current saved box of that name, inline (S5)
+            n, i = read_arg(s, i)
+            raw = expand_macros(LRBOX[CURBOX[n.strip().lstrip('\\')]])
+            raw = re.sub(r'\\(begin|end)\{varwidth\}(\{[^}]*\})?', '', raw)
+            sz = re.search(r'\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])', raw)
+            body, _ = container(raw, '', 'body')
+            h = ''.join(body).replace('<pre ', '<span ').replace('</pre>', '</span>')   # a paragraph holds no <pre>
+            return f'<span class="usebox{" " + sz.group(1) if sz else ""}">' + h + '</span>', i
+        if name == '\\fcolorbox':   # inline: a 0.4pt rule, the fill, \fboxsep 3pt
+            a, i = read_arg(s, i)
+            b, i = read_arg(s, i)
+            g, i = read_arg(s, i)
+            return f'<span class="fcboxi" style="border-color: var(--{a}); background: var(--{b})">{C.inline(g)}</span>', i
+        if name == '\\makebox':   # \makebox[<w>][l]{...}: a box that wide
+            o, i = read_opt(s, i)
+            _, i = read_opt(s, i)
+            g, i = read_arg(s, i)
+            fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', o or '')
+            st = f' style="width: calc({342.295 * float(fw.group(1) or 1):.2f} * var(--pt))"' if fw else ''
+            return f'<span class="makebox"{st}>{C.inline(g)}</span>', i
+        if name == '\\raisebox':   # the raise is left to the corrections
+            _, i = read_arg(s, i)
+            g, i = read_arg(s, i)
+            return C.inline(g), i
+        if name in ('\\hspace', '\\hspace*'):
+            g, i = read_arg(s, i)
+            m = re.fullmatch(r'\s*([0-9.]+)\s*(em|pt|cm|mm)\s*', g)
+            v = float(m.group(1)) * {'em': 10.95, 'pt': 1, 'cm': 28.4528, 'mm': 2.84528}[m.group(2)] if m else 0
+            return f'<span class="hspace" style="width: calc({v:.2f} * var(--pt))"></span>', i
+        if name == '\\structure':   # beamer's structure colour: owblue
+            g, i = read_arg(s, i)
+            return f'<span class="structure">{C.inline(g)}</span>', i
         if name == '\\tikz':   # \tikz ...; : an externalised picture of its own, in source order (S2)
             d, k = 0, i
             while k < len(s) and not (s[k] == ';' and d == 0):
@@ -533,13 +577,19 @@ def includegraphics_hook():
             figs = CFG.get('figures', [])
             nm = figs[n] if n < len(figs) else f'fig-{n}'
             return f'\x00img:<img class="figure tikz fig-{nm}" data-asset="{nm}" alt="ALT-{nm}">\x00', k + 1
-        if name == '\\TIKZW':   # a tikzpicture that \resizebox scaled to a width: its asset, that wide
+        if name == '\\TIKZW':   # a tikzpicture that \resizebox scaled to a width or a height: its asset, so sized
             w, i = read_arg(s, i)
+            hh, i = read_arg(s, i)
             fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
+            fh = re.fullmatch(r'\s*([0-9.]+)\s*(cm|mm|pt)\s*', hh)
             k = TIKZ[0]; TIKZ[0] += 1
             figs = CFG.get('figures', [])
             n = figs[k] if k < len(figs) else f'fig-{k}'
             st = f' style="width: calc({round(342.295 * float(fw.group(1) or 1), 3)} * var(--pt))"' if fw else ''
+            if fw and '\\linewidth' in w:   # \linewidth: the box it sits in, a column's in columns (S5)
+                st = f' style="width: {float(fw.group(1) or 1) * 100:g}%"'
+            if not fw and fh:
+                st = f' style="height: calc({float(fh.group(1)) * {"cm": 28.4528, "mm": 2.84528, "pt": 1}[fh.group(2)]:.2f} * var(--pt)); width: auto"'
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}"{st}>\x00', i
         if name == '\\pgfuseimage':   # \pgfdeclareimage[height=<h>]{name}{file}: the file, inline, that tall
             g, i = read_arg(s, i)
@@ -697,6 +747,7 @@ def verbatim_html(env, ind, size):
     cl = ' '.join([size] + cls if size else cls)
     return f'{ind}<pre class="verbatim{" " + cl if cl else ""}"{style}>{h}</pre>'
 
+LRBOX, CURBOX = [], {}   # the saved boxes' contents; each name's current one
 PGFIMAGES = {}   # \pgfdeclareimage: name -> (file, height in pt)
 FVSET = {}   # fancyvrb's defaults, from the deck's \fvset{...}
 
@@ -851,6 +902,12 @@ def pages():
     raw = re.sub(r'(\\begin\{semiverbatim\})(.*?)(\\end\{semiverbatim\})',
                  lambda m: m.group(1) + re.sub(r'(?<!\\)%', r'\\%', m.group(2)) + m.group(3), raw, flags=re.S)
     src = strip_comments(raw)
+    # a saved box (lrbox): kept aside, put where \usebox uses it in the body; inside a picture it is part of the
+    # externalised picture (S5). Box names are reused from frame to frame: \SETBOX marks which one is current
+    def lr(m):
+        LRBOX.append(m.group(2))
+        return '\\SETBOX{%s}{%d}' % (m.group(1), len(LRBOX) - 1)
+    src = re.sub(r'\\begin\{lrbox\}\{\\(\w+)\}(.*?)\\end\{lrbox\}', lr, src, flags=re.S)
     # \fcolorbox{<rule>}{<fill>}{\begin{minipage}...\end{minipage}}: an environment of its own (S5)
     s2, i = [], 0
     for m in re.finditer(r'\\fcolorbox\{(\w+)\}\{(\w+)\}\{(?=\s*\\begin\{minipage\})', src):
@@ -865,11 +922,11 @@ def pages():
         _, e = read_group(src, m.end() - 1)
         return None, e
     out, i = [], 0
-    for m in re.finditer(r'\\resizebox\{([^{}]*)\}\{!\}\{(?=\s*\\begin\{tikzpicture\})', src):
+    for m in re.finditer(r'\\resizebox\*?\{([^{}]*)\}\{([^{}]*)\}\{(?=\s*\\begin\{tikzpicture\})', src):
         if m.start() < i:
             continue
         _, e = read_group(src, m.end() - 1)
-        out.append(src[i:m.start()] + '\\TIKZW{' + m.group(1) + '}')
+        out.append(src[i:m.start()] + '\\TIKZW{' + m.group(1) + '}{' + m.group(2) + '}')
         i = e
     src = ''.join(out) + src[i:]
     # \column{<w>} ...: beamer's command form, as \begin{column}{<w>} ... \end{column} (C5)

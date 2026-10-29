@@ -138,6 +138,15 @@ em { font-style: italic; color: var(--emph); }
 .apihead { color: var(--owbluedeep); padding: calc(1.5 * var(--pt)) 0 calc(0.6 * var(--pt)); }
 .apicode { padding-top: calc(1.2 * var(--pt)); }
 .apidesc { padding: calc(0.9 * var(--pt)) 0 calc(1.4 * var(--pt)); }
+.usebox { display: inline-block; vertical-align: bottom; text-align: left; }   /* \usebox of a saved box (S5) */
+.usebox > .verbatim { display: block; margin: 0; white-space: pre; font-family: "LM Mono 10", monospace; font-weight: 400; }
+.usebox > .verbatim:not([style]) { font-size: calc(10.91 * var(--pt)); line-height: calc(13.6 * var(--pt)); }
+.usebox > .verbatim[style] { font-family: "LM Mono 8", monospace; }
+.usebox > .verbatim.footnotesize, .usebox.footnotesize > .verbatim { font-family: "LM Mono 10", monospace; font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
+.usebox > .verbatim.tiny, .usebox.tiny > .verbatim { font-family: "LM Mono 8", monospace; font-size: calc(5.98 * var(--pt)); line-height: calc(7 * var(--pt)); }
+.fcboxi { display: inline-block; padding: calc(3 * var(--pt)); border: calc(0.4 * var(--pt)) solid; }
+.makebox, .hspace { display: inline-block; text-align: left; }
+.structure { color: var(--owblue); }
 .rm { font-family: "LM Roman", serif; }   /* \textrm: Computer Modern Roman (C4b) */
 /* footnotes: the mark a letter in owblue, the text in owgreymid at the frame's foot, \footnotesize
    (C5; the position measured on its PDF, at shrink=20) */
