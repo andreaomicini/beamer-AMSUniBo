@@ -463,6 +463,7 @@ ul > li.lbl-btc::after {
 .figure > table.tabular { margin: 0 auto; }   /* a tabular in a figure is centred (C3b) */
 .caption { font-family: "LM Sans 10", "LM Math"; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); white-space: nowrap; }
 .caption-label { color: var(--emph); }
+img.figure + .caption { margin-top: calc(7 * var(--pt)); }   /* beamer's \abovecaptionskip */
 /* a caption over more than one line is set flush left, as the caption package does */
 .caption:has(br) { text-align: left; }
 /* columns: beamer spreads them over the paper width, \hfill before and after each one */
