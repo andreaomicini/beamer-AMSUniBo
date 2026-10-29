@@ -78,7 +78,8 @@ def container(s, ind, mode='body'):
                     flags.add(h)
             elif kind == 'p':
                 h2 = h.replace('\x00hfill\x00', '')
-                if re.fullmatch(r'\s*(<br>\s*)+', h2):   # a \\ alone between two boxes ends their line, no more (C3b)
+                if re.fullmatch(r'\s*(<br>\s*)+', h2) and CFG.get('style') == 'AMSCesena':   # a \\ alone between two boxes
+                    # ends their line, no more (C3b); AMSCesena only so far: experiment 6's corrections allow for it
                     continue
                 items.append(('p', h2))
 

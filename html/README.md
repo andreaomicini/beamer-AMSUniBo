@@ -802,11 +802,10 @@ footline exact.
 1.1 — ten course decks and six seminars, 2,460 pages in all, the first
 repository of many decks through the tools and the first decks with overlays.
 Every page is checked as before, deck by deck; the decks' own numbers are in
-the repository's `CLAUDE.md`. Nine decks have pages, 1,664 pages in all: C0,
-C1, C2, C4a, C4b, C5, C6, S3, S4 within 1–5pt in both engines but a few
-bold-italic bibliography titles; C3a and C3b (another author's LaTeX), C7
-(`eqnarray*` grammars), S1, S2, S5 and S6 (hand-built boxes, listings and
-formulas inside TikZ pictures) need the tools grown further.
+the repository's `CLAUDE.md`. Fourteen decks have pages, 1,966 pages in all,
+within 1–5pt in both engines on almost every page; the exceptions are logged
+there. C7 (`eqnarray*` grammars) and S6 (inference rules in arrays) need the
+tools' mathematics grown.
 
 * **AMSCesena is AMSRedGrey's profile in the blues of CesenaSMA2006**: the
   same theme file with the palette of `beamercolorthemeorchidwhale.sty`, and a
@@ -848,5 +847,13 @@ formulas inside TikZ pictures) need the tools grown further.
   line's first word, read on the PDF, and the two-line title's layout.
 * **Footnotes**: a letter mark in the item colour, the text at the frame's
   foot in `\footnotesize`; beamer may set it higher, under the content.
+* **More of the seminars and C3a/C3b**: inline `lstlisting` in Courier (TeX
+  Gyre Cursor) with the deck's colour and bold delimiters; saved boxes
+  (`lrbox`) drawn where `\usebox` uses them, inline `\fcolorbox`,
+  `\makebox`, `\raisebox`, `\hspace`; `\tikz …;` and `\resizebox`d pictures
+  as assets; S2's section frames and API tables; beamer's `thebibliography`
+  inside frames, with article icons; `\textcolor[rgb]`; frames TeX shrinks
+  further than their `shrink=<n>`, the factor read on the PDF into
+  `deck.json`'s `shrink`.
 * **Runs of ties** (`~~~`) are kept spaces: Latin Modern's no-break space is
   wider in Firefox than in WebKit, 7pt over three.
