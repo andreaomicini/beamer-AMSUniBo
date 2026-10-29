@@ -92,6 +92,9 @@ def container(s, ind, mode='body'):
             q = re.search(r'\\(tiny|scriptsize|footnotesize|small|normalsize)(?![A-Za-z])\s*$', pre)
             if q:
                 pre, size = pre[:q.start()], q.group(1).replace('normalsize', '')
+            q = re.search(r'\\fontsize\{([0-9.]+)\}\{([0-9.]+)\}\\selectfont\s*$', pre)   # S2's
+            if q:
+                pre, size = pre[:q.start()], f'fs:{q.group(1)}:{q.group(2)}'
         # \setbeamerfont{itemize/enumerate body|subbody}{size=\<size>} before a list: its items' sizes
         fonts = dict(re.findall(r'\\setbeamerfont\{itemize/enumerate (body|subbody)\}\{size=\\(\w+)\}%?', pre))
         pre = re.sub(r'\\setbeamerfont\{[^}]*\}\{[^}]*\}%?', '', pre)
@@ -220,6 +223,34 @@ def env_html(env, inner, ind):
         b, j = read_group(inner, skip_ws(inner, j))
         body, flags = container(inner[j:], ind + T, 'body')
         return '\n'.join([f'{ind}<div class="fcbox" style="border-color: var(--{a}); background: var(--{b})">'] + body + [f'{ind}</div>'])
+    if env == 'sectionbox':   # S2's \sectionframe: the title colours' box, centred lines of the title's size
+        h = C.inline(inner).strip()
+        return f'{ind}<div class="sectionbox">{h}</div>'
+    if env == 'apitable':   # S2's API tables, as the simpA manual has them: heads between double rules,
+        # each operation's signatures in typewriter, its description below, a rule between operations
+        o, j = read_opt(inner, skip_ws(inner, 0)) if inner.lstrip().startswith('[') else (None, 0)
+        fs = re.search(r'\\fontsize\{([0-9.]+)\}\{([0-9.]+)\}', o or '')
+        st = f' style="font-size: calc({fs.group(1)} * var(--pt)); line-height: calc({fs.group(2)} * var(--pt))"' if fs else ''
+        out, k, body = [f'{ind}<div class="apitable"{st}>'], j, inner
+        tok = re.compile(r'\\(apihead|apiop|hline)')
+        while True:
+            m = tok.search(body, k)
+            if not m:
+                break
+            k = m.end()
+            if m.group(1) == 'hline':
+                out.append(f'{ind}{T}<div class="aprule"></div>')
+                continue
+            a, k = read_group(body, skip_ws(body, k))
+            if m.group(1) == 'apihead':
+                out += [f'{ind}{T}<div class="aprule2"></div>', f'{ind}{T}<p class="apihead">{C.inline(a).strip()}</p>',
+                        f'{ind}{T}<div class="aprule2"></div>']
+            else:
+                b, k = read_group(body, skip_ws(body, k))
+                code = '<br>'.join(C.inline(x).strip() for x in a.split('\\newline'))
+                out += [f'{ind}{T}<p class="apicode"><code>{code}</code></p>', f'{ind}{T}<p class="apidesc">{C.inline(b).strip()}</p>']
+        out += [f'{ind}{T}<div class="aprule"></div>', f'{ind}</div>']
+        return '\n'.join(out)
     if env == 'lrbox':   # a box saved for a picture: drawn there, nothing here (S5)
         return ''
     if env == 'list':   # \begin{list}{<label>}{<params>}: an itemize of the deck's own fourth level (S5)
@@ -493,6 +524,15 @@ def includegraphics_hook():
                 f = float(fw.group(1) or 1)
                 return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
                         f'style="width: calc({round(342.295 * f, 3)} * var(--pt))">\x00'), i
+        if name == '\\tikz':   # \tikz ...; : an externalised picture of its own, in source order (S2)
+            d, k = 0, i
+            while k < len(s) and not (s[k] == ';' and d == 0):
+                d += {'{': 1, '}': -1}.get(s[k], 0)
+                k += 1
+            n = TIKZ[0]; TIKZ[0] += 1
+            figs = CFG.get('figures', [])
+            nm = figs[n] if n < len(figs) else f'fig-{n}'
+            return f'\x00img:<img class="figure tikz fig-{nm}" data-asset="{nm}" alt="ALT-{nm}">\x00', k + 1
         if name == '\\TIKZW':   # a tikzpicture that \resizebox scaled to a width: its asset, that wide
             w, i = read_arg(s, i)
             fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
@@ -651,6 +691,9 @@ def verbatim_html(env, ind, size):
         m = re.fullmatch(r'([0-9.]+)(em|pt)', fv.get('xleftmargin', ''))
         if m:
             style = f' style="margin-left: calc({float(m.group(1)) * (10.95 if m.group(2) == "em" else 1):g} * var(--pt))"'
+    if size.startswith('fs:'):   # \fontsize{s}{b}\selectfont before it
+        _, a, b = size.split(':')
+        style, size = f' style="font-size: calc({a} * var(--pt)); line-height: calc({b} * var(--pt))"', ''
     cl = ' '.join([size] + cls if size else cls)
     return f'{ind}<pre class="verbatim{" " + cl if cl else ""}"{style}>{h}</pre>'
 
@@ -939,7 +982,10 @@ def pages():
             lead, j = fr[j:j + q.end()], j + q.end()
         if fr.startswith('\\frametitle', j):
             j += len('\\frametitle')
-        title, j = read_group(fr, skip_ws(fr, j))
+        if fr[skip_ws(fr, j):skip_ws(fr, j) + 1] == '{':
+            title, j = read_group(fr, skip_ws(fr, j))
+        else:   # a frame with no title (S2)
+            title = ''
         # a body all in one group opened by a size, {\small ...}: that size declared for the body
         wrapped = re.fullmatch(r'\s*\{\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])(.*)\}\s*', fr[j:], re.S)
         if wrapped:

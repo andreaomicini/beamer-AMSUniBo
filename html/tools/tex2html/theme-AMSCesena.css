@@ -125,6 +125,19 @@ em { font-style: italic; color: var(--emph); }
 .lstlisting.footnotesize { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
 .lstlisting.small { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
 .lstlisting.lst-frame { box-sizing: border-box; border: calc(0.4 * var(--pt)) solid var(--owbluedeep); }
+/* S2's \sectionframe: the title page's box, the section's lines centred in it (measured) */
+.sectionbox { margin: 0 calc(-2.73 * var(--pt)) 0 calc(-4 * var(--pt)); padding: calc(13.5 * var(--pt)) 0 calc(14.6 * var(--pt));
+	border-radius: calc(4 * var(--pt)); background: var(--tp-box); color: var(--tp-title); text-align: center;
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+	font-family: "LM Sans 12", "LM Math"; font-size: calc(13.97 * var(--pt)); line-height: calc(17.93 * var(--pt)); }
+/* S2's API tables, measured: 327.4pt wide, \scriptsize, rules 0.4pt, double ones 2pt apart */
+.apitable { width: calc(327.38 * var(--pt)); font-family: "LM Sans 8", "LM Math"; font-size: calc(8 * var(--fs)); line-height: calc(9.47 * var(--pt)); }
+.apitable code { font-family: "LM Mono 8", monospace; font-size: calc(7.97 * var(--pt)); }
+.aprule { border-top: calc(0.4 * var(--pt)) solid var(--text); }
+.aprule2 { height: calc(1.6 * var(--pt)); border-top: calc(0.4 * var(--pt)) solid var(--text); border-bottom: calc(0.4 * var(--pt)) solid var(--text); }
+.apihead { color: var(--owbluedeep); padding: calc(1.5 * var(--pt)) 0 calc(0.6 * var(--pt)); }
+.apicode { padding-top: calc(1.2 * var(--pt)); }
+.apidesc { padding: calc(0.9 * var(--pt)) 0 calc(1.4 * var(--pt)); }
 .rm { font-family: "LM Roman", serif; }   /* \textrm: Computer Modern Roman (C4b) */
 /* footnotes: the mark a letter in owblue, the text in owgreymid at the frame's foot, \footnotesize
    (C5; the position measured on its PDF, at shrink=20) */

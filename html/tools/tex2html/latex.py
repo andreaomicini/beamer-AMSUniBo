@@ -463,7 +463,7 @@ class Conv:
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
                   '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
-                  '\\refname': 'References', '\\par': '\n\n', '\\relax': ''}
+                  '\\refname': 'References', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
             o, j = read_opt(s, i)
             m = re.fullmatch(r'\s*(-?[0-9.]+)\s*(cm|mm|pt|em|ex)\s*', o or '')
@@ -486,6 +486,10 @@ class Conv:
         if name == '\\COVSPAN':   # \uncover<...>{...} off this slide: its space kept, invisible
             g, i = read_arg(s, i)
             return f'<span class="covered">{self.inline(g)}</span>', i
+        if name == '\\fontsize':   # \fontsize{s}{b}\selectfont: left to the corrections (S2)
+            _, i = read_arg(s, i)
+            _, i = read_arg(s, i)
+            return '', i
         if name in ('\\frenchspacing', '\\nonfrenchspacing'):
             return '', i
         if name == '\\color':   # \color{c} outside a group: what follows in the container, in that colour
