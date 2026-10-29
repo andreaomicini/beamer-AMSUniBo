@@ -208,6 +208,37 @@ def env_html(env, inner, ind):
             out.append(f'{ind}{T}<h3 class="block-title{" display" if md else ""}">{md.group(1) if md else th}</h3>')
         out += [f'{ind}{T}<div class="{bcls}">'] + body + [f'{ind}{T}</div>', f'{ind}</div>']
         return '\n'.join(out)
+    if env == 'semiverbatim':   # beamer's: typewriter, spaces and lines kept, commands obeyed (overlays too)
+        body = inner[1:] if inner.startswith('\n') else inner
+        body = body.rstrip(' \t')
+        body = body[:-1] if body.endswith('\n') else body
+        body = body.replace(' ', ' ').replace('\n', '\\SVNL ')
+        h = C.inline(body).replace('\x00svnl\x00', '\n')
+        return f'{ind}<pre class="verbatim semi">{h}</pre>'
+    if env == 'fcbox':   # \fcolorbox around a minipage: a 0.4pt rule, the fill, \fboxsep 3pt; centred as a box
+        a, j = read_group(inner, skip_ws(inner, 0))
+        b, j = read_group(inner, skip_ws(inner, j))
+        body, flags = container(inner[j:], ind + T, 'body')
+        return '\n'.join([f'{ind}<div class="fcbox" style="border-color: var(--{a}); background: var(--{b})">'] + body + [f'{ind}</div>'])
+    if env == 'lrbox':   # a box saved for a picture: drawn there, nothing here (S5)
+        return ''
+    if env == 'list':   # \begin{list}{<label>}{<params>}: an itemize of the deck's own fourth level (S5)
+        _, j = read_group(inner, skip_ws(inner, 0))
+        _, j = read_group(inner, skip_ws(inner, j))
+        return re.sub(r'<ul', '<ul class="four"', itemize(inner[j:], ind, 'ul'), count=1)
+    if env == 'definition':   # beamer's: a block titled Definition (<name>), its body upright
+        cov = re.match(r'\s*\\COV ', inner)
+        if cov:
+            inner = inner[cov.end():]
+        opt, j = read_opt(inner, skip_ws(inner, 0))
+        title = 'Definition' + (f' ({opt})' if opt else '')
+        return env_html('block', '{' + title + '}' + ('\\COV ' if cov else '') + inner[j:], ind)
+    if env == 'quote':   # beamer's: both margins 2em, no indent, italic in the quote colour
+        cov = re.match(r'\s*\\COV ', inner)
+        if cov:
+            inner = inner[cov.end():]
+        body, flags = container(inner, ind + T, 'quote')
+        return '\n'.join([f'{ind}<div class="quoteenv{" covered" if cov else ""}">'] + body + [f'{ind}</div>'])
     if env == 'quotation':   # LaTeX's: both margins 2em, each paragraph indented, italic in these decks
         body, flags = container(inner, ind + T, 'quote')
         return '\n'.join([f'{ind}<div class="quotation">'] + body + [f'{ind}</div>'])
@@ -354,9 +385,16 @@ def itemize(inner, ind, tag='ul'):
         inner = inner[sep.end():]
         v = float(sep.group(1)) * {'ex': 4.867, 'em': 10.95, 'pt': 1}[sep.group(2)]
         style = f' style="--itemsep: calc({v:g} * var(--pt))"'
+    col = re.match(r'\s*\\color\{(\w+)\}', inner)   # \color{c} before the first item: the list's colour (S5)
+    if col:
+        inner = inner[col.end():]
+        style = (style[:-1] + f'; color: var(--{col.group(1)})"') if style else f' style="color: var(--{col.group(1)})"'
+    cov = re.match(r'\s*\\COVLIST ', inner)   # \uncover<...>{the list} off this slide
+    if cov:
+        inner = inner[cov.end():]
     parts = split_top(inner, 'item')
     assert not parts[0].strip(), parts[0]
-    out = [f'{ind}<{tag}{style}>']
+    out = [f'{ind}<{tag}{style}{" class=" + chr(34) + "covered" + chr(34) if cov else ""}>']
     for p in parts[1:]:
         lab, j = read_opt(p, 0)
         attr = ''
@@ -441,6 +479,13 @@ def includegraphics_hook():
             w, i = read_arg(s, i)
             _, i = read_arg(s, i)
             g, i = read_arg(s, i)
+            fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
+            if False:
+                k = TIKZ[0]; TIKZ[0] += 1
+                figs = CFG.get('figures', [])
+                n = figs[k] if k < len(figs) else f'fig-{k}'
+                return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
+                        f'style="width: calc({round(342.295 * float(fw.group(1) or 1), 3)} * var(--pt))">\x00'), i
             mm = re.fullmatch(r'\s*\\(\w+)\s*', g)
             n = CFG.get('tikzmacros', {}).get(mm.group(1)) if mm else None
             fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
@@ -448,6 +493,14 @@ def includegraphics_hook():
                 f = float(fw.group(1) or 1)
                 return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
                         f'style="width: calc({round(342.295 * f, 3)} * var(--pt))">\x00'), i
+        if name == '\\TIKZW':   # a tikzpicture that \resizebox scaled to a width: its asset, that wide
+            w, i = read_arg(s, i)
+            fw = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
+            k = TIKZ[0]; TIKZ[0] += 1
+            figs = CFG.get('figures', [])
+            n = figs[k] if k < len(figs) else f'fig-{k}'
+            st = f' style="width: calc({round(342.295 * float(fw.group(1) or 1), 3)} * var(--pt))"' if fw else ''
+            return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}"{st}>\x00', i
         if name == '\\pgfuseimage':   # \pgfdeclareimage[height=<h>]{name}{file}: the file, inline, that tall
             g, i = read_arg(s, i)
             f, h = PGFIMAGES.get(g, (g, None))
@@ -604,7 +657,7 @@ def expand_macros(s):
     return s
 
 # ---------------------------------------------------------------- overlays (experiment 8)
-OVL = re.compile(r'\\(item|uncover|only|alert|visible)(\[[^\]]*\])?\s*<([^>]*)>|\\begin\{(block|alertblock|exampleblock|definition|quote)\}<([^>]*)>')
+OVL = re.compile(r'\\(item|uncover|only|alert|visible|pgfuseimage|footnote|textcolor)(\[[^\]]*\])?\s*<([^>]*)>|\\begin\{(block|alertblock|exampleblock|definition|quote)\}<([^>]*)>')
 
 def _spec(spec, pause):
     """an overlay specification -> (set test, pause after); + is the current pause, then one more"""
@@ -641,35 +694,67 @@ def overlay_slides(body):
         specs.append(r)
         for a, b in r:
             n = max(n, a, b or 0)
-    slides = []
-    for k in range(1, n + 1):
-        out, i = [], 0
-        for m, r in zip(OVL.finditer(body), specs):
+    ms = list(OVL.finditer(body))
+
+    def render(lo, hi, k):
+        # the text from lo to hi for slide k; an overlay's group is rendered the same way, so overlays
+        # nested in it (C7's \alert<4>{... \uncover<5->{...}}) take their own specifications
+        out, i, q = [], lo, 0
+        while q < len(ms):
+            m, r = ms[q], specs[q]
+            if m.start() < i or m.start() >= hi:
+                q += 1
+                continue
             on = any(a <= k and (b is None or k <= b) for a, b in r)
             out.append(body[i:m.start()])
             i = m.end()
-            if m.group(4):   # an environment: covered after its title
+            q += 1
+            if m.group(4):   # an environment: covered after its title, when it has one
                 out.append('\\begin{%s}' % m.group(4))
-                if not on:
+                if not on and m.group(4) in BLOCK_ENVS:
                     t, j = read_group(body, skip_ws(body, i))
                     out.append(body[i:j] + '\\COV ')
                     i = j
+                elif not on:
+                    out.append('\\COV ')
                 continue
             cmd, lab = m.group(1), m.group(2) or ''
             if cmd == 'item':
+                if not lab and body.startswith('[', skip_ws(body, i)):   # \item<spec>[label]: the label first
+                    o, j = read_opt(body, skip_ws(body, i))
+                    lab, i = '[' + o + ']', j
                 out.append('\\item' + lab + (' ' if on else ' \\COV '))
                 continue
-            g, j = read_group(body, skip_ws(body, i))
+            if cmd == 'textcolor':   # \textcolor<...>{colour}{text}: the colour on its slides only (S5)
+                c, i = read_group(body, skip_ws(body, i))
+                g0 = skip_ws(body, i)
+                g, j = read_group(body, g0)
+                g = render(g0 + 1, j - 1, k)
+                i = j
+                out.append(('\\textcolor{' + c + '}{' + g + '}') if on else ('\\NOALERT{' + g + '}'))
+                continue
+            g0 = skip_ws(body, i)
+            g, j = read_group(body, g0)
+            g = render(g0 + 1, j - 1, k)
             i = j
-            if cmd in ('uncover', 'visible'):
+            if cmd == 'footnote':   # \footnote<...>{text}: the mark always, the text on its slides
+                out.append(('\\footnote{' if on else '\\FOOTNOTECOV{') + g + '}')
+                continue
+            if cmd == 'pgfuseimage':   # \pgfuseimage<...>{name}: the picture uncovered
+                cmd, g = 'uncover', '\\pgfuseimage{' + g + '}'
+            lst = re.fullmatch(r'\s*\\begin\{(itemize|enumerate|description)\}(.*)\\end\{\1\}\s*', g, re.S)
+            if cmd in ('uncover', 'visible') and lst:   # a whole list: the list itself covered or not
+                out.append('\\begin{%s}%s%s\\end{%s}' % (lst.group(1), '' if on else '\\COVLIST ', lst.group(2), lst.group(1)))
+            elif cmd in ('uncover', 'visible'):
                 out.append('\\SHOWSPAN{' + g + '}' if on else '\\COVSPAN{' + g + '}')   # a span either way
             elif cmd == 'only':
-                out.append('{' + g + '}' if on else '')
+                out.append(('{' + g + '}' if '\\begin{' not in g else g) if on else '')
             elif cmd == 'alert':
                 out.append('\\alert{' + g + '}' if on else '\\NOALERT{' + g + '}')   # a span either way
-        out.append(body[i:])
-        slides.append(''.join(out))
-    return slides
+        out.append(body[i:hi])
+        return ''.join(out)
+
+    return [render(0, len(body), k) for k in range(1, n + 1)]
 
 def shrinkage(opts):
     """beamer's shrink=<n>: the percentage the frame's content is shrunk by, at least; 0 when absent"""
@@ -680,7 +765,42 @@ def shrinkage(opts):
     return 0
 
 def pages():
-    src = strip_comments(keep_verbatim(open(path('tex')).read()))
+    raw = keep_verbatim(open(path('tex')).read())
+    # semiverbatim keeps % as a character: escaped before the comments go (C7)
+    raw = re.sub(r'(\\begin\{semiverbatim\})(.*?)(\\end\{semiverbatim\})',
+                 lambda m: m.group(1) + re.sub(r'(?<!\\)%', r'\\%', m.group(2)) + m.group(3), raw, flags=re.S)
+    src = strip_comments(raw)
+    # \fcolorbox{<rule>}{<fill>}{\begin{minipage}...\end{minipage}}: an environment of its own (S5)
+    s2, i = [], 0
+    for m in re.finditer(r'\\fcolorbox\{(\w+)\}\{(\w+)\}\{(?=\s*\\begin\{minipage\})', src):
+        if m.start() < i:
+            continue
+        g, e = read_group(src, m.end() - 1)
+        s2.append(src[i:m.start()] + '\\begin{fcbox}{%s}{%s}%s\\end{fcbox}' % (m.group(1), m.group(2), g))
+        i = e
+    src = ''.join(s2) + src[i:]
+    # \resizebox{<w>}{!}{\begin{tikzpicture}...}: the picture is externalised; here only its width (S5)
+    def rbox(m):
+        _, e = read_group(src, m.end() - 1)
+        return None, e
+    out, i = [], 0
+    for m in re.finditer(r'\\resizebox\{([^{}]*)\}\{!\}\{(?=\s*\\begin\{tikzpicture\})', src):
+        if m.start() < i:
+            continue
+        _, e = read_group(src, m.end() - 1)
+        out.append(src[i:m.start()] + '\\TIKZW{' + m.group(1) + '}')
+        i = e
+    src = ''.join(out) + src[i:]
+    # \column{<w>} ...: beamer's command form, as \begin{column}{<w>} ... \end{column} (C5)
+    def cols(m):
+        parts = re.split(r'\\column(?=\{)', m.group(2))
+        out = parts[0]
+        for q in parts[1:]:
+            w, j = read_group(q, 0)
+            out += '\\begin{column}{' + w + '}' + q[j:] + '\\end{column}\n'
+        return m.group(1) + out + m.group(3)
+    src = re.sub(r'(\\begin\{columns\}(?:\[[^\]]*\])?)(.*?)(\\end\{columns\})',
+                 lambda m: cols(m) if '\\column{' in m.group(2) else m.group(0), src, flags=re.S)
     for m in re.finditer(r'\\pgfdeclareimage(?:\[height=([0-9.]+)(cm|pt|mm)\])?\{([^}]*)\}\{([^}]*)\}', src):
         h = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1}[m.group(2)] if m.group(1) else None
         PGFIMAGES[m.group(3)] = (m.group(4), h)
@@ -781,6 +901,11 @@ def pages():
         wrapped = re.fullmatch(r'\s*\{\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])(.*)\}\s*', fr[j:], re.S)
         if wrapped:
             fr = fr[:j] + '\\' + wrapped.group(1) + wrapped.group(2)
+        elif re.fullmatch(r'\s*\{.*\}\s*', fr[j:], re.S):   # a body all in one plain group (C4a): the group dropped
+            g0 = skip_ws(fr, j)
+            g, e = read_group(fr, g0)
+            if not fr[e:].strip():
+                fr = fr[:j] + g
         fr = fr[:j] + lead + fr[j:]
         opts = [o.strip() for o in (opts or '').split(',')]
         nonum = 'noframenumbering' in opts or nonumber
@@ -803,6 +928,9 @@ def pages():
             if bsize:
                 part = part[bsize.end():]
             body, flags = container(part, T * 2, 'body')
+            if C.footnotes:   # at the frame's foot, each after its mark
+                body.append(f'{T}{T}<div class="footnotes">' + ''.join(
+                    f'<p class="footnote{" covered" if cov else ""}"><sup class="fnmark">{mk}</sup>{h}</p>' for mk, h, cov in C.footnotes) + '</div>')
             if bsize:
                 flags.add('size:' + bsize.group(1))
             groups = [body]

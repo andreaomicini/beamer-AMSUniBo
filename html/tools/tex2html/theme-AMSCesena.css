@@ -116,6 +116,15 @@ em { font-style: italic; color: var(--emph); }
 .ldots { letter-spacing: 0.21em; }
 .covered { visibility: hidden; }
 .ties { white-space: pre; }
+.fcbox { box-sizing: content-box; width: fit-content; margin: 0 auto; padding: calc(3 * var(--pt)); border: calc(0.4 * var(--pt)) solid; }
+.fcbox > .minipage { white-space: nowrap; }
+.rm { font-family: "LM Roman", serif; }   /* \textrm: Computer Modern Roman (C4b) */
+/* footnotes: the mark a letter in owblue, the text in owgreymid at the frame's foot, \footnotesize
+   (C5; the position measured on its PDF, at shrink=20) */
+.fnmark { color: var(--owblue); font-size: 0.7em; vertical-align: 0.45em; line-height: 0; }
+.footnotes { position: absolute; left: 0; right: 0; bottom: calc(2.4 * var(--pt)); color: var(--owgreymid);
+	font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(10.96 * var(--pt)); white-space: nowrap; }
+.footnote > .fnmark { margin-right: calc(1.5 * var(--pt)); }
 .centering { text-align: left; }   /* \begin{centering} whose paragraph ends after the group: no effect (C2) */   /* ~~ as spaces kept as they are */
 img.pgfimage { vertical-align: baseline; }   /* \pgfuseimage: on the baseline, as tall as declared */   /* an overlay not shown on this slide: beamer's invisible, its space kept */   /* \ldots: cmss's dots with their kerns (experiment 7's deck.css, here for every deck) */
 /* Computer Modern Sans has no small caps: the theme falls back to the serif ones */
@@ -250,6 +259,8 @@ dl.widest > .sizer { height: 0; overflow: hidden; visibility: hidden; }
 dl.widest > .sizer + .ditem { margin-top: 0; }
 dl.widest dd > ul:last-child { margin-bottom: 0; }   /* a list closing an item adds no space below it */
 
+/* quote: both margins 21.818pt, no indent, italic in owgreymid, the theme's quote colour (C4a) */
+.quoteenv { margin: var(--topsep) calc(21.818 * var(--pt)); font-style: italic; color: var(--owgreymid); }
 /* quotation: leftmargin and rightmargin 21.818pt, every paragraph's first line indented by 1.5em
    (13.82pt at 9pt, measured), italic; an {\em} inside it upright (experiment 8, C6) */
 .quotation { margin: var(--topsep) calc(21.818 * var(--pt)); font-style: italic; }

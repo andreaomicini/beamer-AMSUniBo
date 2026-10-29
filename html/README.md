@@ -795,3 +795,58 @@ footline exact.
   and re-nudge alone the pages whose frame options changed (`[t,c]` → `[t]`).
   The same for experiment 6, re-keyed only: its page 43, rebuilt with these
   tools, measures as before.
+
+### 8 — SMA-LS 2006/2007, AMSCesena, 2026-10-29
+
+`smals0607-slides`: the sixteen decks of a 2006 course recovered on AMSCesena
+1.1 — ten course decks and six seminars, 2,460 pages in all, the first
+repository of many decks through the tools and the first decks with overlays.
+Every page is checked as before, deck by deck; the decks' own numbers are in
+the repository's `CLAUDE.md`. Nine decks have pages, 1,664 pages in all: C0,
+C1, C2, C4a, C4b, C5, C6, S3, S4 within 1–5pt in both engines but a few
+bold-italic bibliography titles; C3a and C3b (another author's LaTeX), C7
+(`eqnarray*` grammars), S1, S2, S5 and S6 (hand-built boxes, listings and
+formulas inside TikZ pictures) need the tools grown further.
+
+* **AMSCesena is AMSRedGrey's profile in the blues of CesenaSMA2006**: the
+  same theme file with the palette of `beamercolorthemeorchidwhale.sty`, and a
+  few roles of its own (see the style's section above). The contents balls
+  take the same mixes as the item balls, to `owblue`.
+* **Overlays**: a frame becomes one page per slide. `<+->`, numbers, ranges
+  and lists of them on `\item`, blocks, `quote`, `definition`, `\uncover`,
+  `\only`, `\alert`, `\textcolor`, `\pgfuseimage` and `\footnote`; `+` counts
+  in document order, nested overlays included. A part off its slide is
+  *covered*: invisible, its space kept, as beamer's default `invisible`; the
+  measuring tools leave it out. Every slide shows its frame's number
+  (`data-frameno`, read by `script.js`).
+* **A slide is drawn as its frame's full slide**, when one slide shows
+  everything: the covered parts have no lines in their own page of the PDF,
+  so their line breaks, the corrections and the blocks' depths come from the
+  full slide's page, and each slide keeps only its own classes. Off-slide
+  `\alert` and on-slide `\uncover` are spans too, so the slides' elements
+  line up. A frame whose slides show different parts (`<1>` and `<2>`) keeps
+  per-slide corrections; there the covered parts lack breaks, and a few pages
+  are set by hand.
+* **The course layers' furniture**: `\section[short]{long}` (the headline
+  takes the short title), `\frame[label=…]{\titlepage}`, frames written
+  `\frame[<opts>]{…}`, contents at each section only where the deck asks,
+  subsection contents listing every section's subsections (`subtoc_all`),
+  `description[<widest>]` as a grid of subgrid rows, the deck's own list
+  levels (`lists`), `\setlength{\itemsep}` opening a list, a body opened by a
+  size or wrapped in one group, `quotation`, `quote`, `centering`,
+  `semiverbatim`, fancyvrb's `\fvset` and options, `\verb`, `\url` at the
+  text's size, `\textrm`, `\textcolor`, `\color`, `\pgfuseimage`,
+  `\column{w}`, a two-line frame title, a bibliography at `\normalsize`, a
+  deck with no bibliography, `deck.json`'s `replace`.
+* **Pictures**: a `tikzpicture` in the body is an asset at its natural size
+  (`assets.py` reads the SVG's width); `externalize.sh` finds pictures by
+  paths from the deck's root; a bitmap at `scale=` is sized at 72 dpi, as
+  pdfTeX ignores a PNG's own resolution — which shows that experiment 7's
+  page sizes its two pictures by their pixels, not as its PDF does (not
+  rebuilt).
+* **A frame title TeX wraps on its own** gets a `<br>` before the second
+  line's first word, read on the PDF, and the two-line title's layout.
+* **Footnotes**: a letter mark in the item colour, the text at the frame's
+  foot in `\footnotesize`; beamer may set it higher, under the content.
+* **Runs of ties** (`~~~`) are kept spaces: Latin Modern's no-break space is
+  wider in Firefox than in WebKit, 7pt over three.

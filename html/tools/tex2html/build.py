@@ -218,6 +218,23 @@ def transplant(raw, raw_m, proc_m):
     out.append(proc_m[last:])
     return ''.join(out) if q == len(tk) else None
 
+def wrap_title(n, t):
+    """a frame title TeX wrapped on its own (no \\\\ in the source): a <br> before the second line's first
+    word, read on the PDF (C4a); the theme's two-line title then applies"""
+    if '<br>' in t:
+        return t
+    ws = [w for w in PDF[n - 1].get_text('words') if 42 < w[3] < 56 and w[1] > 35]
+    if not ws:
+        return t
+    w = min(ws, key=lambda x: x[0])[4]
+    for m in re.finditer(re.escape(w[:6]), t):
+        before = t[:m.start()]
+        if before.count('<') == before.count('>') and before.strip():   # outside a tag, not at the start
+            a = before.rfind('<a ')
+            at = a if a != -1 and before.rfind('</a>') < a else m.start()   # inside a link: before the link
+            return t[:at].rstrip() + '<br>' + t[at:]
+    return t
+
 def frame(n, p):
     m = MASTER.get(n, n)
     body = None
@@ -233,7 +250,7 @@ def frame(n, p):
                              secname(p['section']), extra, centred=not p['top'], sub=p['subsection'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
     cls += ''.join(' ' + f[5:] for f in p['flags'] if f.startswith('size:'))
-    return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
+    return '\n'.join([head, f'{T}<h2 class="frametitle">{wrap_title(n, p["title"])}</h2>', f'{T}<div class="{cls}"{bst}>', body,
                       f'{T}</div>', '</section>'])
 
 def bib_pages(n0, p):

@@ -188,6 +188,7 @@ class Conv:
 
     def reset(self):
         self.used = set()
+        self.footnotes = []   # this frame's footnotes: (mark, html, covered)
 
     # ---- acronyms
     def acro(self, cmd, key):
@@ -443,14 +444,18 @@ class Conv:
 
     def group(self, g):
         """a brace group: a declaration inside it scopes to it"""
-        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|LARGE|smaller|bfseries|em|it|sl|sf|sc|itshape)(?![A-Za-z])\s*', g)
+        c = re.match(r'\s*\\color\{([A-Za-z0-9]+)\}\s*', g)   # a palette colour (S5)
+        if c:
+            return f'<span style="color: var(--{c.group(1)})">' + self.group(g[c.end():]) + '</span>'
+        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|LARGE|smaller|bfseries|em|it|sl|sf|sc|itshape|ttfamily|normalfont|sffamily)(?![A-Za-z])\s*', g)
         if m:
             d = m.group(1)
-            inner = self.inline(g[m.end():])
+            inner = self.group(g[m.end():])   # declarations may follow one another
             if d in SIZES and inner.strip().startswith('\x00disp:<div class="displaymath">') and inner.strip().endswith('\x00'):
                 return inner.strip().replace('class="displaymath"', f'class="displaymath {d}"', 1)
             tag = {'bfseries': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'it': ('<span class="it">', '</span>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
-                   'sf': ('', ''), 'sc': ('<span class="sc">', '</span>')}.get(d, (f'<span class="{d}">', '</span>'))
+                   'sf': ('', ''), 'sc': ('<span class="sc">', '</span>'), 'ttfamily': ('<code>', '</code>'), 'normalfont': ('', ''),
+                   'sffamily': ('', '')}.get(d, (f'<span class="{d}">', '</span>'))
             return tag[0] + inner + tag[1]
         return self.inline(g)
 
@@ -465,6 +470,13 @@ class Conv:
             if m:
                 v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
                 return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
+        if name in ('\\footnote', '\\FOOTNOTECOV'):   # beamer's: a letter mark, the text at the frame's foot
+            g, i = read_arg(s, i)
+            mark = 'abcdefghij'[len(self.footnotes)]
+            self.footnotes.append((mark, self.inline(g).strip(), name == '\\FOOTNOTECOV'))
+            return f'<sup class="fnmark">{mark}</sup>', i
+        if name == '\\SVNL':   # a line of a semiverbatim
+            return '\x00svnl\x00', i
         if name == '\\NOALERT':   # \alert<...> off this slide: a span still, so the slides' elements line up
             g, i = read_arg(s, i)
             return f'<span class="noalert">{self.inline(g)}</span>', i
@@ -474,6 +486,11 @@ class Conv:
         if name == '\\COVSPAN':   # \uncover<...>{...} off this slide: its space kept, invisible
             g, i = read_arg(s, i)
             return f'<span class="covered">{self.inline(g)}</span>', i
+        if name in ('\\frenchspacing', '\\nonfrenchspacing'):
+            return '', i
+        if name == '\\color':   # \color{c} outside a group: what follows in the container, in that colour
+            c, i = read_arg(s, i)
+            return f'<span style="color: var(--{c})">' + self.inline(s[i:]) + '</span>', len(s)
         if name == '\\textcolor':   # a palette colour of the theme, by its name: var(--<name>)
             c, i = read_arg(s, i)
             g, i = read_arg(s, i)
@@ -490,11 +507,11 @@ class Conv:
                     i += 1
             return simple[name], i
         n = name[1:]
-        if n in ('emph', 'alert', 'aalert', 'textbf', 'textsc', 'texttt', 'textit', 'textsf'):
+        if n in ('emph', 'alert', 'aalert', 'textbf', 'textsc', 'texttt', 'textit', 'textsf', 'textrm'):
             g, i = A()
             t = {'emph': ('<em>', '</em>'), 'alert': ('<span class="alert">', '</span>'),
                  'aalert': ('<span class="aalert">', '</span>'), 'textbf': ('<b>', '</b>'),
-                 'textsc': ('<span class="sc">', '</span>'), 'texttt': ('<code>', '</code>'),
+                 'textsc': ('<span class="sc">', '</span>'), 'texttt': ('<code>', '</code>'), 'textrm': ('<span class="rm">', '</span>'),
                  'textit': ('<i>', '</i>'), 'textsf': ('<span class="sf">', '</span>')}[n]
             return t[0] + self.inline(g) + t[1], i
         if re.match(r'[aA]c[a-z]*\*?$', n) and n.rstrip('*') in (
