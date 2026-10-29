@@ -9,7 +9,7 @@ case "$STYLE" in AMSBolognaFC|AMSPurpleAndGold|AMSSilverBlue|AMSRedGrey|AMSCesen
 	# Computer Modern Sans, as cm-super sets it: Latin Modern, one optical size per TeX size
 	for f in lmsans8-regular lmsans8-oblique lmsans9-regular lmsans9-oblique lmsans10-regular lmsans10-oblique \
 	         lmsans10-bold lmsans10-boldoblique lmsans12-regular lmsans12-oblique lmsans17-regular lmsans17-oblique \
-	         lmmono8-regular lmmono10-regular lmromancaps10-regular lmroman10-italic lmroman10-regular; do
+	         lmmono8-regular lmmono10-regular lmromancaps10-regular lmroman10-italic lmroman10-regular texgyrecursor-regular texgyrecursor-bold; do
 		"$SUBSET" "$(kpsewhich $f.otf)" --unicodes="$TEXT,U+0394,U+0398,U+039B,U+039E" --layout-features="kern,liga" \
 			--flavor=woff2 --output-file="$OUT/$f.woff2"
 	done

@@ -32,6 +32,7 @@ if style in CM:   # Latin Modern for cm-super, a family per optical size
               ("LM Mono 8", 400, "normal", "lmmono8-regular"), ("LM Mono 10", 400, "normal", "lmmono10-regular"),
               ("LM Roman Caps", 400, "normal", "lmromancaps10-regular"), ("LM Roman", 400, "italic", "lmroman10-italic"),
               ("LM Roman", 400, "normal", "lmroman10-regular"),
+              ("TeX Gyre Cursor", 400, "normal", "texgyrecursor-regular"), ("TeX Gyre Cursor", 700, "normal", "texgyrecursor-bold"),
               ("LM Math", 400, "normal", "latinmodern-math")]
 font = lambda f: f'url(data:font/woff2;base64,{b64(assets / "fonts" / (f + ".woff2"))}) format("woff2")'
 css = [f'@font-face {{ font-family: "{fam}"; font-weight: {w}; font-style: {s}; src: {font(f)}; }}'

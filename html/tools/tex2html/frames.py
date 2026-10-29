@@ -99,7 +99,7 @@ def container(s, ind, mode='body'):
         a, b = find_end(s, m.end(), env)
         inner = s[m.end():a]
         i = b
-        h = verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim') else env_html(env, inner, ind)
+        h = verbatim_html(inner, ind, size) if env in ('verbatim', 'Verbatim', 'lstlisting') else env_html(env, inner, ind)
         if fonts and env in ('itemize', 'enumerate'):
             cl = ' '.join(f'{"sub" if k == "subbody" else ""}body-{v}' for k, v in fonts.items())
             h = re.sub(r'<(ul|ol)( class="([^"]*)")?', lambda q: f'<{q.group(1)} class="{(q.group(3) + " ") if q.group(3) else ""}{cl}"', h, count=1)
@@ -579,16 +579,54 @@ def distribute(items, pn, k):
 VERBATIM = []   # the bodies of verbatim and Verbatim, taken out before anything parses the source
 VERB = re.compile(r'\\begin\{(verbatim|Verbatim)\}(\[[^\]\n]*\])?(.*?)\\end\{\1\}', re.S)
 
+LST = re.compile(r'\\begin\{lstlisting\}(\[(?:[^\[\]]|\[[^\]]*\])*\])?(.*?)\\end\{lstlisting\}', re.S)
+
 def keep_verbatim(src):
     def put(m):
         VERBATIM.append((m.group(1), m.group(2) or '', m.group(3)))
         return '\\begin{%s}%d\\end{%s}' % (m.group(1), len(VERBATIM) - 1, m.group(1))
-    return VERB.sub(put, src)
+    def putl(m):   # an inline lstlisting, its options spanning lines (S1)
+        VERBATIM.append(('lstlisting', m.group(1) or '', m.group(2)))
+        return '\\begin{lstlisting}%d\\end{lstlisting}' % (len(VERBATIM) - 1)
+    return LST.sub(putl, VERB.sub(put, src))
+
+LSTSET = {}   # the deck's \lstset: basicstyle and its moredelim=**[is][<style>]{a}{b}
+
+def lst_html(opt, body, ind):
+    """an lstlisting as listings sets it with columns=fixed in a monospaced face: Courier (the deck's
+    \\codefont, pcr) as TeX Gyre Cursor, every character 0.6em; the deck's delimiters for colour and bold"""
+    o = opt.strip('[]')
+    bs = re.search(r'basicstyle=([^,]*(?:\{[^}]*\}[^,]*)*)', o)
+    bs = bs.group(1) if bs else LSTSET.get('basicstyle', '')
+    size = re.search(r'\\(tiny|scriptsize|footnotesize|small|normalsize)', bs)
+    fs = re.search(r'\\fontsize\{([0-9.]+)\}\{([0-9.]+)\}', bs)
+    style = ''
+    if fs:
+        style += f'font-size: calc({fs.group(1)} * var(--pt)); line-height: calc({fs.group(2)} * var(--pt)); '
+    fr = 'frame=single' in o
+    def mm(k):
+        m = re.search(k + r'=([0-9.]+)(mm|pt)', o)
+        return float(m.group(1)) * (2.84528 if m.group(2) == 'mm' else 1) if m else 0.0
+    if fr:
+        xl, xr, sep = mm('xleftmargin'), mm('xrightmargin'), mm('framesep') or 3
+        style += (f'margin-left: calc({xl - sep - 0.4:.2f} * var(--pt)); width: calc({342.295 - xl - xr + 2 * (sep + 0.4):.2f} * var(--pt)); '
+                  f'padding: calc({sep:g} * var(--pt)); ')
+    body = body[1:] if body.startswith('\n') else body
+    body = body.rstrip(' \t')
+    body = body[:-1] if body.endswith('\n') else body
+    h = esc(body)
+    for st, a, b in LSTSET.get('delims', []):
+        tag = ('<b>', '</b>') if 'bfseries' in st else (f'<span style="color: var(--{re.search(r"color\{(\w+)\}", st).group(1)})">', '</span>')
+        h = re.sub(re.escape(esc(a)) + r'(.*?)' + re.escape(esc(b)), lambda m: tag[0] + m.group(1) + tag[1], h)
+    cls = 'lstlisting' + (' ' + size.group(1) if size else '') + (' lst-frame' if fr else '')
+    return f'{ind}<pre class="{cls}"' + (f' style="{style.strip()}"' if style else '') + f'>{h}</pre>'
 
 def verbatim_html(env, ind, size):
     """a verbatim body as a <pre>, in its size: cmtt's OT1 slots draw ` and ' as curly quotes; with
     fancyvrb's commandchars, \\(..\\) is math"""
     kind, opt, body = VERBATIM[int(env)]
+    if kind == 'lstlisting':
+        return lst_html(opt, body, ind)
     body = body[1:] if body.startswith('\n') else body
     body = body.rstrip(' \t')
     body = body[:-1] if body.endswith('\n') else body
@@ -804,6 +842,11 @@ def pages():
     for m in re.finditer(r'\\pgfdeclareimage(?:\[height=([0-9.]+)(cm|pt|mm)\])?\{([^}]*)\}\{([^}]*)\}', src):
         h = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1}[m.group(2)] if m.group(1) else None
         PGFIMAGES[m.group(3)] = (m.group(4), h)
+    ls = re.search(r'\\lstset\{(.*?)\}\s*\n(?=\S)', src[:src.index('\\begin{document}')], re.S)
+    if ls:
+        bsm = re.search(r'basicstyle=([^,]*)', ls.group(1))
+        LSTSET['basicstyle'] = bsm.group(1) if bsm else ''
+        LSTSET['delims'] = re.findall(r'moredelim=\*\*\[is\]\[([^\]]*)\]\{(.)\}\{(.)\}', ls.group(1))
     fvs = re.search(r'\\fvset\{(.*)\}\s*$', src[:src.index('\\begin{document}')], re.M)
     if fvs:
         FVSET.update(fv_options(fvs.group(1)))
