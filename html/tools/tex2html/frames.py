@@ -412,13 +412,14 @@ def includegraphics_hook():
             fw = re.search(r'width\s*=\s*([0-9.]*)\s*\\(?:line|text)width', o or '')
             if fw and (ROOT / g).with_suffix('.pdf').exists() and not g.endswith(('.png', '.jpg')):
                 st = f' style="width: {float(fw.group(1) or 1) * 100:g}%"'
-            # scale=<f> on a bitmap: its size as pdfTeX takes it, pixels at the file's dpi (72 when none) times f
+            # scale=<f> on a bitmap: its size as pdfTeX takes it, pixels at 72 dpi times f (pdfTeX ignores a
+            # PNG's own resolution: CILC 2016's architecture.png, 182 dpi, is 1820px x 0.15 = 273pt in its PDF)
             sc = re.search(r'scale\s*=\s*([0-9.]+)', o or '')
             bm = next((ROOT / (g + e) for e in ('', '.png', '.jpg') if (ROOT / (g + e)).is_file() and (g + e).endswith(('.png', '.jpg'))), None)
             if sc and bm:
                 from PIL import Image
                 im = Image.open(bm)
-                dpi = (im.info.get('dpi') or (72, 72))[0] or 72
+                dpi = 72
                 st = f' style="width: calc({im.size[0] * 72 / dpi * float(sc.group(1)):.2f} * var(--pt))"'
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}"{st}>\x00', i
         # \resizebox{<f>\textwidth}{!}{\<macro>}: a TikZ picture drawn by a deck macro, named in
