@@ -14,7 +14,7 @@ JS = r'''() => {
   const walk = document.createTreeWalker(f, NodeFilter.SHOW_TEXT);
   const nodes = [];
   let n;
-  while ((n = walk.nextNode())) if (!n.parentElement.closest('.sizer')) nodes.push(n);   // a hidden sizer row
+  while ((n = walk.nextNode())) if (!n.parentElement.closest('.sizer, .covered')) nodes.push(n);   // hidden: a sizer row, a covered overlay
   // labels are generated content: their text is in the PDF, so give it to the alignment
   const labelOf = new Map();
   f.querySelectorAll('li[data-label]').forEach(li => {

@@ -23,7 +23,7 @@
 		foot.children[2].textContent = d.shortdate;
 		const number = document.createElement('span');
 		number.className = 'number';
-		if (!f.hasAttribute('data-noframenumbering')) number.textContent = `${i + 1} / ${d.totalframes}`;
+		if (!f.hasAttribute('data-noframenumbering')) number.textContent = `${f.dataset.frameno || i + 1} / ${d.totalframes}`;   // an overlay's slides share their frame's number
 		foot.children[2].append(number);
 		f.prepend(head);
 		f.append(foot);

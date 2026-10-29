@@ -113,7 +113,10 @@ em { font-style: italic; color: var(--emph); }
 .alert { color: var(--alert); }
 .aalert { font-style: italic; color: var(--aalert); }
 .it { font-style: italic; }
-.ldots { letter-spacing: 0.21em; }   /* \ldots: cmss's dots with their kerns (experiment 7's deck.css, here for every deck) */
+.ldots { letter-spacing: 0.21em; }
+.covered { visibility: hidden; }
+.ties { white-space: pre; }   /* ~~ as spaces kept as they are */
+img.pgfimage { vertical-align: baseline; }   /* \pgfuseimage: on the baseline, as tall as declared */   /* an overlay not shown on this slide: beamer's invisible, its space kept */   /* \ldots: cmss's dots with their kerns (experiment 7's deck.css, here for every deck) */
 /* Computer Modern Sans has no small caps: the theme falls back to the serif ones */
 .sc { font-family: "LM Roman Caps"; font-variant-caps: normal; }
 code, .tt { font-family: "LM Mono 10", monospace; font-weight: 400; }
@@ -284,8 +287,8 @@ ol.toc > li { padding-left: calc(13.33 * var(--pt)); color: var(--toc-current); 
 ol.toc > li + li { margin-top: calc(16.21 * var(--pt)); }
 ol.toc > li::before {
 	left: calc(-3.82 * var(--pt)); top: calc(1.72 * var(--pt)); width: calc(12.48 * var(--pt)); height: calc(12.48 * var(--pt));
-	font-size: calc(8 * var(--fs)); line-height: calc(12.9 * var(--pt)); color: #F5E5E5;
-	background: radial-gradient(circle at 32% 32%, #E3BABA 0, #D89D9D 10%, #CB7D7D 18%, #B74A4A 26%, #A82626 36%, #7F0000 48%, #690000 58%);
+	font-size: calc(8 * var(--fs)); line-height: calc(12.9 * var(--pt)); color: #EBEBF7;   /* owbluepale, as the PDF's */
+	background: radial-gradient(circle at 32% 32%, #C8C8EA 0, #B1B1E1 10%, #9797D8 18%, #6E6EC8 26%, #5151BD 36%, #2A2A94 48%, #23237A 58%);
 }
 ol.toc > li.shaded { opacity: .2; }
 
@@ -531,6 +534,7 @@ ol.toc.fills > li.tocfill.first { margin-top: calc(-5.45 * var(--pt)); }
 ul.tocsub { margin: 0; color: var(--toc-subsection); line-height: calc(13.55 * var(--pt)); }
 ul.tocsub > li { padding-left: calc(10.91 * var(--pt)); }
 ul.tocsub > li + li { margin-top: 0; }
+ul.tocsub > li.shaded { opacity: .2; }   /* subtoc_all: the current section's other subsections */
 ul.tocsub > li::before { left: calc(10.91 * var(--pt) - 4.84 * var(--pt) - 5.1 * var(--pt)); top: calc(5.56 * var(--pt)); }
 /* a frame without a title (\frame{\tableofcontents}): its body starts under the headline */
 .frame.toc.outline .body { top: calc(11.03 * var(--pt)); }

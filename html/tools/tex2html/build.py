@@ -11,12 +11,16 @@ HERE = pathlib.Path(__file__).parent
 OUT = path('page')
 NUD = json.load(open(DIR / 'nudges.json')) if (DIR / 'nudges.json').exists() else {}
 
+# an overlay's slides share one layout (a covered part keeps its space), so every slide takes the
+# corrections of a slide that shows the whole frame, when there is one (experiment 8)
+MASTER = {}
+
 def pt(v):
     return f'calc({v:g} * var(--pt))'
 
 def body_style(n, centred):
     """the frame's shift, in pt, as padding: [c] moves 0.6 of a top padding and 0.4 of a bottom one"""
-    s = NUD.get(str(n), {}).get('shift', 0.0)
+    s = NUD.get(str(MASTER.get(n, n)), {}).get('shift', 0.0)
     if abs(s) < 0.05:
         return ''
     if not centred:
@@ -26,7 +30,7 @@ def body_style(n, centred):
 TAG = re.compile(r'<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>')
 def margins(n, h):
     """the gaps TeX's glue made: margin-top on the k-th element of the body"""
-    m = NUD.get(str(n), {}).get('m', {})
+    m = NUD.get(str(MASTER.get(n, n)), {}).get('m', {})
     if not m:
         return h
     out, k, last = [], 0, 0
@@ -46,7 +50,7 @@ def margins(n, h):
 
 def columns(n, h):
     """each column of the page moved as a whole, by a translate"""
-    cs = NUD.get(str(n), {}).get('cols', {})
+    cs = NUD.get(str(MASTER.get(n, n)), {}).get('cols', {})
     if not cs:
         return h
     parts = re.split(r'<div class="column(?=[" ])', h)
@@ -103,6 +107,20 @@ def subtoc(n, p):
     """\\AtBeginSubsection's frame: every section shaded, the current one's subsections listed, the
     current subsection shown"""
     head, bst = section_open(n, 'frame toc subtoc', secname(p['section']), centred=TOCC, sub=p['subsection'])
+    if CFG.get('subtoc_all'):
+        # \tableofcontents[currentsection,currentsubsection] (experiment 8): the outline's layout, every
+        # section with its subsections, all shaded but the current section and its current subsection
+        out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
+               f'{T}{T}<ol class="toc fills">', f'{T}{T}{T}<li class="tocfill first"></li>']
+        for k, s in enumerate(p['secs'], 1):
+            subs = p['subs'][k - 1]
+            lis = ''.join(f'<li{"" if k == p["current"] and q == p["currentsub"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{x}</li>'
+                          for q, x in enumerate(subs, 1)) if k == p['current'] else ''.join(f'<li>{x}</li>' for x in subs)
+            sub = f'<ul class="tocsub">{lis}</ul>' if subs else ''
+            out.append(f'{T}{T}{T}<li{"" if k == p["current"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{s}{sub}</li>')
+            out.append(f'{T}{T}{T}<li class="tocfill"></li>')
+        out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
+        return '\n'.join(out)
     out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
            f'{T}{T}<ol class="toc">']
     for k, sct in enumerate(p['secs'], 1):
@@ -145,11 +163,20 @@ def quirks(h):
 def block_depths(n, h, f=1):
     """each block body ends where TeX's last line ends: shallower than a 'g', less padding. In a shrunk
     frame (zoom f) the depth measured on the PDF is already scaled: it goes in divided by f"""
-    ds = depths(n)
     parts = h.split('<div class="block-body')
-    if len(parts) - 1 != len(ds):
-        print(f'page {n}: {len(parts) - 1} blocks, {len(ds)} in the PDF: depths left alone')
+    # a covered block (an overlay off this slide) is not in this page of the PDF: on a slide that shares a
+    # full slide's layout every block takes that slide's depths, so the covered ones keep their height
+    if MASTER.get(n, n) != n:
+        ds = depths(MASTER[n])
+        shown = [True] * (len(parts) - 1)
+    else:
+        ds = depths(n)
+        shown = [' covered' not in parts[k][parts[k].rfind('<div class="block'):].split('>', 1)[0] for k in range(len(parts) - 1)]
+    if sum(shown) != len(ds):
+        print(f'page {n}: {sum(shown)} blocks, {len(ds)} in the PDF: depths left alone')
         return h
+    ds = iter(ds)
+    ds = [next(ds) if v else 0 for v in shown]
     out = parts[0]
     for d, rest in zip(ds, parts[1:]):
         if abs(d) >= 0.05:
@@ -158,16 +185,49 @@ def block_depths(n, h, f=1):
         out += '<div class="block-body' + rest
     return out
 
+PROC = {}
+
+def processed(n, p):
+    """the page's body: the PDF's line breaks, TeX's quirks, the corrections, the blocks' depths"""
+    if n not in PROC:
+        body = '\n'.join(p['body'])
+        body, probs, k = add_breaks(body, n)
+        body = quirks(body)
+        body = margins(n, body)
+        body = columns(n, body)
+        sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
+        PROC[n] = block_depths(n, body, 1 - sh / 100)
+    return PROC[n]
+
+CLS = re.compile(r'\sclass="[^"]*"')
+
+def transplant(raw, raw_m, proc_m):
+    """a slide drawn as its full slide is, with its own classes: what is covered or alerted on it. The two
+    raw bodies differ only in classes; the full slide's page adds line breaks and styles"""
+    tk, tm = list(TAG.finditer(raw)), list(TAG.finditer(raw_m))
+    if [t.group(1) for t in tk] != [t.group(1) for t in tm]:
+        return None
+    out, last, q = [], 0, 0
+    for t in TAG.finditer(proc_m):
+        if q < len(tk) and t.group(1) == tm[q].group(1):
+            mine = CLS.search(tk[q].group(2))
+            attrs = CLS.sub('', t.group(2), count=1)
+            out.append(proc_m[last:t.start()] + '<' + t.group(1) + (mine.group(0) if mine else '') + attrs + '>')
+            last = t.end()
+            q += 1
+    out.append(proc_m[last:])
+    return ''.join(out) if q == len(tk) else None
+
 def frame(n, p):
-    body = '\n'.join(p['body'])
-    body, probs, k = add_breaks(body, n)
-    body = quirks(body)
-    body = margins(n, body)
-    body = columns(n, body)
+    m = MASTER.get(n, n)
+    body = None
+    if m != n:   # an overlay's slide: its full slide's page, its own classes
+        body = transplant('\n'.join(p['body']), '\n'.join(PS[m - 1]['body']), processed(m, PS[m - 1]))
+    if body is None:
+        body = processed(n, p)
     # shrink: beamer sets the content at \textwidth / f and scales it by f = 1 - n/100; TeX may shrink further
     # than asked ("shrunk by a factor of ... instead of ..."), which deck.json's "shrink" gives per page
     sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
-    body = block_depths(n, body, 1 - sh / 100)
     extra = (' data-noframenumbering' if p['nonum'] else '') + (f' style="--shrink: {round(1 - sh / 100, 5)}"' if sh else '')
     head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if sh else ''),
                              secname(p['section']), extra, centred=not p['top'], sub=p['subsection'])
@@ -213,10 +273,26 @@ def bib_pages(n0, p):
     return out
 
 ps = pages()
+PS = ps
 parts = []
 n = 0
+OVER = any(p.get('cont') for p in ps)   # a deck with overlays: its pages carry their frame's number
+_g = []
+for _i, _p in enumerate(ps, 1):
+    if _p['kind'] == 'bib':
+        break
+    if not _p.get('cont'):
+        _g.append([])
+    if _g:
+        _g[-1].append((_i, sum(h.count('covered') for h in _p.get('body', []))))
+for _grp in _g:
+    full = [i for i, c in _grp if c == 0]   # a slide that shows it all; slides of disjoint parts keep their own
+    if len(_grp) > 1 and full:
+        for _i, _c in _grp:
+            MASTER[_i] = full[-1]
 for p in ps:
     n += 1
+    k0 = len(parts)
     sep = '<!-- ======================================================================= -->\n'
     if p['kind'] == 'titlepage':
         parts.append(sep + titlepage())
@@ -233,6 +309,8 @@ for p in ps:
         parts.append(sep + bp[0])
         parts += bp[1:]
         n += len(bp) - 1
+    if OVER and p['kind'] != 'bib':
+        parts[k0] = parts[k0].replace('<section ', f'<section data-frameno="{p["frameno"]}" ', 1)
 frames_html = '\n\n'.join(parts)
 ALT = CFG.get('alt', {})
 for k, v in ALT.items():

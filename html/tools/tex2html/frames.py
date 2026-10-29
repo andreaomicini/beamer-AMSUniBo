@@ -195,8 +195,11 @@ def env_html(env, inner, ind):
         sz = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])', inner[j:])
         if sz:   # a size declared first sizes the whole body
             j += sz.end()
+        cov = re.match(r'\s*\\COV ', inner[j:])   # an overlay not shown on this slide
+        if cov:
+            j += cov.end()
         body, flags = container(inner[j:], ind + T * 2, 'block')
-        cls = 'block' + BLOCK_ENVS[env] + ('' if title.strip() else ' notitle')
+        cls = 'block' + BLOCK_ENVS[env] + ('' if title.strip() else ' notitle') + (' covered' if cov else '')
         bcls = 'block-body' + (' center' if 'center' in flags else '') + (' ' + sz.group(1) if sz else '')
         out = [f'{ind}<div class="{cls}">']
         if title.strip():
@@ -361,6 +364,10 @@ def itemize(inner, ind, tag='ul'):
             if 'class="btc"' in C.inline(lab):
                 cl.append('lbl-btc')
             attr = f' data-label="{text}"' + (f' class="{" ".join(cl)}"' if cl else '')
+        cov = re.match(r'\s*\\COV ', p[j:])   # an overlay not shown on this slide: kept, invisible
+        if cov:
+            j += cov.end()
+            attr = attr.replace(' class="', ' class="covered ', 1) if ' class="' in attr else attr + ' class="covered"'
         body, flags = container(p[j:], ind + T * 2, 'li')
         tall = re.search(r'class="cases" style="--rows: (\d+)"', body[0])
         if tall:   # cases in the item's first line: the line is taller, its baseline lower
@@ -389,12 +396,15 @@ def description(inner, ind):
         f'{ind}<dl class="widest">', f'{ind}{T}<div class="ditem sizer"><dt>{C.inline(wide).strip()}</dt><dd></dd></div>']
     for p in parts[1:]:
         lab, j = read_opt(p, 0)
+        cov = re.match(r'\s*\\COV ', p[j:])   # an overlay not shown on this slide
+        if cov:
+            j += cov.end()
         body, flags = container(p[j:], ind + T * 2, 'li')
         dt = f'<dt>{C.inline(lab or "").strip()}</dt>'
         if len(body) == 1:
-            out.append(f'{ind}{T}<div class="ditem">{dt}<dd>{body[0].strip()}</dd></div>')
+            out.append(f'{ind}{T}<div class="ditem{" covered" if cov else ""}">{dt}<dd>{body[0].strip()}</dd></div>')
         else:
-            out += [f'{ind}{T}<div class="ditem">{dt}<dd>{body[0].strip()}'] + body[1:] + [f'{ind}{T}</dd></div>']
+            out += [f'{ind}{T}<div class="ditem{" covered" if cov else ""}">{dt}<dd>{body[0].strip()}'] + body[1:] + [f'{ind}{T}</dd></div>']
     out.append(f'{ind}</dl>')
     return '\n'.join(out)
 
@@ -435,6 +445,12 @@ def includegraphics_hook():
                 f = float(fw.group(1) or 1)
                 return (f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}" '
                         f'style="width: calc({round(342.295 * f, 3)} * var(--pt))">\x00'), i
+        if name == '\\pgfuseimage':   # \pgfdeclareimage[height=<h>]{name}{file}: the file, inline, that tall
+            g, i = read_arg(s, i)
+            f, h = PGFIMAGES.get(g, (g, None))
+            n = f.split('/')[-1]
+            st = f' style="height: calc({h:g} * var(--pt))"' if h else ''
+            return f'<img class="pgfimage" data-asset="{n}" alt="ALT-{n}"{st}>', i
         if name == '\\lstinputlisting':
             from listing import listing
             o, i = read_opt(s, i)
@@ -544,6 +560,7 @@ def verbatim_html(env, ind, size):
     cl = ' '.join([size] + cls if size else cls)
     return f'{ind}<pre class="verbatim{" " + cl if cl else ""}"{style}>{h}</pre>'
 
+PGFIMAGES = {}   # \pgfdeclareimage: name -> (file, height in pt)
 FVSET = {}   # fancyvrb's defaults, from the deck's \fvset{...}
 
 def fv_options(o):
@@ -583,6 +600,74 @@ def expand_macros(s):
             break
     return s
 
+# ---------------------------------------------------------------- overlays (experiment 8)
+OVL = re.compile(r'\\(item|uncover|only|alert|visible)(\[[^\]]*\])?\s*<([^>]*)>|\\begin\{(block|alertblock|exampleblock|definition|quote)\}<([^>]*)>')
+
+def _spec(spec, pause):
+    """an overlay specification -> (set test, pause after); + is the current pause, then one more"""
+    ranges, plus = [], False
+    for part in spec.split(','):
+        part = part.strip()
+        if '+' in part:
+            plus = True
+            part = part.replace('+', str(pause))
+        m = re.fullmatch(r'(\d*)\s*-\s*(\d*)|(\d+)', part)
+        if not m:
+            continue
+        if m.group(3):
+            ranges.append((int(m.group(3)), int(m.group(3))))
+        else:
+            ranges.append((int(m.group(1) or 1), int(m.group(2)) if m.group(2) else None))
+    return ranges, pause + (1 if plus else 0)
+
+def overlay_slides(body):
+    """beamer's overlays: the frame's text for each of its slides, the parts not shown on a slide
+    marked \\COV (covered: invisible, its space kept, as beamer's default) or left out (\\only)"""
+    if not OVL.search(body):
+        return [body]
+    # \uncover<s>{\item ...}: the item's own overlay
+    while True:
+        m = re.search(r'\\uncover<([^>]*)>(?=\{\s*\\item(?![A-Za-z]))', body)
+        if not m:
+            break
+        g, j = read_group(body, m.end())
+        body = body[:m.start()] + '\\item<' + m.group(1) + '>' + g.lstrip()[len('\\item'):] + body[j:]
+    pause, n, specs = 1, 1, []
+    for m in OVL.finditer(body):
+        r, pause = _spec(m.group(3) if m.group(3) is not None else m.group(5), pause)
+        specs.append(r)
+        for a, b in r:
+            n = max(n, a, b or 0)
+    slides = []
+    for k in range(1, n + 1):
+        out, i = [], 0
+        for m, r in zip(OVL.finditer(body), specs):
+            on = any(a <= k and (b is None or k <= b) for a, b in r)
+            out.append(body[i:m.start()])
+            i = m.end()
+            if m.group(4):   # an environment: covered after its title
+                out.append('\\begin{%s}' % m.group(4))
+                if not on:
+                    t, j = read_group(body, skip_ws(body, i))
+                    out.append(body[i:j] + '\\COV ')
+                    i = j
+                continue
+            cmd, lab = m.group(1), m.group(2) or ''
+            if cmd == 'item':
+                out.append('\\item' + lab + (' ' if on else ' \\COV '))
+                continue
+            g, j = read_group(body, skip_ws(body, i))
+            i = j
+            if cmd in ('uncover', 'visible'):
+                out.append('\\SHOWSPAN{' + g + '}' if on else '\\COVSPAN{' + g + '}')   # a span either way
+            elif cmd == 'only':
+                out.append('{' + g + '}' if on else '')
+            elif cmd == 'alert':
+                out.append('\\alert{' + g + '}' if on else '\\NOALERT{' + g + '}')   # a span either way
+        out.append(body[i:])
+        slides.append(''.join(out))
+    return slides
+
 def shrinkage(opts):
     """beamer's shrink=<n>: the percentage the frame's content is shrunk by, at least; 0 when absent"""
     for o in opts:
@@ -593,6 +678,9 @@ def shrinkage(opts):
 
 def pages():
     src = strip_comments(keep_verbatim(open(path('tex')).read()))
+    for m in re.finditer(r'\\pgfdeclareimage(?:\[height=([0-9.]+)(cm|pt|mm)\])?\{([^}]*)\}\{([^}]*)\}', src):
+        h = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1}[m.group(2)] if m.group(1) else None
+        PGFIMAGES[m.group(3)] = (m.group(4), h)
     fvs = re.search(r'\\fvset\{(.*)\}\s*$', src[:src.index('\\begin{document}')], re.M)
     if fvs:
         FVSET.update(fv_options(fvs.group(1)))
@@ -694,7 +782,7 @@ def pages():
         opts = [o.strip() for o in (opts or '').split(',')]
         nonum = 'noframenumbering' in opts or nonumber
         broken = 'allowframebreaks' in opts
-        parts = split_top(fr[j:], 'framebreak') if broken else [fr[j:]]
+        parts = split_top(fr[j:], 'framebreak') if broken else overlay_slides(fr[j:])
         roman = 0
         for k, part in enumerate(parts):
             C.reset()
@@ -726,7 +814,13 @@ def pages():
                 roman += 1
                 out.append(dict(kind='frame', section=section, subsection=subsection,
                                 title=t + (' ' + ROMAN[roman] if broken else ''), body=g, flags=flags,
-                                top='t' in opts, nonum=nonum, shrink=shrinkage(opts)))
+                                top='t' in opts, nonum=nonum, shrink=shrinkage(opts), cont=bool(k) and not broken))
+    # the frame number of every page: an overlay's later slides share their frame's (experiment 8)
+    no = 0
+    for p in out:
+        if not p.get('cont') and not p.get('nonum'):
+            no += 1
+        p['frameno'] = no
     return out
 
 if __name__ == '__main__':

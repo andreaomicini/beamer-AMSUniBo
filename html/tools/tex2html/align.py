@@ -67,7 +67,7 @@ def html_chars(h):
                             skip.pop()
                     elif not tag.endswith('/'):
                         skip[-1][1] += 1
-            elif not closing and re.search(r'class="[^"]*\b(ccite|sizer)\b', tag):   # a sizer row is hidden
+            elif not closing and re.search(r'class="[^"]*\b(ccite|sizer|covered)\b', tag):   # a sizer row, a covered overlay are hidden
                 skip.append([name, 1])
             lab = re.search(r'data-label="([^"]*)"', tag)
             if lab and not skip:

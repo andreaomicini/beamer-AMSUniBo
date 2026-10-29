@@ -410,6 +410,13 @@ class Conv:
                 j = s.index('$', i + 1)
                 out.append(self.math(s[i + 1:j]))
                 i = j + 1
+            elif c == '~' and s.startswith('~~', i) and CFG.get('style') == 'AMSCesena':
+                # a run of ties: spaces kept as they are, since Latin Modern's no-break space is wider than its
+                # space in Firefox and not in WebKit (experiment 6's footline; AMSCesena only, so far)
+                k = i
+                while k < len(s) and s[k] == '~':
+                    k += 1
+                out.append('<span class="ties">' + ' ' * (k - i) + '</span>'); i = k
             elif c == '~':
                 out.append('\u00a0'); i += 1
             elif s.startswith('---', i):
@@ -450,7 +457,7 @@ class Conv:
     def command(self, name, s, i):
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
-                  '\\ldots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
+                  '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
                   '\\refname': 'References', '\\par': '\n\n', '\\relax': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
             o, j = read_opt(s, i)
@@ -458,6 +465,15 @@ class Conv:
             if m:
                 v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
                 return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
+        if name == '\\NOALERT':   # \alert<...> off this slide: a span still, so the slides' elements line up
+            g, i = read_arg(s, i)
+            return f'<span class="noalert">{self.inline(g)}</span>', i
+        if name == '\\SHOWSPAN':   # \uncover<...>{...} on this slide
+            g, i = read_arg(s, i)
+            return f'<span class="shown">{self.inline(g)}</span>', i
+        if name == '\\COVSPAN':   # \uncover<...>{...} off this slide: its space kept, invisible
+            g, i = read_arg(s, i)
+            return f'<span class="covered">{self.inline(g)}</span>', i
         if name == '\\textcolor':   # a palette colour of the theme, by its name: var(--<name>)
             c, i = read_arg(s, i)
             g, i = read_arg(s, i)
@@ -467,7 +483,7 @@ class Conv:
             k = s.index(s[i], i + 1)
             return f'<code>{esc(s[i + 1:k])}</code>', k + 1
         if name in simple:
-            if name == '\\ldots' and s.startswith('{}', i):
+            if name in ('\\ldots', '\\dots') and s.startswith('{}', i):
                 i += 2
             elif re.match(r'\\[A-Za-z]+$', name):
                 while i < len(s) and s[i] in ' \t\n':   # TeX skips the spaces after a control word

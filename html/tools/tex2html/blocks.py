@@ -10,7 +10,7 @@ from depth import blocks, near
 
 K = 1024 / 362.835
 TITLE = STYLE['titles']   # block, alert, example
-JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.querySelectorAll('.block')].map(k=>{
+JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.querySelectorAll('.block:not(.covered)')].map(k=>{
   const r=k.getBoundingClientRect();let e=k.querySelector(':scope>.block-body'),d=[];
   while(e.lastElementChild&&!['P','SPAN','EM','A','BR','I','B','CODE'].includes(e.lastElementChild.tagName)){
     e=e.lastElementChild;d.push(e.tagName.toLowerCase()+(e.className?'.'+e.className.split(' ')[0]:''))}
