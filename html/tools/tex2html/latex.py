@@ -149,6 +149,8 @@ def load_acronyms():
 
 # ---------------------------------------------------------------- bibliography labels
 def load_bbl():
+    if not path('bbl').exists():   # a deck with no bibliography (experiment 8)
+        return {}, []
     s = open(path('bbl')).read()
     items = re.split(r'\\bibitem', s)[1:]
     labels, entries = {}, []
@@ -456,6 +458,9 @@ class Conv:
             if m:
                 v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
                 return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
+        if name == '\\verb' and i < len(s):   # \verb|...|: the text as it is, in the typewriter face
+            k = s.index(s[i], i + 1)
+            return f'<code>{esc(s[i + 1:k])}</code>', k + 1
         if name in simple:
             if name == '\\ldots' and s.startswith('{}', i):
                 i += 2

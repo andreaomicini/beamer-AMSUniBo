@@ -172,6 +172,7 @@ def frame(n, p):
     head, bst = section_open(n, 'frame' + (' top' if p['top'] else '') + (' shrink' if sh else ''),
                              secname(p['section']), extra, centred=not p['top'], sub=p['subsection'])
     cls = 'body' + (' center' if 'center' in p['flags'] else '')
+    cls += ''.join(' ' + f[5:] for f in p['flags'] if f.startswith('size:'))
     return '\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}</h2>', f'{T}<div class="{cls}"{bst}>', body,
                       f'{T}</div>', '</section>'])
 

@@ -219,6 +219,12 @@ dl.widest > .sizer > * { visibility: hidden; height: 0; overflow: hidden; }
 dl.widest > .ditem + .ditem:not(.sizer + .ditem) > * { margin-top: var(--itemsep); }
 dl.widest dd > ul:last-child { margin-bottom: 0; }   /* a list closing an item adds no space below it */
 
+/* quotation: leftmargin and rightmargin 21.818pt, every paragraph's first line indented by 1.5em
+   (13.82pt at 9pt, measured), italic; an {\em} inside it upright (experiment 8, C6) */
+.quotation { margin: var(--topsep) calc(21.818 * var(--pt)); font-style: italic; }
+.quotation > p { text-indent: 1.536em; }
+.quotation i { font-style: normal; }
+
 /* ----- blocks: rounded, shadowed ---------------------------------------- */
 .block {
 	--title-bg: var(--block-title); --title-fg: var(--block-title-text); --body-bg: var(--block-body);
@@ -452,6 +458,11 @@ ul.subtoc > li.shaded { opacity: .2; }
 pre.verbatim { margin: var(--topsep) 0; white-space: pre; color: var(--text); font-weight: 400;
 	font-family: "LM Mono 10", monospace; font-size: calc(10.91 * var(--pt)); line-height: calc(13.6 * var(--pt)); }
 pre.verbatim.scriptsize { font-family: "LM Mono 8", monospace; font-size: calc(7.97 * var(--pt)); line-height: calc(9.5 * var(--pt)); }
+/* a verbatim inside a body or block set in a smaller size takes that size (C6) */
+.small pre.verbatim { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
+.footnotesize pre.verbatim { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
+pre.verbatim.small { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
+pre.verbatim.footnotesize { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
 pre.verbatim .rel, pre.verbatim .bin { font-family: "LM Math"; }
 /* table: centred as beamer's table is; tabular with \tabcolsep 6pt, rules 0.4pt, \hline\hline 2pt apart */
 .table { display: flex; justify-content: center; margin: var(--topsep) 0; }

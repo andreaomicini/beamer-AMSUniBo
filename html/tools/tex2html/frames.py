@@ -198,6 +198,9 @@ def env_html(env, inner, ind):
             out.append(f'{ind}{T}<h3 class="block-title{" display" if md else ""}">{md.group(1) if md else th}</h3>')
         out += [f'{ind}{T}<div class="{bcls}">'] + body + [f'{ind}{T}</div>', f'{ind}</div>']
         return '\n'.join(out)
+    if env == 'quotation':   # LaTeX's: both margins 2em, each paragraph indented, italic in these decks
+        body, flags = container(inner, ind + T, 'quote')
+        return '\n'.join([f'{ind}<div class="quotation">'] + body + [f'{ind}</div>'])
     if env == 'indquotation':
         body, flags = container(inner, ind + T, 'quote')
         return '\n'.join([f'{ind}<div class="quote">'] + body + [f'{ind}</div>'])
@@ -402,6 +405,14 @@ def includegraphics_hook():
             fw = re.search(r'width\s*=\s*([0-9.]*)\s*\\(?:line|text)width', o or '')
             if fw and (ROOT / g).with_suffix('.pdf').exists() and not g.endswith(('.png', '.jpg')):
                 st = f' style="width: {float(fw.group(1) or 1) * 100:g}%"'
+            # scale=<f> on a bitmap: its size as pdfTeX takes it, pixels at the file's dpi (72 when none) times f
+            sc = re.search(r'scale\s*=\s*([0-9.]+)', o or '')
+            bm = next((ROOT / (g + e) for e in ('', '.png', '.jpg') if (ROOT / (g + e)).is_file() and (g + e).endswith(('.png', '.jpg'))), None)
+            if sc and bm:
+                from PIL import Image
+                im = Image.open(bm)
+                dpi = (im.info.get('dpi') or (72, 72))[0] or 72
+                st = f' style="width: calc({im.size[0] * 72 / dpi * float(sc.group(1)):.2f} * var(--pt))"'
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}"{st}>\x00', i
         # \resizebox{<f>\textwidth}{!}{\<macro>}: a TikZ picture drawn by a deck macro, named in
         # deck.json's "tikzmacros" (macro -> asset); the width is the fraction of the text width
@@ -574,6 +585,7 @@ def pages():
     section = subsection = ''
     i = 0
     tok = re.compile(r'\\(sub)?section(\*?)(?:\[([^]]*)\])?\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
+                     r'|\\frame(?![A-Za-z])(\[[^]]*\])?\s*(?=\{)'
                      r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
     nonumber = False
     secno = subno = 0
@@ -614,9 +626,13 @@ def pages():
             out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs, subs=subs))
             i = m.end()
             continue
-        # a frame
-        a, b = find_end(doc, m.end(), 'frame')
-        fr = doc[m.end():a]
+        # a frame: \begin{frame} ... \end{frame}, or \frame[<opts>]{...} (the course decks of experiment 8)
+        if m.group(0).startswith('\\frame'):
+            g, b = read_group(doc, m.end())
+            fr = (m.group(7) or '') + g
+        else:
+            a, b = find_end(doc, m.end(), 'frame')
+            fr = doc[m.end():a]
         i = b
         # an overlay specification: <presentation:0>, <beamer:0> or <0> keeps the frame out of the PDF
         k0 = skip_ws(fr, 0)
@@ -634,6 +650,10 @@ def pages():
         if fr.startswith('\\frametitle', j):
             j += len('\\frametitle')
         title, j = read_group(fr, skip_ws(fr, j))
+        # a body all in one group opened by a size, {\small ...}: that size declared for the body
+        wrapped = re.fullmatch(r'\s*\{\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])(.*)\}\s*', fr[j:], re.S)
+        if wrapped:
+            fr = fr[:j] + '\\' + wrapped.group(1) + wrapped.group(2)
         fr = fr[:j] + lead + fr[j:]
         opts = [o.strip() for o in (opts or '').split(',')]
         nonum = 'noframenumbering' in opts or nonumber
@@ -651,7 +671,13 @@ def pages():
                                 nonum=nonum, top='t' in opts, size=sz.group(1) if sz else 'normalsize'))
                 continue
             t = C.inline(title)
+            # a size declared first, before any text or environment, sizes the whole body (C6's {\footnotesize ...})
+            bsize = re.match(r'\s*\\(scriptsize|footnotesize|small)(?![A-Za-z])\s*(?=\S)(?!\\begin\{verbatim\})', part)
+            if bsize:
+                part = part[bsize.end():]
             body, flags = container(part, T * 2, 'body')
+            if bsize:
+                flags.add('size:' + bsize.group(1))
             groups = [body]
             if broken:
                 pn = len(out) + 1
