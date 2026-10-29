@@ -114,7 +114,10 @@ def container(s, ind, mode='body'):
         if fonts and env in ('itemize', 'enumerate'):
             cl = ' '.join(f'{"sub" if k == "subbody" else ""}body-{v}' for k, v in fonts.items())
             h = re.sub(r'<(ul|ol)( class="([^"]*)")?', lambda q: f'<{q.group(1)} class="{(q.group(3) + " ") if q.group(3) else ""}{cl}"', h, count=1)
-        items.append(('raw', h))
+        if env == 'thebibliography':   # each entry an item of its own, for allowframebreaks (C3a)
+            items.extend(('raw', l) for l in h.split('\n') if l.strip())
+        else:
+            items.append(('raw', h))
 
     # side by side: consecutive minipages are one line of boxes
     grouped = []
@@ -259,6 +262,16 @@ def env_html(env, inner, ind):
                 code = '<br>'.join(C.inline(x).strip() for x in a.split('\\newline'))
                 out += [f'{ind}{T}<p class="apicode"><code>{code}</code></p>', f'{ind}{T}<p class="apidesc">{C.inline(b).strip()}</p>']
         out += [f'{ind}{T}<div class="aprule"></div>', f'{ind}</div>']
+        return '\n'.join(out)
+    if env == 'thebibliography':   # beamer's, inside a frame, with the article icons (C3a)
+        _, j = read_group(inner, skip_ws(inner, 0))
+        out = []   # each entry an element of the body, so allowframebreaks can share them out
+        for it in re.split(r'\\bibitem', inner[j:])[1:]:
+            key, k = read_group(it, skip_ws(it, 0))
+            parts = [C.inline(x).strip() for x in it[k:].split('\\newblock')]
+            cls = ['ab-author', 'ab-title'] + ['ab-rest'] * (len(parts) - 2)
+            out.append(f'{ind}{T}<p class="artitem" id="cite-{key}">' + ''.join(
+                f'<span class="{c}">{x}</span>' for c, x in zip(cls, parts)) + '</p>')
         return '\n'.join(out)
     if env == 'lrbox':   # a box saved for a picture: drawn there, nothing here (S5)
         return ''
@@ -433,6 +446,7 @@ def itemize(inner, ind, tag='ul'):
     if cov:
         inner = inner[cov.end():]
     parts = split_top(inner, 'item')
+    parts[0] = re.sub(r'\\par\b', '', parts[0])   # a blank line before the first item (C3a)
     assert not parts[0].strip(), parts[0]
     out = [f'{ind}<{tag}{style}{" class=" + chr(34) + "covered" + chr(34) if cov else ""}>']
     for p in parts[1:]:
@@ -904,6 +918,10 @@ def pages():
     raw = re.sub(r'(\\begin\{semiverbatim\})(.*?)(\\end\{semiverbatim\})',
                  lambda m: m.group(1) + re.sub(r'(?<!\\)%', r'\\%', m.group(2)) + m.group(3), raw, flags=re.S)
     src = strip_comments(raw)
+    # thebibliography inside frames (C3a): numbered labels, each environment from 1
+    for tb in re.finditer(r'\\begin\{thebibliography\}.*?\\end\{thebibliography\}', src, re.S):
+        for k, key in enumerate(re.findall(r'\\bibitem(?:\[[^\]]*\])?\{([^}]*)\}', tb.group(0)), 1):
+            C.labels.setdefault(key, str(k))
     # a saved box (lrbox): kept aside, put where \usebox uses it in the body; inside a picture it is part of the
     # externalised picture (S5). Box names are reused from frame to frame: \SETBOX marks which one is current
     def lr(m):
@@ -1041,6 +1059,9 @@ def pages():
             lead, j = fr[j:j + q.end()], j + q.end()
         if fr.startswith('\\frametitle', j):
             j += len('\\frametitle')
+            ov = re.match(r'\s*<[^>]*>', fr[j:])   # \frametitle<presentation>{...} (C3a)
+            if ov:
+                j += ov.end()
         if fr[skip_ws(fr, j):skip_ws(fr, j) + 1] == '{':
             title, j = read_group(fr, skip_ws(fr, j))
         else:   # a frame with no title (S2)

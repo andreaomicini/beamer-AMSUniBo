@@ -463,7 +463,8 @@ class Conv:
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
                   '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
-                  '\\refname': 'References', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': ''}
+                  '\\refname': 'References', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '',
+                  '\\beamertemplatebookbibitems': '', '\\beamertemplatearticlebibitems': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
             o, j = read_opt(s, i)
             m = re.fullmatch(r'\s*(-?[0-9.]+)\s*(cm|mm|pt|em|ex)\s*', o or '')

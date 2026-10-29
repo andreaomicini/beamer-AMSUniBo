@@ -147,6 +147,17 @@ em { font-style: italic; color: var(--emph); }
 .fcboxi { display: inline-block; padding: calc(3 * var(--pt)); border: calc(0.4 * var(--pt)) solid; }
 .makebox, .hspace { display: inline-block; text-align: left; }
 .structure { color: var(--owblue); }
+/* beamer's thebibliography inside a frame, article icons (C3a, measured): the text 22.57pt in, an entry's
+   lines one under the other, 6.43pt between entries */
+.artbib { margin: var(--topsep) 0; }
+.artitem { position: relative; padding-left: calc(22.57 * var(--pt)); margin: 0 0 calc(6.43 * var(--pt)); line-height: calc(13.55 * var(--pt)); }
+.artitem > span { display: block; }
+.ab-author { color: var(--text); }
+.ab-title { color: var(--owblue); }
+.ab-rest { color: var(--owgreymid); }
+.artitem::before { content: ""; position: absolute; left: calc(2.1 * var(--pt)); top: calc(-8.5 * var(--pt));
+	width: calc(9 * var(--pt)); height: calc(11.5 * var(--pt)); border: calc(0.5 * var(--pt)) solid var(--owgreymid);
+	background: linear-gradient(var(--owbluepale), var(--owwhite)); border-radius: 0 calc(3 * var(--pt)) 0 0; }
 .rm { font-family: "LM Roman", serif; }   /* \textrm: Computer Modern Roman (C4b) */
 /* footnotes: the mark a letter in owblue, the text in owgreymid at the frame's foot, \footnotesize
    (C5; the position measured on its PDF, at shrink=20) */
