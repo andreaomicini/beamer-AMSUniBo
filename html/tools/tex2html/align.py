@@ -54,7 +54,8 @@ def html_chars(h):
                 elif not tag.endswith('/'):
                     boxes[-1][1] += 1
             # so are an array's cells, each a flow of its own, and the two scripts of a subsup
-            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr])\b', tag)
+            # and a display \sum's limits (C10 of SMA-LS 07/08)
+            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr]|limsub|limsup)\b', tag)
                                 or (name in ('sub', 'sup') and re.search(r'class="subsup"', h[max(0, i - 200):i]) and h.rfind('</span>', 0, i) < h.rfind('class="subsup"', 0, i))):
                 boxes.append([name, 1, flow])
                 fresh += 1

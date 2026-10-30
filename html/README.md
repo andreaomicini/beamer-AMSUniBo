@@ -948,3 +948,74 @@ house frame. What the tools learnt:
 * **A `[c]` references frame** has its nudged shift applied as centred
   (`bib_pages` passed `centred=False`, so the shift landed 0.6 short). This
   holds for AGoT's references too, the next time that page is rebuilt.
+
+### 11 — SMA-LS 2007/2008, AMSCesena, 2026-10-30
+
+The thirteen decks of `smals0708-slides`: C0–C7 from 2006 with new labels, and
+five decks new in 2007 (C8 AOSE, C8a SODA, C8b its case study, Ambra Molesini's;
+C9 self-organisation, Luca Gardelli's; C10 simulation, Sara Montagna's). All
+thirteen were rebuilt with the tools as they stand at the end, so their pages
+are of one version. What the new decks taught:
+
+* **Pages TeX makes and the translator did not.** Every page is checked by
+  frame title against the PDF before anything is measured; four decks had
+  fewer pages:
+  * a frame `allowframebreaks` holding a list: the list is cut item by item
+    and `distribute` puts each item on the PDF page that holds its text
+    (`split_lists`), joining each page's items again (`join_lists`); a
+    `description` too, its widest-label sizer going with every piece; one
+    level down as well, the nested list's later items on the next page in an
+    outer `<li class="cont">` with no ball of its own (C8's *Fragment-Storing
+    View*);
+  * a figure on such a page is placed by its caption's own words: before
+    them the text is not in the PDF, and their last words were on the other
+    page too (C9);
+  * `\subsection {Design Phase}`, a space before the brace (C8a): the
+    section patterns allow it;
+  * overlay specifications in an `allowframebreaks` frame: typeset once, the
+    frame shows them all and makes no slide (C10).
+* **`\subsubsection`**, beamer's third level of the contents (C8):
+  `\footnotesize`, 9.7pt in from the subsection, baselines 10.96pt apart;
+  all of them shaded in a subsection's outline, the current one's too.
+* **Shrinking.** beamer logs a frame it shrinks beyond what the frame asked
+  (*Frame text is shrunk by a factor of x percent instead of y*), just before
+  the page it ships: `pdf_shrink` reads the factor there. A frame that asks to
+  shrink takes the logged factor, else its own `shrink=<n>` (TeX took exactly
+  that: C2's frames log nothing), so one TeX shrinks further needs no
+  `deck.json` entry any more (C8b's tables, 16–31%, as C3b's in experiment 8).
+  Text sizes are no measure: reading the factor from the commonest size, tried
+  first, misread a frame of a picture and its `\small` caption, and every
+  frame of C2. A bare `shrink` asks for nothing: its content is
+  set at the full `\textwidth` and then scaled, so its body is not widened.
+  An `\AtBeginSubsection` frame that shrinks (C9, C10 bare, C3 `shrink=10`)
+  scales its outline the same way; the list is `display: contents`, but both
+  engines still pass its zoom on to its items (zooming them too, tried first,
+  scaled them twice). Shrunk, an outline overfills its frame: its `\vfill`s come
+  to nothing and the lines are packed at the scaled step (C3; smals0607's C4a
+  set this by hand).
+* **Footnotes.** LaTeX's `\footnoterule` (0.4pt, 0.4 of the column, 10.49pt
+  above the first baseline) was missing from every page so far, C5's of
+  experiment 8 included; the mark is right-aligned in a 1.8em box
+  (`\@makefntext`), so the mark sits 12.72pt in and the text at 16.6pt. A
+  footnote in a frame title is LaTeX's own, numbered through the deck, its
+  text at the page's foot; one whose mark is inside a block goes at the foot
+  of that block's body (C10).
+* **Out of an item's indent.** A block, columns, and a figure's caption
+  inside an item are set from the margin at the full text width (an `\hbox`
+  of `\hsize`); a picture there is centred on the item but sized on
+  `\textwidth` (`--wf`).
+* **Display style** (C10): in `\[ \]` and `equation`, `\frac` at full size and
+  `\sum` large with its limits stacked; the limits are a flow of their own for
+  `align.py`, as a fraction's parts, and placed by the theme, not by the
+  margins pass. The large ∑ has its origin at the top of the glyph in the PDF
+  (`cmex`), so `stats.py` reports it 13pt off where the glyph is in place; its
+  subscript is within 0.3pt. `equation` with `\nonumber` is `equation*`; spaces
+  before `_` and `^` are dropped, as TeX does.
+* **Smaller things.** `\begin{small}` and the other sizes as environments;
+  `\Huge`; `\newline`; `\label`; `\;` in text; `\leftrightarrow`;
+  `\multicolumn` in a text `tabular`; an empty cell keeps its row's height;
+  a column or minipage given in `cm` and its `[t]`/`[c]`/`[b]`;
+  `\includegraphics[height=…]` in any unit; the headline takes a subsection's
+  short title; the wrapped-item quirk (the sub-list's baselineskip already in
+  force) holds before an `enumerate` too; a control space closing a table
+  cell.

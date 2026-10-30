@@ -185,7 +185,33 @@ em { font-style: italic; color: var(--emph); }
 .fnmark { color: var(--owblue); font-size: 0.7em; vertical-align: 0.45em; line-height: 0; }
 .footnotes { position: absolute; left: 0; right: 0; bottom: calc(2.4 * var(--pt)); color: var(--owgreymid);
 	font-family: "LM Sans 9", "LM Math"; font-size: calc(8.95 * var(--fs)); line-height: calc(10.96 * var(--pt)); white-space: nowrap; }
-.footnote > .fnmark { margin-right: calc(1.5 * var(--pt)); }
+/* LaTeX's \@makefntext: the mark right-aligned in a box 1.8em wide (at \footnotesize), the text straight after it
+   (C10 of SMA-LS 07/08: the mark 12.72pt in, the text at 16.6pt) */
+.footnote > .fnmark { display: inline-block; width: calc(16.15 * var(--pt)); text-align: right; }
+/* LaTeX's \footnoterule above them: 0.4pt, 0.4 of the column long, 10.49pt above the first footnote's baseline,
+   in the text colour; a title's (at the page's foot) in the footnote colour (C10 of SMA-LS 07/08; C5's had none) */
+.footnotes::before { content: ""; position: absolute; left: 0; top: calc(-2.3 * var(--pt)); width: calc(136.79 * var(--pt));
+	border-top: calc(0.4 * var(--pt)) solid var(--text); }
+.footnotes.page::before { width: calc(136.4 * var(--pt)); border-top-color: currentColor; }
+/* a footnote whose mark is in a block: at the foot of the block's body, under its text */
+.block-body .footnotes.inblock { position: relative; left: auto; right: auto; bottom: auto; margin-top: calc(9 * var(--pt));
+	white-space: normal; }   /* wrapping in the block as TeX does, covered or not (C5's long one) */
+.block-body .footnotes.inblock::before { width: calc(136.4 * var(--pt)); }
+/* a frame title's footnote (C10 of SMA-LS 07/08): LaTeX's, numbered through the deck, its text at the page's
+   foot, the baseline 3.99pt above the body's bottom */
+.footnotes.page { bottom: calc(1.2 * var(--pt)); }
+/* an item TeX broke across pages inside its own list: the next page carries on that list, no ball of its own (C8 of
+   SMA-LS 07/08) */
+li.cont::before { display: none; }
+/* a block or columns inside an item: TeX sets them from the margin at the full text width, not indented with the
+   item (C10 of SMA-LS 07/08) */
+.body > ul > li > .block, .body > ol > li > .block { margin-left: calc((-21.818 - 4) * var(--pt)); }
+.body > ul > li > .columns, .body > ol > li > .columns { margin-left: calc(-32.727 * var(--pt)); }
+.block-body > ul > li > .columns, .block-body > ol > li > .columns { margin-left: calc(-32.727 * var(--pt)); }
+/* a figure inside an item: the picture centred on the item but as wide as asked of \textwidth; its caption, an
+   \hbox of \hsize, centred on the full text width (C9 of SMA-LS 07/08) */
+li img.figure[style*="--wf"] { width: calc(var(--wf) * 342.295 * var(--pt)) !important; }
+.body > ul > li > .figure > .caption, .body > ol > li > .figure > .caption { margin-left: calc(-21.818 * var(--pt)); }
 .centering { text-align: left; }   /* \begin{centering} whose paragraph ends after the group: no effect (C2) */   /* ~~ as spaces kept as they are */
 img.pgfimage { vertical-align: baseline; }   /* \pgfuseimage: on the baseline, as tall as declared */   /* an overlay not shown on this slide: beamer's invisible, its space kept */   /* \ldots: cmss's dots with their kerns (experiment 7's deck.css, here for every deck) */
 /* Computer Modern Sans has no small caps: the theme falls back to the serif ones */
@@ -432,6 +458,15 @@ sup { font-size: 73%; line-height: 0; vertical-align: 0.565em; }
 .subsup > sup, .subsup > sub { font-size: 100%; vertical-align: 0; line-height: inherit; }
 .op { font-family: "LM Math"; }
 .op.lim { font-family: inherit; margin-right: 0.17em; }
+/* display style (C10 of SMA-LS 07/08): \frac at full size, numerator 0.677em up, denominator 0.686em down; \sum
+   large with its limits stacked under (and over) it */
+.frac.disp { font-size: 100%; vertical-align: 0.677em; line-height: 1.15; margin: 0 0.17em; }
+.frac.disp > .den { padding-top: 0.22em; }
+.oplim { display: inline-block; position: relative; vertical-align: -0.26em; margin: 0 0.17em; line-height: 1; }
+.oplim > .op.big { font-size: 144%; line-height: 1; }
+.oplim > .limsub, .oplim > .limsup { position: absolute; left: 50%; transform: translateX(-50%); font-size: 70%; line-height: 1.1; }
+.oplim > .limsub { top: 100%; margin-top: 0 !important; }   /* placed here, not by the margins pass */
+.oplim > .limsup { bottom: calc(100% - 0.2em); }
 /* a text-style fraction: numerator and denominator in the script size, their baselines 5.37pt
    above and 3.76pt below the line's (measured at \normalsize) */
 .frac { display: inline-flex; flex-direction: column; vertical-align: 0.674em; font-size: 73%; line-height: 1.145; text-align: center; margin: 0 0.12em; }
@@ -582,6 +617,8 @@ table.tabular td.l { text-align: left; }
 table.tabular td.r { text-align: right; }
 table.tabular td.vl { border-left: calc(0.4 * var(--pt)) solid var(--text); }
 table.tabular td.vr { border-right: calc(0.4 * var(--pt)) solid var(--text); }
+/* an empty cell still has the row's strut, as in TeX: an empty row keeps its height (C8b of SMA-LS 07/08) */
+table.tabular td:empty::after { content: "\200b"; }
 table.tabular tr.hl1 > td { border-top: calc(0.4 * var(--pt)) solid var(--text); }
 table.tabular tr.hb1 > td { border-bottom: calc(0.4 * var(--pt)) solid var(--text); }
 table.tabular tr.hl2 > td { border-top: calc(2.8 * var(--pt)) double var(--text); }
@@ -589,9 +626,14 @@ table.tabular tr.hb2 > td { border-bottom: calc(2.8 * var(--pt)) double var(--te
 /* shrink=<n>: beamer sets the content at \textwidth / f and scales it by f; zoom lays each child out
    so, on the frame's own width; when TeX shrinks more than asked, the body narrower by their ratio */
 .frame.shrink .body > * { zoom: var(--shrink); }
+/* shrunk because it overfills the frame: its \vfill's come to nothing, the lines packed at the scaled step (C3 of
+   SMA-LS 07/08, as smals0607's C4a set by hand) */
+.frame.toc.shrink ol.toc.fills > li.tocfill:not(.first) { flex: 0 0 0; }
 .frame.shrink .body { width: calc(342.295 * var(--shrinkr, 1) * var(--pt)); }
 /* \huge: cmss17 at 20.74pt, baselineskip 25pt */
 .huge { font-family: "LM Sans 17", "LM Math"; font-size: calc(20.74 * var(--fs)); line-height: calc(25 * var(--pt)); }
+/* \Huge: cmss17 at 24.88pt, baselineskip 30pt (C8 of SMA-LS 07/08) */
+.Huge { font-family: "LM Sans 17", "LM Math"; font-size: calc(24.88 * var(--fs)); line-height: calc(30 * var(--pt)); }
 /* \mathcal, \mathscr: Unicode's script capitals, from LM Math */
 .mspace { display: inline-block; width: var(--w); }
 /* the deck's \arrowdown: a TikZ single arrow, 3.5ex long, head 1ex wider, rotated to point down,
@@ -613,6 +655,16 @@ ul.tocsub > li { padding-left: calc(10.91 * var(--pt)); }
 ul.tocsub > li + li { margin-top: 0; }
 ul.tocsub > li.shaded { opacity: .2; }   /* subtoc_all: the current section's other subsections */
 ul.tocsub > li::before { left: calc(10.91 * var(--pt) - 4.84 * var(--pt) - 5.1 * var(--pt)); top: calc(5.56 * var(--pt)); }
+/* the subsubsections (C8 of SMA-LS 07/08): \footnotesize, 9.7pt in from their subsection, baselines 10.96pt
+   apart, 10.95pt below the subsection and 13.55pt above the next one; their ball as the subsections', 2.85pt
+   before the text; in a subsection's outline all of them shaded */
+ul.tocsubsub { margin: calc(-0.72 * var(--pt)) 0 calc(0.71 * var(--pt)); font-family: "LM Sans 9", "LM Math";
+	font-size: calc(9 * var(--fs)); line-height: calc(10.96 * var(--pt)); }
+ul.tocsubsub > li { padding-left: calc(9.7 * var(--pt)); }
+ul.tocsubsub > li + li { margin-top: 0; }
+ul.tocsubsub > li::before { left: calc(9.7 * var(--pt) - 3.55 * var(--pt) - 5.1 * var(--pt)); top: calc(4.08 * var(--pt));
+	width: calc(5.1 * var(--pt)); height: calc(5.1 * var(--pt)); }
+ul.tocsubsub.shaded { opacity: .2; }
 /* a frame without a title (\frame{\tableofcontents}): its body starts under the headline */
 .frame.toc.outline .body { top: calc(11.03 * var(--pt)); }
 /* \\[<len>]: the extra space after the break, as an empty line of that height; a negative one pulls the

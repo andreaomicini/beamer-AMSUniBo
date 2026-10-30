@@ -297,7 +297,8 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
 # math symbols: relations, binary operators, ordinary symbols
 MATHREL = {'approx': '≈', 'longrightarrow': '⟶', 'mapsto': '↦', 'neq': '≠', 'ne': '≠', 'geq': '≥', 'ge': '≥', 'leq': '≤',
            'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈',
-           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑', 'downarrow': '↓'}
+           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑', 'downarrow': '↓',
+           'leftrightarrow': '↔'}   # C10 of SMA-LS 07/08
 MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond': '⋄', 'rhd': '⊳', 'lhd': '⊲', 'land': '∧',
            'lor': '∨', 'cup': '∪', 'cap': '∩', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗'}
 # lowercase Greek: Unicode's mathematical italic, in TeX's order (\epsilon and \phi are the variant forms)
@@ -331,7 +332,7 @@ MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': 
            'pi': '\U0001D70B', 'beta': '\U0001D6FD', 'theta': '\U0001D703', 'omega': '\U0001D714', 'sigma': '\U0001D70E',
            '{': '{', '}': '}'}
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
-SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'huge', 'smaller'}
+SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'huge', 'Huge', 'smaller'}
 
 class Conv:
     def __init__(self):
@@ -339,10 +340,14 @@ class Conv:
         self.labels, self.bbl = load_bbl()
         self.used = set()
         self.unknown = set()
+        self.display = False   # display style: \frac at full size, \sum large with its limits (C10 of SMA-LS 07/08)
+        self.in_title = False   # a frame title: its \footnote is LaTeX's, numbered through the deck (C10 of SMA-LS 07/08)
+        self.title_fn = 0
 
     def reset(self):
         self.used = set()
         self.footnotes = []   # this frame's footnotes: (mark, html, covered)
+        self.title_footnotes = []   # its title's: (mark, html), at the page's foot
 
     # ---- acronyms
     def acro(self, cmd, key):
@@ -444,8 +449,17 @@ class Conv:
         return f'<div class="displaymath">{self.alignment(split_align(inner), ["r", "c", "l"], "eqnarray")}</div>'
 
     # ---- math
+    def dmath(self, s):
+        """a display's maths, in display style"""
+        self.display = True
+        try:
+            return self.math(s)
+        finally:
+            self.display = False
+
     def math(self, s):
         s = s.strip()
+        s = re.sub(r'(?<!\\)\s+(?=[_^])', '', s)   # TeX ignores spaces before a script: \sum _{i} (C10 of SMA-LS 07/08)
         # a lone symbol has no neighbours, so TeX puts no space around it
         lone = {'=': '=', '+': '+', '\\times': '×'}
         if s in lone:
@@ -560,7 +574,10 @@ class Conv:
                 elif name in ('frac',):
                     a, i = read_arg(s, i)
                     b, i = read_arg(s, i)
-                    out.append(f'<span class="frac"><span class="num">{self.math(a)}</span><span class="den">{self.math(b)}</span></span>')
+                    disp, self.display = self.display, False   # numerator and denominator in text style
+                    out.append(f'<span class="frac{" disp" if disp else ""}"><span class="num">{self.math(a)}</span>'
+                               f'<span class="den">{self.math(b)}</span></span>')
+                    self.display = disp
                 elif name == 'stackrel':
                     a, i = read_arg(s, i)
                     b, i = read_arg(s, i)
@@ -570,6 +587,23 @@ class Conv:
                     i += len(m2.group(0))
                     d = MATHORD.get(m2.group(1), '') if m2.group(1) else ('' if m2.group(2) == '.' else esc(m2.group(2)))
                     out.append(d)
+                elif name in ('sum', 'lim') and self.display:   # display style: limits under and over it
+                    sub = sup = ''
+                    for _ in range(2):
+                        q = re.match(r'\s*([_^])', s[i:])
+                        if not q:
+                            break
+                        g, i = read_arg(s, i + q.end())
+                        disp, self.display = self.display, False
+                        if q.group(1) == '_':
+                            sub = self.math(g)
+                        else:
+                            sup = self.math(g)
+                        self.display = disp
+                    sym = '<span class="op big">∑</span>' if name == 'sum' else '<span class="op lim">lim</span>'
+                    sup = f'<span class="limsup">{sup}</span>' if sup else ''
+                    sub = f'<span class="limsub">{sub}</span>' if sub else ''
+                    out.append(f'<span class="oplim">{sup}{sym}{sub}</span>')
                 elif name in ('sum', 'lim'):
                     out.append('<span class="op">∑</span>' if name == 'sum' else '<span class="op lim">lim</span>')
                 elif name == 'begin':
@@ -668,7 +702,8 @@ class Conv:
             c = s[i]
             if c == '\\':
                 m = re.match(r'\\([A-Za-z]+\*?|.)', s[i:], re.S)   # a backslash before a newline is a control space (C3b)
-                name = m.group(0) if m.group(0) != '\\\n' else '\\ '
+                # and so is one closing the string: a cell's strip() took the space of its \  (C8b, SMA-LS 07/08)
+                name = '\\ ' if not m or m.group(0) == '\\\n' else m.group(0)
                 i += len(name)
                 r, i = self.command(name, s, i)
                 out.append(r)
@@ -677,7 +712,7 @@ class Conv:
                 out.append(self.group(g))
             elif s.startswith('$$', i):   # plain TeX's display, as \[ \]
                 j = s.index('$$', i + 2)
-                out.append(f'\x00disp:<div class="displaymath">{self.math(s[i + 2:j])}</div>\x00')
+                out.append(f'\x00disp:<div class="displaymath">{self.dmath(s[i + 2:j])}</div>\x00')
                 i = j + 2
             elif c == '$':
                 j = s.index('$', i + 1)
@@ -734,7 +769,7 @@ class Conv:
     def command(self, name, s, i):
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
-                  '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\-': '',
+                  '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\newline': '<br>', '\\-': '',
                   '\\refname': 'References', '\\appendixname': 'Appendix', '\\/': '', '\\allowbreak': '<wbr>', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '',
                   '\\beamertemplatebookbibitems': '', '\\beamertemplatearticlebibitems': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
@@ -743,6 +778,16 @@ class Conv:
             if m:
                 v = float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'em': 10.95, 'ex': 4.7}[m.group(2)]
                 return f'<br><span class="brskip" style="--v: calc({v:.2f} * var(--pt))"></span>', j
+        if name == '\\label':   # prints nothing (C9 of SMA-LS 07/08)
+            g, i = read_arg(s, i)
+            return '', i
+        if name == '\\;':   # a thick space, 5/18 em, in text as in maths (C9)
+            return '<span class="mspace" style="--w: 0.2778em"></span>', i
+        if name == '\\footnote' and self.in_title:   # in a frame title: a number, the text at the page's foot
+            g, i = read_arg(s, i)
+            self.title_fn += 1
+            self.title_footnotes.append((str(self.title_fn), self.inline(g).strip()))
+            return f'<sup class="fnmark">{self.title_fn}</sup>', i
         if name in ('\\footnote', '\\FOOTNOTECOV'):   # beamer's: a letter mark, the text at the frame's foot
             g, i = read_arg(s, i)
             mark = 'abcdefghij'[len(self.footnotes)]
@@ -814,7 +859,7 @@ class Conv:
             return self.cite(g, 'ccite cccite', note), i
         if name == '\\[':   # a display: its own line, centred
             j = s.index('\\]', i)
-            return f'\x00disp:<div class="displaymath">{self.math(s[i:j])}</div>\x00', j + 2
+            return f'\x00disp:<div class="displaymath">{self.dmath(s[i:j])}</div>\x00', j + 2
         if n == 'href':
             u, i = A()
             g, i = read_arg(s, i)

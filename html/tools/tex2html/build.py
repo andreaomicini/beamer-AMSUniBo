@@ -1,7 +1,7 @@
 """build.py: the deck's page, from its .tex, .bbl and PDF and the inputs in $TEX2HTML_DECK.
 Keeps the page's ASSETS block, if there is one: refill it with assets.py."""
 import re, json, pathlib
-from frames import pages, C, T
+from frames import pages, C, T, pdf_shrink
 from bib import entries
 from align import add_breaks, PDF
 from deck import CFG, DIR, path, STYLE
@@ -76,6 +76,11 @@ def section_open(n, cls, sec, extra='', centred=True, sub=''):
 # experiment 6 corrected them as [t] and keep doing so, unless deck.json says "toc_centred": true
 TOCC = CFG.get('toc_centred', False)
 
+def subsub(p, k, q, shaded=False):
+    """the subsubsections of section k's subsection q, beamer's third level of the contents"""
+    xs = (p.get('subsubs') or [])[k - 1][q - 1] if p.get('subsubs') else []
+    return (f'<ul class="tocsubsub{" shaded" if shaded else ""}">' + ''.join(f'<li>{x}</li>' for x in xs) + '</ul>') if xs else ''
+
 def toc(n, p, title=True):
     cls = 'frame toc' + ('' if title else ' outline')
     head, bst = section_open(n, cls, secname(p['section']), centred=TOCC, sub=p.get('subsection', ''))
@@ -91,7 +96,8 @@ def toc(n, p, title=True):
         for k, s in enumerate(p['secs'], 1):
             sh = ' class="shaded"' if title and k != p['current'] else ''
             subs = p.get('subs', [[]] * len(p['secs']))[k - 1]
-            sub = ('<ul class="tocsub">' + ''.join(f'<li>{x}</li>' for x in subs) + '</ul>') if subs else ''
+            sub = ('<ul class="tocsub">' + ''.join(f'<li>{x}{subsub(p, k, q)}</li>' for q, x in enumerate(subs, 1))
+                   + '</ul>') if subs else ''
             out.append(f'{T}{T}{T}<li{sh}>{s}{sub}</li>')
             out.append(f'{T}{T}{T}<li class="tocfill"></li>')
         out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
@@ -106,7 +112,11 @@ def toc(n, p, title=True):
 def subtoc(n, p):
     """\\AtBeginSubsection's frame: every section shaded, the current one's subsections listed, the
     current subsection shown"""
-    head, bst = section_open(n, 'frame toc subtoc', secname(p['section']), centred=TOCC, sub=p['subsection'])
+    # the \\AtBeginSubsection frame [shrink]ed: scaled by TeX's factor, read from the PDF (C9, C10 of SMA-LS 07/08)
+    sh = shrink_of(n, p)
+    extra = f' style="--shrink: {round(1 - sh / 100, 5)}"' if sh else ''
+    head, bst = section_open(n, 'frame toc subtoc' + (' shrink' if sh else ''), secname(p['section']), extra,
+                             centred=TOCC, sub=p['subsection'])
     if CFG.get('subtoc_all'):
         # \tableofcontents[currentsection,currentsubsection] (experiment 8): the outline's layout, every
         # section with its subsections, all shaded but the current section and its current subsection
@@ -114,8 +124,12 @@ def subtoc(n, p):
                f'{T}{T}<ol class="toc fills">', f'{T}{T}{T}<li class="tocfill first"></li>']
         for k, s in enumerate(p['secs'], 1):
             subs = p['subs'][k - 1]
-            lis = ''.join(f'<li{"" if k == p["current"] and q == p["currentsub"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{x}</li>'
-                          for q, x in enumerate(subs, 1)) if k == p['current'] else ''.join(f'<li>{x}</li>' for x in subs)
+            # the subsubsections are all shaded, the current subsection's too: shaded once, where nothing
+            # around them is
+            lis = ''.join(f'<li{"" if k == p["current"] and q == p["currentsub"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{x}'
+                          f'{subsub(p, k, q, shaded=q == p["currentsub"])}</li>'
+                          for q, x in enumerate(subs, 1)) if k == p['current'] else ''.join(f'<li>{x}{subsub(p, k, q)}</li>'
+                                                                                          for q, x in enumerate(subs, 1))
             sub = f'<ul class="tocsub">{lis}</ul>' if subs else ''
             out.append(f'{T}{T}{T}<li{"" if k == p["current"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{s}{sub}</li>')
             out.append(f'{T}{T}{T}<li class="tocfill"></li>')
@@ -151,7 +165,7 @@ def quirks(h):
     lines = h.split('\n')
     for i, l in enumerate(lines[:-1]):
         m = re.match(r'(\s*)<li\b([^>]*)>(.*)$', l)
-        if m and '<br>' in m.group(3) and re.match(r'<ul[ >]', lines[i + 1].strip()):
+        if m and '<br>' in m.group(3) and re.match(r'<(?:ul|ol)[ >]', lines[i + 1].strip()):   # an enumerate too (C9 of SMA-LS 07/08)
             attrs = m.group(2)
             if 'class="' in attrs:
                 attrs = attrs.replace('class="', 'class="wrapsub ')
@@ -187,6 +201,16 @@ def block_depths(n, h, f=1):
 
 PROC = {}
 
+def shrink_of(n, p):
+    """the percentage TeX shrank page n by: deck.json's "shrink" if it says, else, for a frame that asks to shrink
+    (shrink=<n> or a bare shrink), the factor beamer logged, read by pdf_shrink (C8b, C9 of SMA-LS 07/08: before,
+    a frame TeX shrank beyond its shrink=<n> needed its factor in deck.json)"""
+    if str(n) in CFG.get('shrink', {}):
+        return CFG['shrink'][str(n)]
+    if p.get('shrink') or p.get('shrink_auto'):
+        return pdf_shrink(n) or p.get('shrink') or 0   # logged when TeX went beyond the frame's shrink=<n>
+    return 0
+
 def processed(n, p):
     """the page's body: the PDF's line breaks, TeX's quirks, the corrections, the blocks' depths"""
     if n not in PROC:
@@ -195,8 +219,7 @@ def processed(n, p):
         body = quirks(body)
         body = margins(n, body)
         body = columns(n, body)
-        sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
-        PROC[n] = block_depths(n, body, 1 - sh / 100)
+        PROC[n] = block_depths(n, body, 1 - shrink_of(n, p) / 100)
     return PROC[n]
 
 CLS = re.compile(r'\sclass="[^"]*"')
@@ -249,8 +272,9 @@ def frame(n, p):
     # than asked ("shrunk by a factor of ... instead of ..."), which deck.json's "shrink" gives per page
     # The text is set \textwidth / f wide for the f asked, but scaled by the f TeX took: --shrinkr, their ratio,
     # narrows the body so (beamerbaseframe.sty widens \hsize by the asked factor only)
-    sh = CFG.get('shrink', {}).get(str(n), p.get('shrink') or 0)
-    req = p.get('shrink') or sh
+    sh = shrink_of(n, p)
+    # a bare shrink asks for nothing: the content is set at the full \\textwidth, then scaled by TeX's factor
+    req = p.get('shrink') if p.get('shrink_auto') else (p.get('shrink') or sh)
     r = round((1 - sh / 100) / (1 - req / 100), 5) if sh else 1
     extra = (' data-noframenumbering' if p['nonum'] else '') + (
         f' style="--shrink: {round(1 - sh / 100, 5)}{f"; --shrinkr: {r}" if r != 1 else ""}"' if sh else '')

@@ -199,12 +199,16 @@ def env_html(env, inner, ind):
         return description(inner, ind)
     if env in CFG.get('lists', {}):   # a list environment of the deck's own: an itemize with a class (deck.json "lists")
         return re.sub(r'<ul', f'<ul class="{CFG["lists"][env]}"', itemize(inner, ind, 'ul'), count=1)
-    if env == 'minipage':
-        w, j = read_group(inner, skip_ws(inner, 0))
-        frac = float(w.replace('\\textwidth', '').replace('\\linewidth', '') or 1)
+    if env == 'minipage':   # [t] or [b]: aligned on its first baseline or its bottom, not centred (C10 of SMA-LS 07/08)
+        pos, j = read_opt(inner, 0)
+        w, j = read_group(inner, skip_ws(inner, j))
+        frac = width_frac(w)
         body, flags = container(inner[j:], ind + T, 'body')
-        return '\n'.join([f'{ind}<div class="minipage" style="width: calc({frac:g} * 342.295 * var(--pt))">'] + body
+        return '\n'.join([f'{ind}<div class="minipage" style="width: calc({frac:g} * 342.295 * var(--pt)){box_align(pos)}">'] + body
                          + [f'{ind}</div>'])
+    if env in ('tiny', 'scriptsize', 'footnotesize', 'small'):   # \begin{small} ... \end{small} (C10 of SMA-LS 07/08)
+        body, flags = container(inner, ind + T, 'body')
+        return '\n'.join([f'{ind}<div class="{env}">'] + body + [f'{ind}</div>'])
     if env in BLOCK_ENVS:
         title, j = read_group(inner, skip_ws(inner, 0))
         sz = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])', inner[j:])
@@ -336,14 +340,15 @@ def env_html(env, inner, ind):
             if not m:
                 break
             a, b = find_end(inner, m.end(), 'column')
-            w, q = read_group(inner, skip_ws(inner, m.end()))
-            frac = float(w.replace('\\textwidth', '').replace('\\linewidth', '') or 1)
+            cpos, q = read_opt(inner, m.end())   # a column's own [t] [c] [b] (C8a of SMA-LS 07/08)
+            w, q = read_group(inner, skip_ws(inner, q))
+            frac = width_frac(w)
             body, flags = container(inner[q:a], ind + T * 2, 'body')
             c2 = ' center' if 'center' in flags else ''
             if cols:   # beamer's \hfill after the column before, and one more for each \hfill in the source
                 fills = 1 + len(re.findall(r'\\hfill', inner[k:m.start()]))
                 cols += [f'{ind}{T}<div class="fill"></div>'] * fills
-            cols.append('\n'.join([f'{ind}{T}<div class="column{c2}" style="--w: {frac:g}">'] + body + [f'{ind}{T}</div>']))
+            cols.append('\n'.join([f'{ind}{T}<div class="column{c2}" style="--w: {frac:g}{box_align(cpos)}">'] + body + [f'{ind}{T}</div>']))
             k = b
         al = ' top' if opt and 't' in opt else ''
         return '\n'.join([f'{ind}<div class="columns{al}">'] + cols + [f'{ind}</div>'])
@@ -367,9 +372,25 @@ def env_html(env, inner, ind):
         return f'{ind}<img class="figure tikz fig-{n}" data-asset="{n}" alt="ALT-{n}">'
     if env in ('eqnarray', 'eqnarray*'):   # numbers are not drawn: no deck numbers its displays
         return ind + C.eqnarray(inner)
+    if env == 'equation' and re.search(r'\\nonumber(?![A-Za-z])', inner):   # numbered but for \nonumber: as equation* (C10)
+        env, inner = 'equation*', re.sub(r'\\nonumber(?![A-Za-z])', '', inner)
     if env in ('equation*', 'displaymath'):   # unnumbered: a display, as \[ \]
         return ind + C.inline('\\[' + inner + '\\]').strip('\x00').removeprefix('disp:')
     raise ValueError('env ' + env)
+
+def box_align(pos):
+    """a minipage's or a column's [t] [c] [b] in a flex line: top on the first baseline, as TeX, or bottom"""
+    return {'t': '; align-self: baseline', 'b': '; align-self: flex-end', 'c': '; align-self: center'}.get((pos or '').strip(), '')
+
+
+def width_frac(w):
+    """a minipage's or a column's width as a fraction of \\textwidth (342.295pt): <f>\\textwidth, <f>\\linewidth,
+    or a length (\\begin{column}{8cm}, C8a of SMA-LS 07/08)"""
+    m = re.fullmatch(r'\s*([\d.]+)\s*(cm|mm|pt|in|bp)\s*', w)
+    if m:
+        return float(m.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'in': 72.27, 'bp': 1.00375}[m.group(2)] / 342.295
+    return float(w.replace('\\textwidth', '').replace('\\linewidth', '') or 1)
+
 
 def split_cells(s, sep):
     """split a tabular body at top-level \\\\ (sep '\\\\') or & (sep '&'): not in a group, not in math"""
@@ -425,9 +446,23 @@ def tabular(inner, ind):
     for k, row in enumerate(rows):
         cls = ([f'hl{row["above"]}'] if row['above'] else []) + ([f'hb{row["below"]}'] if row['below'] else [])
         out.append(f'{ind}{T}<tr{" class=" + chr(34) + " ".join(cls) + chr(34) if cls else ""}>')
-        for q, c in enumerate(row['cells'][:len(cols)]):
+        q = 0
+        for c in row['cells']:
+            if q >= len(cols):
+                break
+            m = re.match(r'\s*\\multicolumn\s*\{(\d+)\}', c)
+            if m:   # \multicolumn{k}{spec}{text}: one cell over k columns, aligned and ruled as its spec says (C10)
+                k = int(m.group(1))
+                sp, j2 = read_group(c, skip_ws(c, m.end()))
+                g, _ = read_group(c, skip_ws(c, j2))
+                sp = sp.replace(' ', '')
+                cc = [next((x for x in sp if x in 'lcr'), 'c')] + (['vl'] if sp.startswith('|') else []) + (['vr'] if sp.endswith('|') else [])
+                out.append(f'{ind}{T}{T}<td colspan="{k}" class="{" ".join(cc)}">{C.inline(g.strip()).strip()}</td>')
+                q += k
+                continue
             cc = [cols[q]] + (['vl'] if vl[q] else []) + (['vr'] if vl[q + 1] else [])
             out.append(f'{ind}{T}{T}<td class="{" ".join(cc)}">{C.inline(c.strip()).strip()}</td>')
+            q += 1
         out.append(f'{ind}{T}</tr>')
     out.append(f'{ind}</table>')
     return '\n'.join(out)
@@ -530,7 +565,9 @@ def includegraphics_hook():
             st = ''
             fw = re.search(r'width\s*=\s*([0-9.]*)\s*\\(?:line|text)width', o or '')
             if fw and (ROOT / g).with_suffix('.pdf').exists() and not g.endswith(('.png', '.jpg')):
-                st = f' style="width: {float(fw.group(1) or 1) * 100:g}%"'
+                # its fraction kept too: inside an item a \\textwidth is not the item's width (C9 of SMA-LS 07/08)
+                tw = '\\textwidth' in fw.group(0)
+                st = f' style="width: {float(fw.group(1) or 1) * 100:g}%{f"; --wf: {float(fw.group(1) or 1):g}" if tw else ""}"'
             # scale=<f> on a bitmap: its size as pdfTeX takes it, pixels at 72 dpi times f (pdfTeX ignores a
             # PNG's own resolution: CILC 2016's architecture.png, 182 dpi, is 1820px x 0.15 = 273pt in its PDF)
             sc = re.search(r'scale\s*=\s*([0-9.]+)', o or '')
@@ -540,6 +577,11 @@ def includegraphics_hook():
                 im = Image.open(bm)
                 dpi = 72
                 st = f' style="width: calc({im.size[0] * 72 / dpi * float(sc.group(1)):.2f} * var(--pt))"'
+            # height=<len>: that tall, its width in proportion (C8a of SMA-LS 07/08: 1.5in, 5.5cm)
+            hh = re.search(r'(?<![a-z])height\s*=\s*([0-9.]+)\s*(cm|mm|pt|in|bp)', o or '')
+            if hh and not fw:
+                v = float(hh.group(1)) * {'cm': 28.4528, 'mm': 2.84528, 'pt': 1, 'in': 72.27, 'bp': 1.00375}[hh.group(2)]
+                st = f' style="height: calc({v:.2f} * var(--pt)); width: auto"'
             return f'\x00img:<img class="figure fig-{n}" data-asset="{n}" alt="ALT-{n}"{st}>\x00', i
         # \resizebox{<f>\textwidth}{!}{\<macro>}: a TikZ picture drawn by a deck macro, named in
         # deck.json's "tikzmacros" (macro -> asset); the width is the fraction of the text width
@@ -648,6 +690,33 @@ def pdf_title(pn):
                 for sp in l['spans'] for ch in sp['chars'] if STYLE['head'] < ch['origin'][1] < STYLE['title'])
     return re.sub(r'\s+', '', t)
 
+_SHRUNK = []
+
+def log_shrinks():
+    """{page: percent} from beamer's "Frame text is shrunk by a factor of <x> percent" in the deck's .log: each
+    warning belongs to the next page shipped out, [<n> in the log (C9 of SMA-LS 07/08)"""
+    if not _SHRUNK:
+        out, pend = {}, None
+        try:
+            log = path('pdf').with_suffix('.log').read_text(errors='replace')
+        except OSError:
+            log = ''
+        log = re.sub(r'\n(?=\S)', '\n', log)
+        for m in re.finditer(r'shrunk by a factor of\s+([\d.]+)\s+percent|(?<![\w{])\[(\d+)(?=[\s{<\]])', log):
+            if m.group(1):
+                pend = float(m.group(1))
+            elif pend is not None:
+                out[int(m.group(2))] = pend
+                pend = None
+        _SHRUNK.append(out)
+    return _SHRUNK[0]
+
+def pdf_shrink(pn):
+    """the percentage TeX shrank PDF page pn by beyond what its frame asked, as beamer logged it; 0 when it logged
+    nothing (TeX then took the frame's own shrink=<n>, or did not need to shrink a bare shrink at all). Text sizes
+    are no measure: a frame's commonest text may be a \\small caption (C2, C9 of SMA-LS 07/08)"""
+    return round(log_shrinks().get(pn, 0), 3)
+
 def pdf_body(pn):
     """the alphanumeric text of PDF page pn's body"""
     import unicodedata
@@ -678,7 +747,10 @@ def distribute(items, pn, k):
     for h in items:
         t = plain(h)
         page = None
-        for w in (t[:40], t[:16], t[-16:], t[:8]):
+        # a figure by its caption's own words first: what comes before them is not in the PDF, and its last
+        # words may be on another page too (C9 of SMA-LS 07/08)
+        cap = t[t.index('Figure') + 6:] if 'Figure' in t else ''
+        for w in (cap[:40], cap[:16], t[:40], t[:16], t[-16:], t[:8]):
             if len(w) >= 4:
                 hits = [q for q in range(cur, k) if w in bodies[q]]
                 if hits:
@@ -717,6 +789,65 @@ def split_entries(items, pn, k):
             head = m.group(1) if q == pages[0] else m.group(1).replace('bibentry', 'bibentry cont', 1)
             out.append(f'{head}{body}</p>')
     return out
+
+def split_lists(items):
+    """a top-level itemize TeX broke across pages between its items (C8 of SMA-LS 07/08): each item a list
+    of its own, marked with the list it came from, so that distribute can share them out"""
+    out = []
+    for n, h in enumerate(items):
+        m = re.match(r'(\s*)(<(ul|dl)\b[^>]*)>\n(.*)\n\1</\3>\s*$', h, re.S)   # a description too (C8's rules)
+        lis = re.split(r'\n(?=' + re.escape(m.group(1) + T) + r'(?:<li\b|<div class="ditem(?! sizer)))', m.group(4)) if m else []
+        if len(lis) < 2:
+            out.append(h)
+            continue
+        if lis[0].lstrip().startswith('<div class="ditem sizer"'):   # the widest label's sizer goes with every piece
+            sizer, first = lis[0].split('\n', 1) if '\n' in lis[0] else (lis[0], '')
+            lis = [first] + lis[1:] if first else lis[1:]
+            lis = [sizer + '\n' + x for x in lis]
+        pieces = []
+        for x in lis:   # an item whose own list TeX broke too: that list cut item by item, one level down (C8)
+            nm = re.search(r'^(\s*)(<(ul|dl)\b[^>]*)>\n(.*?)\n\1</\3>$', x, re.S | re.M)
+            kids = re.split(r'\n(?=' + re.escape(nm.group(1) + T) + r'(?:<li\b|<div class="ditem(?! sizer)))', nm.group(4)) if nm else []
+            if len(kids) < 2:
+                pieces.append(x)
+                continue
+            sizer = ''
+            if kids[0].lstrip().startswith('<div class="ditem sizer"'):
+                sizer, rest = kids[0].split('\n', 1) if '\n' in kids[0] else (kids[0], '')
+                kids = ([rest] if rest else []) + kids[1:]
+                sizer += '\n'
+            head, tail = x[:nm.start()], x[nm.end():]
+            nopen = f'{nm.group(1)}{nm.group(2)} data-nest="{n}">'
+            li_ind = re.match(r'\s*', x).group(0)
+            for q, kid in enumerate(kids):
+                inner = f'{nopen}\n{sizer}{kid}\n{nm.group(1)}</{nm.group(3)}>'
+                pieces.append(f'{head}{inner}{tail}' if q == 0 else f'{li_ind}<li class="cont">\n{inner}\n{li_ind}</li>')
+        out += [f'{m.group(1)}{m.group(2)} data-split="{n}">\n{x}\n{m.group(1)}</{m.group(3)}>' for x in pieces]
+    return out
+
+def join_lists(items):
+    """split_lists undone on one page: the items of a list that fell on it are one list again"""
+    out = []
+    for h in items:
+        m = re.match(r'(\s*)(<(ul|dl)\b[^>]*?) data-split="(\d+)">\n(.*)\n\1</\3>$', h, re.S)
+        body = m.group(5) if m else ''
+        if m and out and isinstance(out[-1], list) and out[-1][0] == m.group(4):
+            if body.lstrip().startswith('<div class="ditem sizer"'):   # one sizer per list
+                body = body.split('\n', 1)[1]
+            c = re.match(r'(\s*)<li class="cont">\n(\s*)<(ul|dl)\b[^>]*data-nest="([^"]+)">\n(.*)\n\2</\3>\n\1</li>$', body, re.S)
+            close = re.search(r'\n(\s*)</(ul|dl)>\n(\s*)</li>$', out[-1][1])
+            if c and close and f'data-nest="{c.group(4)}"' in out[-1][1]:   # the same nested list: its items join it
+                kid = c.group(5)
+                if kid.lstrip().startswith('<div class="ditem sizer"'):
+                    kid = kid.split('\n', 1)[1]
+                out[-1][1] = out[-1][1][:close.start()] + '\n' + kid + out[-1][1][close.start():]
+            else:
+                out[-1][1] += '\n' + body
+        elif m:
+            out.append([m.group(4), body, m.group(1), m.group(2), m.group(3)])
+        else:
+            out.append(h)
+    return [f'{x[2]}{x[3]}>\n{x[1]}\n{x[2]}</{x[4]}>' if isinstance(x, list) else x for x in out]
 
 VERBATIM = []   # the bodies of verbatim and Verbatim, taken out before anything parses the source
 VERB = re.compile(r'\\begin\{(verbatim|Verbatim)\}(\[[^\]\n]*\])?(.*?)\\end\{\1\}', re.S)
@@ -1018,26 +1149,36 @@ def pages():
     src = expand_macros(src)
     doc = src[src.index('\\begin{document}') + 16:src.index('\\end{document}')]
     subtocs = '\\AtBeginSubsection' in src[:src.index('\\begin{document}')]
+    # its frame [shrink]ed: TeX scales each of those outlines to fit, by the factor pdf_shrink reads (C9, C10 of SMA-LS 07/08)
+    sm = re.search(r'\\AtBeginSubsection(?:\[[^\]]*\])?\s*\{\s*\\begin\{frame\}(?:<[^>]*>)?\[([^\]]*)\]', src)
+    subshrink = bool(sm) and any(o.strip().startswith('shrink') for o in sm.group(1).split(','))
+    subshrinkby = shrinkage([o.strip() for o in sm.group(1).split(',')]) if sm else 0   # shrink=10 (C3 of SMA-LS 07/08)
     # a contents frame at each section only where the deck asks for one (every deck before experiment 8 did)
     sectocs = '\\AtBeginSection' in src[:src.index('\\begin{document}')] or any(
         '\\AtBeginSection' in f.read_text(errors='replace') for f in (ROOT / 'sty').glob('*.sty'))
     # the sections, and their subsections, for the contents frames
-    secs, subs = [], []
-    for m in re.finditer(r'\\(sub)?section(?:<presentation>)?(\*?)(\[[^]]*\])?\{', doc):   # <presentation>: C3a's appendix
+    # and the subsubsections of each subsection, beamer's third level (C8 of SMA-LS 07/08)
+    secs, subs, subsubs = [], [], []
+    for m in re.finditer(r'\\(sub|subsub)?section(?:<presentation>)?(\*?)(\[[^]]*\])?\s*\{', doc):   # <presentation>: C3a's appendix
         g, _ = read_group(doc, m.end() - 1)
         C.reset()
         if m.group(2):
             continue
-        if m.group(1):
+        if m.group(1) == 'subsub':
+            if subsubs and subsubs[-1]:
+                subsubs[-1][-1].append(C.inline(g))
+        elif m.group(1):
             if subs:
                 subs[-1].append(C.inline(g))
+                subsubs[-1].append([])
         else:
             secs.append(C.inline(g))
             subs.append([])
+            subsubs.append([])
     out = []
     section = subsection = ''
     i = 0
-    tok = re.compile(r'\\(sub)?section(?:<presentation>)?(\*?)(?:\[([^]]*)\])?\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
+    tok = re.compile(r'\\(sub)?section(?:<presentation>)?(\*?)(?:\[([^]]*)\])?\s*\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
                      r'|\\frame(?![A-Za-z])(\[[^]]*\])?\s*(?=\{)'
                      r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
     nonumber = False
@@ -1053,12 +1194,12 @@ def pages():
         if m.group(0).startswith('\\subsection'):
             g, i = read_group(doc, m.end() - 1)
             C.reset()
-            subsection = C.inline(g)
+            subsection = C.inline(m.group(3) if m.group(3) is not None else g)   # the headline takes the short title (C9)
             if not m.group(2):
                 subno += 1
                 if subtocs:
-                    out.append(dict(kind='subtoc', section=section, subsection=subsection, current=secno,
-                                    currentsub=subno, secs=secs, subs=subs))
+                    out.append(dict(kind='subtoc', section=section, subsection=subsection, current=secno, shrink_auto=subshrink, shrink=subshrinkby,
+                                    currentsub=subno, secs=secs, subs=subs, subsubs=subsubs))
             continue
         if m.group(0).startswith('\\section'):
             g, i = read_group(doc, m.end() - 1)
@@ -1069,14 +1210,14 @@ def pages():
             if not m.group(2):
                 secno += 1
                 if sectocs:
-                    out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs))
+                    out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs, subsubs=subsubs))
             continue
         if m.group(5) == 'titlepage':
             out.append(dict(kind='titlepage', section=section, subsection=subsection))
             i = m.end()
             continue
         if m.group(5) == 'tableofcontents':
-            out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs, subs=subs))
+            out.append(dict(kind='outline', section=section, subsection=subsection, secs=secs, subs=subs, subsubs=subsubs))
             i = m.end()
             continue
         # a frame: \begin{frame} ... \end{frame}, or \frame[<opts>]{...} (the course decks of experiment 8)
@@ -1122,6 +1263,8 @@ def pages():
         opts = [o.strip() for o in (opts or '').split(',')]
         nonum = 'noframenumbering' in opts or nonumber
         broken = 'allowframebreaks' in opts
+        if broken:   # typeset once: an overlay specification shows its content and makes no slide (C10 of SMA-LS 07/08)
+            fr = fr[:j] + re.sub(r'(\\begin\{\w+\*?\}|\\item)\s*<[^>]*>', r'\1', fr[j:])
         parts = split_top(fr[j:], 'framebreak') if broken else overlay_slides(fr[j:])
         roman = 0
         for k, part in enumerate(parts):
@@ -1134,15 +1277,29 @@ def pages():
                 out.append(dict(kind='bib', section=section, subsection=subsection, title=C.inline(title),
                                 nonum=nonum, top='t' in opts, size=sz.group(1) if sz else 'normalsize'))
                 continue
+            C.in_title = True
             t = C.inline(title)
+            C.in_title = False
             # a size declared first, before any text or environment, sizes the whole body (C6's {\footnotesize ...})
             bsize = re.match(r'\s*\\(scriptsize|footnotesize|small)(?![A-Za-z])\s*(?=\S)(?!\\begin\{verbatim\})', part)
             if bsize:
                 part = part[bsize.end():]
             body, flags = container(part, T * 2, 'body')
-            if C.footnotes:   # at the frame's foot, each after its mark
-                body.append(f'{T}{T}<div class="footnotes">' + ''.join(
-                    f'<p class="footnote{" covered" if cov else ""}"><sup class="fnmark">{mk}</sup>{h}</p>' for mk, h, cov in C.footnotes) + '</div>')
+            if C.title_footnotes:   # the title's, at the page's foot (C10 of SMA-LS 07/08)
+                body.append(f'{T}{T}<div class="footnotes page">' + ''.join(
+                    f'<p class="footnote"><sup class="fnmark">{mk}</sup>{h}</p>' for mk, h in C.title_footnotes) + '</div>')
+            if C.footnotes:   # at the frame's foot, each after its mark; at the foot of the block holding the marks (C10)
+                fns = ''.join(f'<p class="footnote{" covered" if cov else ""}"><sup class="fnmark">{mk}</sup>{h}</p>'
+                              for mk, h, cov in C.footnotes)
+                held = next((q for q, h in enumerate(body) if h.lstrip().startswith('<div class="block')
+                             and all(f'<sup class="fnmark">{mk}</sup>' in h for mk, _, _ in C.footnotes)), None)
+                if held is not None:
+                    h = body[held]
+                    e = h.rfind('</div>', 0, h.rfind('</div>'))   # the block body's end (not k: the slide's index)
+                    ind = re.match(r'\s*', h[h.rfind('\n', 0, e) + 1:]).group(0)
+                    body[held] = h[:e] + f'{T}<div class="footnotes inblock">{fns}</div>\n{ind}' + h[e:]
+                else:
+                    body.append(f'{T}{T}<div class="footnotes">{fns}</div>')
             if bsize:
                 flags.add('size:' + bsize.group(1))
             groups = [body]
@@ -1150,15 +1307,16 @@ def pages():
                 pn = len(out) + 1
                 n = broken_pages(pn)
                 if n > 1:
-                    body = split_entries(body, pn, n)
+                    body = split_lists(split_entries(body, pn, n))
                     where = distribute(body, pn, n)
-                    groups = [[h for h, w in zip(body, where) if w == q] for q in range(n)]
+                    groups = [join_lists([h for h, w in zip(body, where) if w == q]) for q in range(n)]
                     groups = [g for g in groups if g] or [body]
             for g in groups:
                 roman += 1
                 out.append(dict(kind='frame', section=section, subsection=subsection,
                                 title=t + (' ' + ROMAN[roman] if broken else ''), body=g, flags=flags,
-                                top='t' in opts, nonum=nonum, shrink=shrinkage(opts), cont=bool(k) and not broken))
+                                top='t' in opts, nonum=nonum, shrink=shrinkage(opts), shrink_auto='shrink' in opts,
+                                cont=bool(k) and not broken))
     # the frame number of every page: an overlay's later slides share their frame's (experiment 8)
     no = 0
     for p in out:
