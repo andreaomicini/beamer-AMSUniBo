@@ -1,0 +1,48 @@
+# style-lag -- a yellow warning on the pipeline when this repo's .style is behind its style's main.
+#
+# Every deck or collection using an AMS Beamer style includes this file, so a change to a style shows
+# on every repo still pinned to the old one (Andrea, 2026-10-30: a style change is not done until
+# every repo using it has it; see ~/GitLab/disi/andrea.omicini/CLAUDE.md, "Recovered decks follow
+# every new idea"). In the repo's .gitlab-ci.yml:
+#
+#   include:
+#     - project: andrea.omicini/beamer-AMSUniBo
+#       file: /ci/style-lag.gitlab-ci.yml
+#
+# The job clones the style (its own .style URL, with the job token) and counts the commits after the
+# pinned one that a deck builds from (the script below, the same as ci/style-lag.sh). In step: green. Behind: exit 3, allowed to
+# fail, so the pipeline passes with a warning and the job log lists the missing commits.
+
+style-lag:
+  stage: test
+  image: alpine/git:latest
+  interruptible: true
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    GIT_DEPTH: "1"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    # the same as ci/style-lag.sh (keep the two in step)
+    - |
+      set -e
+      url=${STYLE_URL:-$(git config -f .gitmodules submodule..style.url)}
+      case "$url" in
+        ../*) url="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/${url#../}" ;;
+      esac
+      pin=$(git ls-tree HEAD .style | awk '{print $3}')
+      [ -n "$pin" ] || { echo "style-lag: no .style submodule pinned"; exit 1; }
+      tmp=$(mktemp -d)
+      git clone -q --filter=blob:none --no-checkout "$url" "$tmp/style"
+      top=$(git -C "$tmp/style" rev-parse origin/main)
+      n=$(git -C "$tmp/style" rev-list --count "$pin..$top" -- . ':(exclude)html' ':(exclude)ci' ':(exclude)*.md')
+      name=$(basename "$url" .git)
+      if [ "$n" -gt 0 ]; then
+        echo "style-lag: .style is $n commit(s) of $name behind its main (${pin%"${pin#???????}"} -> ${top%"${top#???????}"}):"
+        git -C "$tmp/style" log --oneline "$pin..$top" -- . ':(exclude)html' ':(exclude)ci' ':(exclude)*.md' | sed 's/^/  /'
+        echo "Move it: git submodule update --remote .style, rebuild, CI, push, republish."
+        exit 3
+      fi
+      echo "style-lag: .style in step with $name main (${top%"${top#???????}"})"
+  allow_failure:
+    exit_codes: [3]
