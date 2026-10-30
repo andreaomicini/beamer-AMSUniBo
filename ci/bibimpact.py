@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Which decks a change to the course's bibliography touches: the CI child pipeline that rebuilds them.
+
+    bibimpact.py <before-sha>            YAML for the child pipeline, on stdout
+    bibimpact.py <before-sha> --list     the decks, one per line
+
+Run from a course repository's root. The course's bibliography is its one bib/<course>.bib (pool.bib,
+the reserve no deck reads, never counts). The rule (Andrea, 2026-10-30): a change rebuilds only the decks
+where a changed entry appears, cited or reached through a crossref; never every deck.
+
+- An entry counts as changed if its text differs, it appears or it goes; a crossref child counts when its
+  parent does (to any depth); an entry using an @string counts when that @string changes.
+- A deck is touched when bib/cites/<deck>.keys (written by .latexmkrc from the deck's .aux) holds a
+  changed key; a deck without that file is touched alone.
+- With no usable <before-sha> (a new branch: zeros) the parent commit is the comparison. Only a changed
+  @preamble, which BibTeX writes into every deck's .bbl, touches every deck.
+
+Shared by every course repository (beamer-AMSUniBo/ci/bib-impact.gitlab-ci.yml); first written for
+iag2627-slides as src/bibimpact.py.
+"""
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+def course_bib():
+    bibs = [p for p in Path('bib').glob('*.bib') if p.name != 'pool.bib']
+    if len(bibs) != 1:
+        sys.exit(f'bibimpact: expected one bib/<course>.bib besides pool.bib, found {[p.name for p in bibs]}')
+    return str(bibs[0])
+
+
+def parse(text):
+    """entries: key -> (normalised text, crossref parent or None); strings: name -> value; preamble text."""
+    entries, strings, preamble, i = {}, {}, [], 0
+    for m in re.finditer(r'@(\w+)\s*[{(]', text):
+        if m.start() < i:
+            continue
+        j, depth = m.end(), 1
+        while j < len(text) and depth:
+            depth += {'{': 1, '(': 1, '}': -1, ')': -1}.get(text[j], 0)
+            j += 1
+        body, kind = text[m.end():j - 1], m.group(1).lower()
+        i = j
+        if kind == 'string':
+            name, _, value = body.partition('=')
+            strings[name.strip().lower()] = re.sub(r'\s+', ' ', value).strip()
+        elif kind == 'preamble':
+            preamble.append(re.sub(r'\s+', ' ', body).strip())
+        elif kind != 'comment':
+            key = body.split(',', 1)[0].strip().lower()
+            cr = re.search(r'^\s*crossref\s*=\s*[{"]([^}"]*)[}"]', body, re.M | re.I)
+            entries[key] = (re.sub(r'\s+', ' ', body).strip(), cr.group(1).strip().lower() if cr else None)
+    return entries, strings, preamble
+
+
+def uses(body, name):
+    """the entry uses @string `name`: as a bare field value or in a # concatenation"""
+    return re.search(r'(?:=|#)\s*' + re.escape(name) + r'\s*(?=[,#}]|$)', body, re.I) is not None
+
+
+def decks():
+    return sorted(p.stem for p in Path('tex').glob('*.tex'))
+
+
+def show(rev, path):
+    r = subprocess.run(['git', 'show', f'{rev}:{path}'], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def touched(before):
+    bib = course_bib()
+    old = show(before, bib) if before else None
+    if old is None:
+        old = show('HEAD~1', bib)                        # no usable before-sha: the parent commit
+    if old is None:
+        return decks()                                   # no history at all to compare with
+    (o, os_, op), (n, ns, np) = parse(old), parse(Path(bib).read_text(encoding='utf-8'))
+    if op != np:
+        return decks()                                   # @preamble: in every deck's .bbl
+    changed = {k for k in o.keys() | n.keys() if o.get(k, (None,))[0] != n.get(k, (None,))[0]}
+    for s in {s for s in os_.keys() | ns.keys() if os_.get(s) != ns.get(s)}:
+        changed |= {k for k, (body, _) in n.items() if uses(body, s)}
+    grew = True
+    while grew:                                          # crossref: children inherit, to any depth
+        more = {k for k, (_, parent) in n.items() if parent in changed} - changed
+        changed |= more
+        grew = bool(more)
+    out = []
+    for d in decks():
+        keys = Path(f'bib/cites/{d}.keys')
+        if not keys.exists() or changed & {k.strip().lower() for k in keys.read_text().split()}:
+            out.append(d)
+    return out
+
+
+def deck_template():
+    """The .deck job of .gitlab-ci.yml, copied, so the child builds exactly as the parent does."""
+    lines = Path('.gitlab-ci.yml').read_text().splitlines()
+    i = lines.index('.deck:')
+    j = next((k for k in range(i + 1, len(lines)) if lines[k] and not lines[k].startswith(' ')), len(lines))
+    return '\n'.join(lines[i:j]).rstrip()
+
+
+def main(argv):
+    if not argv:
+        sys.exit(__doc__)
+    before = '' if re.fullmatch(r'0*', argv[0]) else argv[0]
+    ds = touched(before)
+    if '--list' in argv:
+        print('\n'.join(ds))
+        return
+    print(f'# generated by beamer-AMSUniBo/ci/bibimpact.py: the decks a {course_bib()} change touches')
+    print(deck_template())
+    print()
+    if not ds:
+        print('no-deck-touched:\n  image: alpine:latest\n  script:\n    - echo "no deck cites a changed entry"')
+    for d in ds:
+        print(f'{d}:\n  extends: .deck\n  variables:\n    DECK: {d}\n')
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

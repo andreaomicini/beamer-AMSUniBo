@@ -1,0 +1,44 @@
+# bib-impact -- a change to the course's bibliography rebuilds only the decks it touches.
+#
+# Every course repository includes this file (Andrea, 2026-10-30: if an entry changes, only the decks
+# where it appears, cited or through a crossref, are rebuilt; never every deck):
+#
+#   include:
+#     - project: andrea.omicini/beamer-AMSUniBo
+#       file: /ci/bib-impact.gitlab-ci.yml
+#
+# and keeps bib/ out of the list of shared files that rebuild every deck. bib-impact runs ci/bibimpact.py
+# against the commit before the push and writes a child pipeline with the touched decks only, each built
+# by the repository's own .deck job; bib-decks runs it. The rules match the course's bib/<course>.bib and
+# not pool.bib (no course's name starts with p): a change to the reserve alone makes no pipeline.
+
+bib-impact:
+  stage: .pre
+  image: python:3-alpine
+  interruptible: true
+  variables:
+    GIT_DEPTH: "50"
+    GIT_SUBMODULE_STRATEGY: none
+  rules:
+    - changes:
+        - bib/[!p]*.bib
+  script:
+    - apk add --no-cache git >/dev/null
+    - git clone -q --depth 1 "${CI_SERVER_URL}/andrea.omicini/beamer-AMSUniBo.git" /tmp/hub
+    - python3 /tmp/hub/ci/bibimpact.py "$CI_COMMIT_BEFORE_SHA" > bib-decks.yml
+    - cat bib-decks.yml
+  artifacts:
+    paths: [bib-decks.yml]
+    expire_in: 1 week
+
+bib-decks:
+  stage: test
+  needs: [bib-impact]
+  rules:
+    - changes:
+        - bib/[!p]*.bib
+  trigger:
+    include:
+      - artifact: bib-decks.yml
+        job: bib-impact
+    strategy: depend
