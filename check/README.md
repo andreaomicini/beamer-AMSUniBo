@@ -7,7 +7,7 @@ not one per repository; see `../../COURSE-DECKS.md`). Run from the deck reposito
 | --- | --- | --- |
 | `checkdeck.py` | content silently dropped by `allowframebreaks` (a block too tall to split) | `../beamer-AMSUniBo/check/checkdeck.py tex/<deck>.tex aux/<deck>.pdf` |
 | `framebreaks.py` | `allowframebreaks` frames rendering a single page, a lone `I` in the title | `../beamer-AMSUniBo/check/framebreaks.py aux/<deck>.pdf` |
-| `vbwidth.py` | verbatim lines wider than `\textwidth` (62 characters on AMSUniBo, 60 on the others) | `../beamer-AMSUniBo/check/vbwidth.py tex/<deck>.tex` |
+| `vbwidth.py` | verbatim lines that really leave the text area in the built PDF: the long source lines are only the candidates, each looked up in the PDF; a line found fine is not checked again until it changes (`aux/<deck>.vbwidth`) | `../beamer-AMSUniBo/check/vbwidth.py tex/<deck>.tex aux/<deck>.pdf` |
 
 They need `pdftotext` (poppler) and `mutool` (mupdf), both from Homebrew. A change here counts for no
 deck's `style-lag` (it ignores `check/`, as `html/` and `ci/`).
