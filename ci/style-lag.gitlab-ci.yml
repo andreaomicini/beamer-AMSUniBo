@@ -15,7 +15,9 @@
 
 style-lag:
   stage: test
-  image: alpine/git:latest
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]   # the image's entrypoint is git itself
   interruptible: true
   variables:
     GIT_SUBMODULE_STRATEGY: none
