@@ -11,7 +11,8 @@
 #
 # The job clones the style (its own .style URL, with the job token) and counts the commits after the
 # pinned one that a deck builds from (the script below, the same as ci/style-lag.sh). In step: green. Behind: exit 3, allowed to
-# fail, so the pipeline passes with a warning and the job log lists the missing commits.
+# fail, so the pipeline passes with a warning and the job log lists the missing commits. It never makes
+# a pipeline by itself (see its rules).
 
 style-lag:
   stage: test
@@ -22,8 +23,21 @@ style-lag:
   variables:
     GIT_SUBMODULE_STRATEGY: none
     GIT_DEPTH: "1"
+  # never a pipeline of its own: only where a push to main touches what the decks build from, so a
+  # pipeline is there anyway (a documentation-only push still gets none)
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - changes:
+        - tex/**/*
+        - sty/**/*
+        - bib/**/*
+        - img/**/*
+        - code/**/*
+        - .latexmkrc
+        - .gitmodules
+        - .gitlab-ci.yml
+        - .style
   script:
     # the same as ci/style-lag.sh (keep the two in step)
     - |
