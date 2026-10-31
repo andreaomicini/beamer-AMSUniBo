@@ -55,10 +55,12 @@ for b in $(sed -n 's/^\\bibdata{\(.*\)}$/\1/p' "aux/$deck.aux" | tr , ' '); do f
 for s in $(sed -n 's/^\\bibstyle{\(.*\)}$/\1/p' "aux/$deck.aux"); do find_one "$s.bst"; done
 
 ## a file called through a folder is called by name, now that all sit side by side:
-## {img/x} becomes {x} wherever x, with or without its extension, is one of the files here (x may hold spaces)
+## {img/x} becomes {x} wherever x, with or without its extension, is one of the files here (x may hold spaces);
+## inside a macro, {img/#1} becomes {#1} wherever img/ is a folder of the repository (the check below proves it)
 for f in "$dir"/*.tex "$dir"/*.sty; do
 	[ -e "$f" ] || continue
 	perl -pi -e 'BEGIN { $d = shift } s{\{[^{}%#\\]*/([^{}/%#\\]+)\}}{ (-e "$d/$1" || (() = glob("\Q$d/$1\E.*"))) ? "{$1}" : $& }ge' "$dir" "$f"
+	perl -pi -e 's{\{([^{}%#\\]+)/(#[1-9][^{}/%\\]*)\}}{ -d $1 ? "{$2}" : $& }ge' "$f"
 done
 
 ## check: a plain build in a copy, no local tree, same warnings and same pages as aux/
