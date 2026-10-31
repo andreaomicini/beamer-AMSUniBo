@@ -37,8 +37,9 @@ put() {
 		cp -L "$1" "$dir/"
 	fi
 }
-for f in $(grep '^INPUT ' "aux/$deck.fls" | cut -c7- | sed 's|^\./||' | sort -u |
-	grep -v -e '^/' -e '^aux/' -e "^tex/$deck.tex\$"); do
+## one name per line, read whole: a name may hold spaces
+grep '^INPUT ' "aux/$deck.fls" | cut -c7- | sed 's|^\./||' | sort -u |
+	grep -v -e '^/' -e '^aux/' -e "^tex/$deck.tex\$" | while IFS= read -r f; do
 	put "$f"
 done
 
@@ -54,10 +55,10 @@ for b in $(sed -n 's/^\\bibdata{\(.*\)}$/\1/p' "aux/$deck.aux" | tr , ' '); do f
 for s in $(sed -n 's/^\\bibstyle{\(.*\)}$/\1/p' "aux/$deck.aux"); do find_one "$s.bst"; done
 
 ## a file called through a folder is called by name, now that all sit side by side:
-## {img/x} becomes {x} wherever x, with or without its extension, is one of the files here
+## {img/x} becomes {x} wherever x, with or without its extension, is one of the files here (x may hold spaces)
 for f in "$dir"/*.tex "$dir"/*.sty; do
 	[ -e "$f" ] || continue
-	perl -pi -e 'BEGIN { $d = shift } s{\{[^{}\s%#\\]*/([^{}/\s%#\\]+)\}}{ (-e "$d/$1" || (() = glob("$d/$1.*"))) ? "{$1}" : $& }ge' "$dir" "$f"
+	perl -pi -e 'BEGIN { $d = shift } s{\{[^{}%#\\]*/([^{}/%#\\]+)\}}{ (-e "$d/$1" || (() = glob("\Q$d/$1\E.*"))) ? "{$1}" : $& }ge' "$dir" "$f"
 done
 
 ## check: a plain build in a copy, no local tree, same warnings and same pages as aux/
@@ -68,9 +69,12 @@ cp -R "$dir" "$work/test"
 	export TEXMFHOME="$work/texmf"
 	pdflatex -interaction=nonstopmode "$deck" >/dev/null || true
 	if grep -q '^\\bibdata' "$deck.aux"; then bibtex "$deck" >/dev/null || die "bibtex fails in the flat folder"; fi
-	for i in 1 2 3; do
+	## rerun until .aux and .nav settle: beamer's frame total changes them without asking for a rerun
+	for i in 1 2 3 4 5; do
+		before=$(cat "$deck.aux" "$deck.nav" 2>/dev/null | cksum)
 		pdflatex -interaction=nonstopmode -recorder "$deck" >/dev/null || true
-		grep -q 'Rerun to get' "$deck.log" || break
+		if [ "$before" = "$(cat "$deck.aux" "$deck.nav" 2>/dev/null | cksum)" ] &&
+			! grep -q 'Rerun to get' "$deck.log"; then break; fi
 	done
 	grep -q '^!' "$deck.log" && die "the flat build stops with an error"
 	grep -q 'Library/texmf' "$deck.fls" && die "the flat build reads ~/Library/texmf"
