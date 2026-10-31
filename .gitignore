@@ -1,2 +1,19 @@
 ## Finder's custom folder icon: empty data fork, the picture is in icon/beamer-AMSUniBo.icns.
 Icon?
+
+## Files a tool or the system writes on its own beside the sources: never edited, rebuilt at will.
+##
+## Python: the bytecode an import leaves next to each module (check/, ci/, html/tools/), and the
+## caches its tools keep at the root of what they scan.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+## macOS
+.DS_Store
+
+## Editor leftovers
+*.swp
+*~
