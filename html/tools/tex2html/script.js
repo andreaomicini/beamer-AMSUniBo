@@ -10,20 +10,15 @@
 		head.className = 'headline';
 		head.innerHTML = '<div class="section"></div><div class="subsection"></div>';
 		head.firstChild.textContent = f.dataset.section;
-		if (f.dataset.subsection) head.lastChild.textContent = f.dataset.subsection;
 		const foot = document.createElement('div');
 		foot.className = 'footline';
 		foot.innerHTML = '<div class="author"></div><div class="title"></div><div class="date"></div>';
-		// infolines' ~~ as two spaces kept as they are: Latin Modern's no-break space is wider than its
-		// space, and Firefox draws it where WebKit does not
-		foot.children[0].style.whiteSpace = 'pre';
-		// infolines prints "~~(institute)" only when there is one: \ifblank{\beamer@shortinstitute}
-		foot.children[0].textContent = d.shortinstitute ? `${d.shortauthor}  (${d.shortinstitute})` : d.shortauthor;
+		foot.children[0].textContent = `${d.shortauthor}  (${d.shortinstitute})`;
 		foot.children[1].textContent = d.shorttitle;
 		foot.children[2].textContent = d.shortdate;
 		const number = document.createElement('span');
 		number.className = 'number';
-		if (!f.hasAttribute('data-noframenumbering')) number.textContent = `${f.dataset.frameno || i + 1} / ${d.totalframes}`;   // an overlay's slides share their frame's number
+		if (!f.hasAttribute('data-noframenumbering')) number.textContent = `${i + 1} / ${d.totalframes}`;
 		foot.children[2].append(number);
 		f.prepend(head);
 		f.append(foot);

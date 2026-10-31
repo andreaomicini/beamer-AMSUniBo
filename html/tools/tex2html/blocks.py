@@ -5,21 +5,21 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from browser import Browser
 from align import PDF
-from deck import path, STYLE
+from deck import path
 from depth import blocks, near
 
 K = 1024 / 362.835
-TITLE = STYLE['titles']   # block, alert, example
-JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.querySelectorAll('.block:not(.covered)')].map(k=>{
+TITLE = [(0.212, 0.408, 0.38), (0.733, 0.18, 0.161), (0.698, 0.843, 0.824)]   # block, alert, example
+JS = """(()=>{const f=document.querySelector('.frame.current');return [...f.querySelectorAll('.block')].map(k=>{
   const r=k.getBoundingClientRect();let e=k.querySelector(':scope>.block-body'),d=[];
   while(e.lastElementChild&&!['P','SPAN','EM','A','BR','I','B','CODE'].includes(e.lastElementChild.tagName)){
-    e=e.lastElementChild;d.push(e.tagName.toLowerCase()+(e.getAttribute('class')?'.'+e.getAttribute('class').split(' ')[0]:''))}
+    e=e.lastElementChild;d.push(e.tagName.toLowerCase()+(e.className?'.'+e.className.split(' ')[0]:''))}
   return [r.top,r.bottom,!!k.querySelector(':scope>.block-title'),d.join('>')||'p']})})()"""
 
 def titles(n):
-    return [r.y0 for r in sorted((dr['rect'] for dr in PDF[n - 1].get_drawings()
+    return sorted(dr['rect'].y0 for dr in PDF[n - 1].get_drawings()
                   if dr.get('fill') and dr['rect'].x0 > 1 and dr['rect'].width > 60 and near(dr['fill'], TITLE)
-                  and STYLE['head'] < dr['rect'].y0 and dr['rect'].y1 < STYLE['foot']), key=lambda r: (round(r.y0), r.x0))]
+                  and 13 < dr['rect'].y0 and dr['rect'].y1 < 262)
 
 eng = sys.argv[1]
 rows = []

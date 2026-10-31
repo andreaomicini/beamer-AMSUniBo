@@ -2,25 +2,22 @@
 import re, unicodedata, difflib, html as H
 import pymupdf
 
-from deck import path, STYLE, CITES
+from deck import path
 
 PDF = pymupdf.open(path('pdf'))
-BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th', 'pre'}
-
-# Computer Modern's math symbols as the PDF names them -> as the page writes them
-SAME = str.maketrans({'∆': 'Δ'})
+BLOCK = {'p', 'div', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'h2', 'h3', 'section', 'br', 'img', 'table', 'tr', 'td', 'th'}
 
 def norm(c):
-    c = unicodedata.normalize('NFKC', c).translate(SAME)
+    c = unicodedata.normalize('NFKC', c)
     return c
 
-def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
+def pdf_chars(pn, ytop=37.2, ybot=262.0, skip_cite=True):
     out = []
     raw = PDF[pn - 1].get_text('rawdict')
     for b in raw['blocks']:
         for l in b.get('lines', []):
             for sp in l['spans']:
-                cite = skip_cite and sp['size'] < 6.2 and sp['color'] in CITES
+                cite = skip_cite and sp['size'] < 6.2 and sp['color'] == 0xc7c9cb
                 for ch in sp['chars']:
                     x, y = ch['origin']
                     if y < ytop or y > ybot or cite:
@@ -34,7 +31,7 @@ def pdf_chars(pn, ytop=STYLE['title'], ybot=STYLE['foot'], skip_cite=True):
 def html_chars(h):
     """visible non-space characters of an HTML fragment: (char, start, end, flow); and visible spaces"""
     chars, spaces = [], set()
-    i, flow, skip, boxes, fresh = 0, 0, [], [], 0
+    i, flow, skip = 0, 0, []
     while i < len(h):
         c = h[i]
         if c == '<':
@@ -42,24 +39,8 @@ def html_chars(h):
             tag = h[i + 1:j]
             name = re.match(r'/?([a-z0-9]+)', tag).group(1)
             closing = tag.startswith('/')
-            if (name in BLOCK and 'class="pgfimage"' not in tag) or (re.search(r'class="bib-', tag) and 'data-runon' not in tag):   # \pgfuseimage is inline; a \bibentry's title runs on
+            if name in BLOCK or re.search(r'class="bib-', tag):
                 flow += 1
-            # the parts of a fraction, a stack, cases or an array sit on lines of their own: each is a
-            # flow of its own, and the text after it goes on in the flow before it
-            if boxes and name == boxes[-1][0]:
-                if closing:
-                    boxes[-1][1] -= 1
-                    if boxes[-1][1] == 0:
-                        flow = boxes.pop()[2]
-                elif not tag.endswith('/'):
-                    boxes[-1][1] += 1
-            # so are an array's cells, each a flow of its own, and the two scripts of a subsup
-            # and a display \sum's limits (C10 of SMA-LS 07/08), and the raised A and lowered E of \LaTeX (IAG 26/27)
-            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr]|limsub|limsup|logo-[ae])\b', tag)
-                                or (name in ('sub', 'sup') and re.search(r'class="subsup"', h[max(0, i - 200):i]) and h.rfind('</span>', 0, i) < h.rfind('class="subsup"', 0, i))):
-                boxes.append([name, 1, flow])
-                fresh += 1
-                flow = 10 ** 6 + fresh
             if skip:
                 if name == skip[-1][0]:
                     if closing:
@@ -68,8 +49,7 @@ def html_chars(h):
                             skip.pop()
                     elif not tag.endswith('/'):
                         skip[-1][1] += 1
-            elif not closing and (re.search(r'class="[^"]*\b(ccite|sizer|covered)\b', tag) or name == 'svg'):   # a sizer row, a covered
-                # overlay are hidden; an SVG (M2's \\Tree) is a picture: a <br> in it would break the page out of the SVG
+            elif not closing and re.search(r'class="[^"]*\b(ccite)\b', tag):
                 skip.append([name, 1])
             lab = re.search(r'data-label="([^"]*)"', tag)
             if lab and not skip:
@@ -124,45 +104,11 @@ def add_breaks(h, pn, report=True, **kw):
         if not newline(p, q):
             continue
         gap = [k for k in range(hc[i][2], hc[i + 1][1]) if k in spaces]
-        # in a <pre>, the line's own newline, after any trailing spaces
-        nl = [k for k in gap if h[k] == '\n' and h.rfind('<pre', 0, k) > h.rfind('</pre>', 0, k)]
-        if nl:
-            inserts.append((nl[0], nl[0] + 1, '<br>'))
-        elif gap:
+        if gap:
             inserts.append((gap[0], gap[0] + 1, '<br>'))
         else:
             between = b[match[i] + 1:match[i + 1]]
             inserts.append((hc[i][2], hc[i][2], '-<br>' if '-' in between else '<br>'))
-    # a \ccite that the PDF moves to a line of its own: its first character against the text before it.
-    # The cites are left out of the alignment, so the loop above sees this break only when text follows
-    # the cite in the same paragraph; at the end of an item it does not (experiment 5, [Pascal, 1669])
-    cites = []
-    for bl in PDF[pn - 1].get_text('rawdict')['blocks']:
-        for l in bl.get('lines', []):
-            for sp in l['spans']:
-                if sp['size'] < 6.2 and sp['color'] in CITES and sp['chars'] and sp['chars'][0]['c'] == '[':
-                    ch = sp['chars'][0]
-                    cites.append(dict(x=ch['origin'][0], y=ch['origin'][1], x1=ch['bbox'][2]))
-    anchors = [m.start() for m in re.finditer(r'<(?:a|span) class="ccite', h)]
-    if len(anchors) == len(cites):
-        done = {x[0] for x in inserts}
-        for at, cq in zip(anchors, cites):
-            prev = [i for i, x in enumerate(hc) if x[2] <= at]
-            if not prev or prev[-1] not in match:
-                continue
-            if not newline(pc[match[prev[-1]]], cq):
-                continue
-            # a cite opening a paragraph or a block of its own breaks there already
-            if re.search(r'<(?:p|div|li|ul|ol|dl|dt|dd|br)\b', h[hc[prev[-1]][2]:at]):
-                continue
-            sp_ = [k for k in range(hc[prev[-1]][2], at) if k in spaces]
-            pos = sp_[0] if sp_ else at
-            if pos not in done:
-                inserts.append((pos, pos + 1 if sp_ else pos, '<br>'))
-                done.add(pos)
     for s, e, t in sorted(inserts, reverse=True):
         h = h[:s] + t + h[e:]
-    # a <pre>'s newline the alignment did not reach (lines alike: IAG 26/27's L6) is a break all the same: a <br>, as
-    # the others, or the line is measured as one with the next; a newline right after <pre> is no line in HTML
-    h = re.sub(r'(<pre\b[^>]*>\n?)(.*?)(</pre>)', lambda m: m.group(1) + m.group(2).replace('\n', '<br>') + m.group(3), h, flags=re.S)
     return h, problems, len(inserts)

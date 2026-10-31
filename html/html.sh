@@ -39,51 +39,42 @@ fi
 field() { python3 -c "import json,sys; v=json.load(open(sys.argv[1])).get(sys.argv[2]); print('' if v is None else (' '.join(v) if isinstance(v, list) else v))" "$cfg/deck.json" "$1"; }
 page=$(field page)
 generated=$(field title)
-style=$(field style); style=${style:-AMSUniBo}
 
 ## the PDF, so that aux/ is the reference
 latexmk -pdf "tex/$deck.tex" >/dev/null 2>&1 || die "the deck does not build: see aux/$deck.log"
 
-## a generated page is written again
-## the assets go in before any correction is measured: a picture still missing has no height, and the
-## corrections would make up for it (experiment 5, a TikZ figure: 100pt of margin, the text pushed off)
+## a generated page is written again; corrected frame by frame the first time, or with --nudge:
+## the corrections are not idempotent, and a second round on a settled page moves it off
 if [ -n "$generated" ]; then
 	[ -f "$cfg/nudges.json" ] || nudge=1
 	python3 "$T/tex2html/build.py"
+	if [ -n "$nudge" ]; then
+		for mode in gaps gaps gaps both; do
+			python3 "$T/tex2html/nudge.py" webkit "" $mode >/dev/null
+			python3 "$T/tex2html/build.py" >/dev/null
+		done
+	fi
 fi
 [ -f "$page" ] || die "no $page: write it, or give deck.json the fields of a generated page"
 
 ## the assets: fonts, the seal of the class option, the TikZ pictures, the deck's own images
 A=$(mktemp -d)
 trap 'rm -rf "$A"' EXIT
-"$T/subset-fonts.sh" "$A/fonts" "$style" >/dev/null 2>&1
+"$T/subset-fonts.sh" "$A/fonts" >/dev/null 2>&1
 seal=$(sed -n 's/^\\documentclass\[\([^]]*\)\].*/\1/p' "tex/$deck.tex" | tr , '\n' | grep -xE 'bologna|cesena' || true)
-[ -n "$seal" ] && "$T/seal.sh" "$seal" "$A" "$style" >/dev/null
+[ -n "$seal" ] && "$T/seal.sh" "$seal" "$A" >/dev/null
 figs=($(field figures))
 if [ ${#figs[@]} -gt 0 ]; then
 	"$T/externalize.sh" "tex/$deck.tex" "$A" >/dev/null
 	for i in "${!figs[@]}"; do mv "$A/fig-$i.svg" "$A/${figs[$i]}.svg"; done
 fi
-# one name per line: a picture's name may hold a space (ISE 25/26's M0); .jpeg as .jpg (its M1)
-while IFS= read -r name; do
+for name in $(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | sort -u); do
 	ls "$A/$name".* >/dev/null 2>&1 && continue
-	src=$(find -L img -name "$name.png" -o -name "$name.jpg" -o -name "$name.jpeg" | head -1)
-	if [ -n "$src" ]; then cp -L "$src" "$A/"; continue; fi
-	# a PDF picture, as pdflatex took it: to SVG, its text as outlines
-	src=$(find -L img -name "$name.pdf" | head -1)
+	src=$(find img -name "$name.png" -o -name "$name.jpg" | head -1)
 	[ -n "$src" ] || die "no picture for data-asset $name: list the TikZ ones in figures, in source order"
-	pdftocairo -svg "$src" "$A/$name.svg"
-done < <(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | sort -u)
+	cp -L "$src" "$A/"
+done
 python3 "$T/assets.py" "$page" "$A"
-
-## corrected frame by frame the first time, or with --nudge: the corrections are not idempotent, and a
-## second round on a settled page moves it off. build.py keeps the ASSETS block it finds
-if [ -n "$generated" ] && [ -n "$nudge" ]; then
-	for mode in gaps gaps gaps both; do
-		python3 "$T/tex2html/nudge.py" webkit "" $mode >/dev/null
-		python3 "$T/tex2html/build.py" >/dev/null
-	done
-fi
 
 ## the checks of the checklist that a program can make; the rows are read by a person
 for engine in webkit firefox; do

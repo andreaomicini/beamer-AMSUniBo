@@ -3,10 +3,10 @@ Prints, per page, the runs off by more than 0.6pt: dy > 0 means the HTML sits lo
 import sys, json, difflib, statistics, unicodedata, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from browser import Browser
-from align import PDF, SAME
+from align import PDF
 
 K = 1024 / 362.835
-from deck import path, STYLE
+from deck import path
 URL = path('page').as_uri()
 JS = r'''() => {
   const f = document.querySelector('.frame.current');
@@ -14,7 +14,7 @@ JS = r'''() => {
   const walk = document.createTreeWalker(f, NodeFilter.SHOW_TEXT);
   const nodes = [];
   let n;
-  while ((n = walk.nextNode())) if (!n.parentElement.closest('.sizer, .covered')) nodes.push(n);   // hidden: a sizer row, a covered overlay
+  while ((n = walk.nextNode())) nodes.push(n);
   // labels are generated content: their text is in the PDF, so give it to the alignment
   const labelOf = new Map();
   f.querySelectorAll('li[data-label]').forEach(li => {
@@ -26,7 +26,7 @@ JS = r'''() => {
   const marks = [];
   for (n of nodes) {
     const p = n.parentElement;
-    if (p.closest('.headline, .footline, svg')) continue;   // an SVG is a picture (M2's \\Tree)
+    if (p.closest('.headline, .footline')) continue;
     const t = n.data;
     const i = t.search(/\S/);
     if (i < 0) continue;
@@ -40,7 +40,7 @@ JS = r'''() => {
     for (let e = p; e && !e.classList.contains('frame'); e = e.parentElement) {
       if (['SPAN', 'EM', 'A', 'B', 'I', 'CODE', 'SUB'].includes(e.tagName)) continue;
       let d = e.tagName.toLowerCase();
-      if (e.getAttribute('class')) d += '.' + e.getAttribute('class').split(' ')[0];   // an SVG's className is not a string (M2)
+      if (e.className) d += '.' + e.className.split(' ')[0];
       if (e.tagName === 'LI' && e.dataset.label !== undefined) d += '[l]';
       chain.unshift(d);
     }
@@ -56,14 +56,6 @@ JS = r'''() => {
           continue;
         }
         if (getComputedStyle(e).display.startsWith('inline')) continue;
-        // nor a <br>, nor code or a line inside a <pre>: a margin there moves nothing (IAG 26/27's L6)
-        if (['BR', 'CODE'].includes(e.tagName) || e.parentElement.closest('pre')) continue;
-        // never inside multicols: a margin there rebalances the columns
-        if (e.parentElement.closest('.multicols')) continue;
-        // never inside an array: its cells are a grid, a margin there moves a whole row of it
-        if (e.parentElement.closest('.array')) continue;
-        // never inside a fraction: a margin on a numerator or denominator breaks it apart (IAG 26/27's M2 proof tree)
-        if (e.parentElement.closest('.frac')) continue;
         const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let t0;
         while ((t0 = w.nextNode()) && !/\S/.test(t0.data));
@@ -75,10 +67,7 @@ JS = r'''() => {
     const emargin = E ? parseFloat(getComputedStyle(E).marginTop) : 0;
     let prevSib = n.previousSibling;
     const brk = prevSib && prevSib.nodeName === 'BR';
-    const colEl = p.closest('.column');
-    const col = colEl ? [...f.querySelectorAll('.column')].indexOf(colEl) : -1;
-    // a big operator's glyph (\\sum) is set by its math font's own origin, which the eye does not see: out, as a cite (L4)
-    out.push({t, x, base: 0, cite: !!p.closest('.ccite, .op'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin, col});
+    out.push({t, x, base: 0, cite: !!p.closest('.ccite'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin});
     marks.push([n, i, m]);
   }
   // all markers in, read, then all out: inserting splits text nodes
@@ -96,9 +85,9 @@ def pdf_chars(pn):
             for sp in l['spans']:
                 for ch in sp['chars']:
                     x, y = ch['origin']
-                    if y < STYLE['head'] or y > STYLE['foot']:
+                    if y < 12.9 or y > 262:
                         continue
-                    for c in unicodedata.normalize('NFKC', ch['c']).translate(SAME):
+                    for c in unicodedata.normalize('NFKC', ch['c']):
                         if not c.isspace():
                             out.append((c, x, y))
     return out
@@ -115,7 +104,7 @@ def run(engine, pages):
 def compare(n, nodes, limit=0.6):
     hc, own, first = [], [], []
     for k, nd in enumerate(nodes):
-        t = unicodedata.normalize('NFKC', nd['t']).translate(SAME)
+        t = unicodedata.normalize('NFKC', nd['t'])
         f = True
         for c in t:
             if c.isspace():
