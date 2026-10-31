@@ -1,477 +1,105 @@
-# AMSUniBo in HTML
+# Beamer decks in HTML
 
-**This translator is AMSUniBo's own** (since 2026-10-31). It was taken from
-`beamer-AMSUniBo/html/` at `17880a2` (the last version before it was shared,
-after experiment 3), the version that served this style best. The shared
-translator that followed, one tool for six styles, is kept under the tag
-`html-shared-final` of `beamer-AMSUniBo`. It changes here, for this style only.
+One command turns a Beamer deck into a single self-contained HTML page that matches its PDF page for
+page. TeX itself typesets the page: the deck is compiled with `latex` to DVI, `dvisvgm` draws each page
+as SVG with the deck's own fonts (WOFF2), and the pages are assembled into one file. Nothing is
+translated, so nothing depends on the style: the same command serves every AMS style, and any Beamer
+deck in principle. None of this is in `style.zip`: the release zips the top-level files only.
 
-**When a deck shows a problem**, look first whether another style has met it:
-the *experiments* in its `html/README.md` and the issues of its repository. Take
-or adapt its solution before writing one. **When you learn something**, a
-problem or a solution, that could matter to another style, open an issue in that
-style's repository: it decides whether and how to adopt it, and records the
-answer in its own `html/README.md`.
+Since 2026-11-01 this is the tool for new HTML pages, in every style. It replaces the translators
+(one per style, and the shared one before them), which are kept in the history: AMSUniBo's under the
+tag `html-translator-final`, the shared one under `html-shared-final`. Pages already delivered and
+corrected by hand stay as they are; when such a deck changes, its page is made again with this command.
 
-How to turn an AMSUniBo Beamer deck into a single HTML page that matches its PDF
-page for page, and the tools that do the mechanical part. None of this is in
-`style.zip`: the release zips the top-level files only.
+## Use
 
-The page is a translation, not a conversion. The PDF is the reference: the text,
-its line breaks and its geometry are copied from it, and the result is checked
-against it by overlay. Each experiment adds to [what we have learnt](#experiments)
-at the end of this file.
+From the root of a deck repository: an AMSUniBo deck has this repository as its `.style/` submodule,
+a deck of another style reaches it as the sibling clone `../beamer-AMSUniBo/`:
 
-## the page
-
-One self-contained `.html` file, named like the deck's copy in `pdf/` and kept in
-the deck's `html/`. It loads nothing from the network, so it works offline and can
-be attached to an APICe page like the PDF. It is laid out in this order:
-
-1. the theme, as CSS in a `<style>` in the head;
-2. the frames, one `<section class="frame">` per PDF page;
-3. a `<style>` for what belongs to this deck only;
-4. a short script that builds the headline and footline, scales the page to the
-   window and handles the keys (→ ← space PgUp PgDn Home End, `f` for full
-   screen; `#n` opens PDF page *n*);
-5. the `<!-- ASSETS -->` block, generated: fonts, seal and pictures as data URIs.
-
-Everything above the assets is written by hand and meant to be read and edited.
-The model is `agot-aixia2026-slides/html/Agentic Graph of Thoughts (AGoT).html`.
-
-### the frame
-
-<!-- markdownlint-disable MD013 -->
-| Beamer | HTML |
-| --- | --- |
-| `\section{X}` | `data-section="X"` on each of its frames; the headline is built from it |
-| `noframenumbering` | `data-noframenumbering` |
-| `\author[short]`, `\institute[short]`, `\title[short]`, `\date[short]` | `data-shortauthor` … `data-shortdate`, and `data-totalframes`, on `<main class="deck">` |
-| the paper size | `data-width` and `data-height` on `<main class="deck">`, the drawing size in px: `1024`/`768` for 4:3, `1024`/`576` for 16:9 |
-| `\frametitle` | `<h2 class="frametitle">`, with the numerals I, II … copied from the PDF on `allowframebreaks` pages |
-| frame body | `<div class="body">`, with the size class (`small`, `footnotesize`, `scriptsize`) when the frame sets one |
-| `block`, `alertblock`, `exampleblock` | `<div class="block">`, `block alert`, `block example`, holding `h3.block-title` and `div.block-body` |
-| `itemize`, `enumerate`, `description` | `ul`, `ol`, `dl` with `dt`/`dd` |
-| `\tightitemize` | `class="tight"` on the list |
-| `\alert`, `\aalert`, `\emph`, `\textbf`, `\textsc`, `\texttt` | `span.alert`, `span.aalert`, `em`, `b`, `span.sc`, `code` |
-| `\ccite{key}` | `<a class="ccite" href="#cite-key">[Label, year]</a>`, the label as the PDF prints it |
-| `\uurl`, `\apice{talk}{Name}` | `a.uurl`, `a.apice`, linked to the full address |
-| math | written out: `<i>` for variables (always light), `<sub>`, Unicode symbols, `span.rel` around a relation |
-| a TikZ picture | `<img class="figure" data-asset="name" alt="…">`, the `alt` describing what it shows |
-| the bibliography | `p.bibitem#cite-key` holding `biblabel`, `bib-author`, `bib-title`, `bib-location`, `bib-note`, `bib-links` |
-
-<!-- markdownlint-enable MD013 -->
-
-## the rules
-
-### general, for any Beamer deck
-
-* **Copy TeX's line breaks; do not let the browser reflow.** TeX may shrink the
-  interword glue (`fontdimen4`) to fit one more word on a line, which a browser
-  never does, so it would wrap that line one word early. Every line the PDF breaks
-  gets a `<br>`, and `white-space: nowrap` holds the rest. Take the breaks from
-  `pdftotext`.
-* **Copy the page breaks too.** An `allowframebreaks` frame becomes as many
-  frames as the PDF has pages, each with the PDF's numbering suffix, even when
-  that suffix looks wrong.
-* **Work in TeX points.** The page is drawn at 1024 × 768 px and scaled to the
-  window; `--pt` is one TeX point, `1024px / 362.835` for 128 mm paper. Every
-  length in the CSS is `calc(n * var(--pt))`, so a TeX dimension goes in as it is.
-* **Measure, never guess.** `pdftotext -bbox` gives every word's box in points;
-  margins, indents and label widths come from there. Inked lines come from
-  `compare.py`.
-* **The sizes of the 11pt class**: `\normalsize` is 10.95pt, not 11, on a 13.6pt
-  baseline; `\small` 10/12, `\footnotesize` 9/11, `\scriptsize` 8/9.5, `\tiny`
-  6/7, `\large` 12/14, `\Large` 14.4/18.
-* **`[c]` is not centred.** beamer's skips are 1fill above and 1.5fill below,
-  for `allowframebreaks` pages 0.4 and 0.6 `\paperheight`, so content sits 40/60
-  in the free space. `.body::before` and `::after` grow 2 and 3.
-* **Spacing starts from beamer's own values**: `\@listi` gives topsep and itemsep
-  3pt, `\@listii` topsep 2pt and itemsep 0; leftmargin 2em, labelsep .5em,
-  description width 2cm. TeX's stretch and shrink then move these frame by frame.
-  The variance is real, so correct it on the frame (`--itemsep`, `--subtopsep`,
-  or a `padding` on the body as a nudge) rather than in the theme.
-* **A display `\[…\]` opening a paragraph** leaves an empty line above it, and a
-  generous `\belowdisplayskip` below. Give it the PDF's space, measured.
-* **Pictures come from the deck**: TikZ externalised, then `pdftocairo -svg`.
-  Each goes in as an `<img>` data URI, never inline: pdftocairo's glyph ids repeat
-  from one SVG to the next and would collide. The SVG keeps the TikZ bounding box,
-  so `width` alone sizes it, as `\resizebox{\linewidth}{!}` did.
-* **Fonts are the ones the PDF used**: the TeX Live OTFs of the same faces,
-  subset to WOFF2, with their OpenType features kept.
-* **Check by overlay, in more than one engine.** Every page is shot in Firefox
-  (Gecko) and in WebKit, the engine of Safari, and each is compared with
-  `pdftoppm` of the PDF at the same size. The target is the same lines within a
-  few pixels; a constant offset is the frame's glue, a step is one gap.
-
-* **Embedded, the deck tells its host its shape.** Every HTML deck must do this,
-  so that APICe (or any page) can frame it at its own proportions, 4:3, 16:9 or
-  anything else. Three parts, all in the deck, copied as they are:
-
-  1. the drawing size on the deck element: `1024`/`768` for 4:3, `1024`/`576` for
-     16:9, the same numbers the frame CSS uses:
-
-     ```html
-     <main class="deck" data-width="1024" data-height="768" …>
-     ```
-
-  2. scaling on the root's size, not on the `resize` event, which a frame resized
-     by its host does not reliably fire:
-
-     ```js
-     const fit = () => deck.style.setProperty('--scale',
-       Math.min(innerWidth / +deck.dataset.width, innerHeight / +deck.dataset.height));
-     new ResizeObserver(fit).observe(document.documentElement);
-     ```
-
-  3. the announcement, at the end of the deck's script, after the first `fit()`:
-
-     ```js
-     if (window.parent !== window)
-       window.parent.postMessage({ type: 'deck-size',
-         width: +deck.dataset.width, height: +deck.dataset.height }, '*');
-     ```
-
-  A message, not a read from outside: the host frames an uploaded file with
-  `sandbox="allow-scripts"` and no `allow-same-origin`, which must stay, so it
-  cannot look inside. The host side, as APICe's Talks sheet has it for its
-  `<iframe id="talkhtml">`:
-
-<!-- markdownlint-disable MD013 -->
-  ```js
-  addEventListener('message', e => {
-    const f = document.getElementById('talkhtml');
-    if (!f || e.source !== f.contentWindow || e.data?.type !== 'deck-size') return;
-    const { width: w, height: h } = e.data;
-    if (w > 0 && h > 0) { f.style.aspectRatio = `${w} / ${h}`; f.style.height = 'auto'; }
-  });
-  ```
-<!-- markdownlint-enable MD013 -->
-
-  A deck that posts nothing keeps the host's default frame.
-
-### AMSUniBo
-
-* **Palette**: the `--ams*` custom properties copy `beamercolorthemeamsunibo.sty`
-  name for name. Use them by name and never write a hex value elsewhere.
-* **Faces**: Merriweather Sans light, 300, for the body; regular, 400, for block
-  titles; bold, 700, for `\textbf`; Merriweather regular for the frame and page
-  titles, and its italic for an `\emph` in a title; Inconsolata for code and
-  addresses, with `ss01` and `ss03` (the `varl` and `varqu` options). Oldstyle
-  figures everywhere, math included:
-  `font-variant-numeric: oldstyle-nums proportional-nums`.
-* **`scaled=0.92` is the sans only**: `--fs` is `0.92 * --pt` and sizes Merriweather
-  Sans. The serif titles are not scaled, and the math symbols are not either.
-* **Math symbols** Merriweather lacks (`→ ⇐ ⇒ ∈ ∙ ∼ ⋅`) come from NewCMMath.
-  They are loaded as a second Merriweather Sans face with a `unicode-range` and
-  `size-adjust: 108.7%`, declared **after** the text faces or the text faces win.
-  `\iff` is ⇐ and ⇒ overlapped, as TeX builds it. `×`, `≠`, `≥` and `−` are
-  closer in Merriweather and stay there. `\mathcal` letters are the Unicode
-  script ones (`𝒜 𝒞 ℒ`), from the same face.
-* **Geometry, measured on 128 mm paper**: headline 12.8pt, frame title band 24.4pt
-  with its text at 8.5pt, footline 9.9pt; text margin 10.909pt, text width
-  342.295pt; item indent 21.818pt.
-* **infolines**: the headline is two halves, the section right-aligned on
-  `amsred` and an empty `amsgreentint2`. The footline is three thirds: author
-  (institute) on `amsgreendark`, the short title on `amsgreentint2`, the date and
-  `n / N` on `amsgreentint`. All of it is in `\tiny`.
-* **Blocks**: rounded at 4pt and shadowed. The box overhangs the text 4pt left
-  and 2.6pt right, with 4pt of padding. The title is 12pt regular in a bar
-  15.76pt tall, its baseline 11.95pt down; the body opens with a 2pt gradient
-  from the title colour. An untitled block's text starts 3.5pt into the box. A
-  block has 7.5pt above it, 4pt below, and 7pt before a list that follows it.
-* **Balls**: radial-gradient spheres in `amsred`, 5.2pt at the first level, 4pt
-  at the second. Enumerate balls are 8.4pt with the number in white bold.
-* **Paired commands keep their weights**: `.ccite` is `amsgreyline`, `\tiny`,
-  raised 3.3pt; `.uurl` and `.apice` are `amsred` Inconsolata at 8pt; in the
-  bibliography the APICe marker is `amsgreendark` and `.dddoi`/`.uuurl` are
-  `amsgreyline` at 6pt.
-* **Bibliography colours by block**: label `amsgreymid`, authors `amstext`, title
-  `amsred` bold, location `amsgreymid`, note `amsgreendark`. The hanging indent
-  is
-  11.75pt.
-* **Title page**: a rounded, shadowed `amsgreentint` box holds the title (14.4pt)
-  and the subtitle (`amsgreymid`, 10.95pt), both serif. Authors are `amsred`,
-  with the speaker bold; the institute is `amsgrey` in `\scriptsize`, and the date
-  `amsgreymid`.
-* **The seal**: the theme's own placement, rendered and cropped by `seal.sh`,
-  which prints the box to put in `.frame::before`.
-
-## the tools
-
-<!-- markdownlint-disable MD013 -->
-Everything comes from Homebrew: `brew install playwright-cli pymupdf fonttools
-geckodriver`, with TeX Live, poppler and the Firefox cask. Firefox is driven
-headless through `geckodriver`; WebKit is Playwright's, through the Node library
-inside `playwright-cli`, whose browser build Playwright downloads once:
-`node $(brew --prefix playwright-cli)/libexec/lib/node_modules/@playwright/cli/node_modules/playwright-core/cli.js install webkit`.
-`tools/browser.py` puts the two behind one interface, for `shoot.sh` and the
-measuring tools; Safari itself does not reliably accept automated sessions.
-<!-- markdownlint-enable MD013 -->
-
-### html.sh, the whole run
-
-From the deck's root:
-
-```sh
-../beamer-AMSUniBo/html/html.sh            # tex/ holds one deck
-../beamer-AMSUniBo/html/html.sh l2-lp      # tex/ holds several: name one
+```bash
+bash .style/html/html.sh [<deck>] [--compare]               # AMSUniBo decks
+bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
 ```
 
-It builds the PDF; for a generated page (a `deck.json` with a `title`) it writes
-the page with `build.py` and runs `nudge.py` four times (`gaps` three, then
-`both`), rebuilding after each; it refills the ASSETS block — fonts, the seal of
-the class option, the TikZ pictures listed in `deck.json`'s `figures` in source
-order, the deck's own `img/` pictures — and ends with `stats.py` and `blocks.py`
-in WebKit and in Firefox, whose rows a person reads against the checklist. The
-deck's inputs are in `html/tex2html/`, or `html/tex2html/<deck>/` in a
-repository of several decks; with none there, it writes a starting `deck.json`
-and stops.
+- `<deck>` is the jobname (`l2-lp`, or `tex/l2-lp.tex`); it may be omitted when `tex/` holds one
+  `.tex`.
+- The page goes to `html/<name>.html`, `<name>` being the PDF's name in `pdf/` (latexmk's
+  `aux/<deck>.pdfprev`, else `aux/<deck>.pdfname`, else the jobname).
+- The work is done on a copy of the sources in `aux/html/<deck>/`; the repository is only read.
+- `--compare` draws every page in Playwright WebKit and in Firefox headless and measures it against
+  `aux/<deck>.pdf` (ImageMagick AE at 12% fuzz): `aux/html/cmp-<deck>/wk.txt` and `ff.txt`, one line
+  per page. Never Chrome.
 
-### one tool at a time
+A deck takes 6–27 s for a talk, about 70 s for a 329-page course deck.
 
-With `A` a scratch folder for the assets:
+Needs: TeX Live (`latex`, `bibtex`, `dvisvgm`, `dv2dt`, `dt2dv`), and from Homebrew `poppler`
+(`pdftocairo`, `pdfinfo`, `pdftoppm`), `imagemagick`, `fonttools` (its own interpreter, which
+has brotli for WOFF2); for `--compare` also `playwright-cli` with WebKit, and Firefox.
 
-```sh
-T=../beamer-AMSUniBo/html/tools
-$T/subset-fonts.sh $A/fonts
-$T/seal.sh cesena $A                        # or bologna; prints the CSS box
-$T/externalize.sh tex/<deck>.tex $A         # fig-0.svg, fig-1.svg … in source order
-mv $A/fig-0.svg $A/<name>.svg               # one per data-asset name in the page
-cp img/<name>.png $A/                       # the deck's own pictures: .png or .jpg
-python3 $T/assets.py "html/<Title>.html" $A # refills the ASSETS block in place
-```
+## The page
 
-and to check:
+One `.html` file that loads nothing from the network, so it works offline and can be attached to an
+APICe page like the PDF. Each PDF page is a `<section class="frame">` holding the page's SVG; the text
+is real text in the deck's fonts (selectable, searchable, read aloud), the links work (internal ones go
+to `#<page>`, external ones open a new tab). Keys → ← space PgUp PgDn Home End, `f` for full screen,
+`#n` opens page *n*; inside an APICe page it sends the `deck-size` message.
 
-<!-- markdownlint-disable MD013 -->
-```sh
-pdftoppm -scale-to-x 1024 -scale-to-y 768 -png "pdf/<Title>.pdf" $A/ref/p
-$T/shoot.sh firefox "html/<Title>.html" $A/firefox <pages>
-$T/shoot.sh webkit "html/<Title>.html" $A/webkit <pages>
-$T/shoot.sh webkit "html/<Title>.html" $A/zoom <pages> 4    # the checklist's 4x look
-python3 $T/compare.py $A/ref $A/firefox <page> $A/sheet.png   # and the same for webkit
-```
-<!-- markdownlint-enable MD013 -->
+## The pipeline
 
-### tex2html, the converter
+`tools/deck2html.zsh <repo> <deck.tex> <out.html>`.
 
-`tools/tex2html/` writes the page instead of a hand: frames from the `.tex`,
-references from the `.bbl`, line breaks and per-frame corrections from the PDF.
-It knows the TeX subset of the decks it has met and reports any command it does
-not; a new deck may need it grown.
+**On the way in**, on the copy:
 
-`theme.css` and `script.js` there are the theme and the deck script every
-generated page carries, the deck-size announcement included. What belongs to
-one deck lives in that deck, in `html/tex2html/`: `deck.json` (paths, names,
-short fields, alt texts, the deck's own name macros), `titlepage.html`,
-`deck.css` and `nudges.json`, the per-frame corrections, which `nudge.py` writes.
+1. PDF pictures become SVG beside them (`pdftocairo -svg`), which PGF and graphicx then prefer:
+   dvisvgm's own PDF route names images by object number, and two PDFs with an image 4 on one page
+   swapped their pictures. A PDF whose SVG needs soft-mask filters becomes a transparent 200-dpi PNG on
+   its crop box instead, with an `.xbb` of that box (pdflatex reads a PDF on its crop box). Large photo
+   bitmaps inside the SVGs become JPEG when that halves them (`svgjpeg.py`); `\includegraphics{x.pdf}`
+   loses its extension so that the choice applies.
+2. Bitmaps whose resolution has no unit get an `.xbb` at 72 dpi, pdflatex's reading (`imgbb.py`).
+3. Video commands the tool does not handle are named in a WARNING at the start.
+4. `latex`, through a wrapper that only sets drivers: PGF `pgfsys-dvisvgm.def`, graphicx and xcolor
+   `dvisvgm`, hyperref `hypertex`; PGF's driver is given graphicx's image formats; `\videolink` becomes
+   its poster in a marked group. A fatal latex error stops the conversion.
+5. The DVI is repaired in its text form (`dv2dt`/`dt2dv`): colour groups for Beamer's `\color` inside
+   pictures, closed before PGF's own `</g>`, and balanced groups (`fixdvi.py`); word spaces marked
+   (`spaces.py`); one more page with every character of the deck, font by font (`allglyphs.py`).
 
-```sh
-export TEX2HTML_DECK=html/tex2html
-python3 $T/tex2html/build.py                # writes the page named in deck.json
-python3 $T/assets.py "html/<Title>.html" $A
-python3 $T/tex2html/nudge.py webkit "" gaps # build; twice more; then "both"
-python3 $T/tex2html/stats.py webkit         # worst errors, per page
-python3 $T/tex2html/stats.py firefox
-python3 $T/tex2html/blocks.py webkit        # every block against the PDF's box
-```
+**dvisvgm**: `--font-format=woff2 --linkmark=none --bbox=papersize`, all pages in one run.
 
-`build.py` keeps the page's ASSETS block, so a rebuild needs `assets.py` only
-when the assets change. After an edit to a frame, rebuild the PDF, then the
-page, and nudge that frame again: its old corrections may no longer fit.
+**On the way out:**
 
-## the checklist
+1. `svgfix.py` per page: Beamer's block shadow (a fading, which PGF's SVG drivers lack) redrawn as a
+   blurred rectangle and moved before the block's title, so the block covers it and only its fringe
+   shows; glyphs never take the colour groups' stroke; a `<use>` of a `<symbol>` gets its size; linked
+   bitmaps and SVGs embedded; the space marks become spaces; a `\videolink`'s MP4 found.
+2. `assemble.py`: one page; ids and classes prefixed per page; a repeated picture stored once; the
+   extra page's fonts replace every per-page subset (one WOFF2 per font); private-use glyphs
+   (old-style figures) given their real characters too (`fontfix.py`); ligatures as plain letters;
+   each video embedded once, laid over its poster and played on a click.
 
-Every page, new or old, before it is called done. Each point is a mistake an
-experiment made and Andrea saw; each has the check that catches it. A page made
-before a point was added is checked against it when it is next touched.
+## Results
 
-1. **Text and lines.** The text and its line breaks are identical to the PDF,
-   and every baseline is within about 1pt of it, in WebKit and in Firefox:
-   `stats.py webkit`, `stats.py firefox`.
-2. **Blocks.** Every block's box meets the box the PDF draws within about 1pt,
-   top and bottom: `blocks.py webkit`, `blocks.py firefox`. What it caught:
-   * a correction on `.block-body` itself. Never put a margin or a padding
-     nudge there: under a title bar it opens a light line, or slides the body's
-     gradient over the bar and blurs its edge. Correct what is inside the body,
-     or move an untitled block as a whole;
-   * the title bar's height: 15.76pt, its baseline 11.95pt down, which is a
-     padding of 1.03pt and 0.73pt. Pages made before 2026-10-12 have 1.5pt and
-     1pt, 0.7pt too tall;
-   * the bottom, which TeX sets by the real depth of the last line: a body's
-     padding-bottom is 2.8pt less the gap between that line's deepest glyph
-     and a `g`. `depth.py` computes it from the PDF and the fonts; by hand, a
-     last line with none of `g j p q y , ; ( ) /` takes about 2.44pt less at
-     `\normalsize`, 2.2pt in a second-level item;
-   * an untitled block: its body's padding-top is 3.5pt.
-3. **Bibliography.** An `<i>` in a title is bold italic, as the PDF has it:
-   `.bib-title > i { font-weight: 700; }`. The theme's `i` rule makes it light.
-4. **Footline.** The date's right edge does not move with the page number.
-   Check it against the PDF on a numbered and on an unnumbered page; in
-   experiment 2 the number sat in a 28pt box, 18.38pt when unnumbered.
-5. **Embedded.** The three parts of the deck-size rule above, copied as they
-   are.
-6. **Look closely.** Overlays at 1024 × 768 hide half-point faults that show on
-   a real screen. Zoom on the block bars at four times, the PDF beside both
-   engines: `pdftoppm -scale-to-x 4096 -scale-to-y 3072`, and
-   `shoot.sh <engine> <page> <outdir> <pages> 4`.
+Checked against the PDF in WebKit and Firefox on nine decks of all six AMS styles (2026-10-31): no page
+above 3.1%, the rest being anti-aliasing; every page smaller than its hand-made predecessor once
+gzipped (APICe serves attachments gzipped). Checked by eye since: shadows on AGoT, Blockchain, DS C4,
+SMA-LS C1; videos in AS C7; TikZ pictures in IAG L2 and SMA-LS S4.
 
-The checks run on a page written by hand too: a `deck.json` with `root`,
-`tex`, `bbl`, `pdf` and `page` is all `stats.py` and `blocks.py` need. Text
-inside a picture (TikZ labels in the PDF) can throw `stats.py`'s alignment off
-on that page, and a table can throw off `blocks.py`'s: read the rows, not only
-the worst number.
+## Limits
 
-## experiments
+- The text is placed word by word: a paragraph copies as words with spaces, not as flowing lines, and
+  a word hyphenated by TeX stays broken. Not relevant: the HTML is for viewing, the PDF for the text.
+- Images carry no description (`alt`), unlike the hand-made pages.
+- Beamer's shadow is redrawn, not translated: it matches at the eye, a hair darker than the PDF's.
+  The block's title is found as the first picture at the block's x since the previous block; if none
+  is found, the shadow goes just before the body.
+- Videos: only `\videolink{<mp4>}{<poster>}`; another video command gets its own method when the
+  warning names it.
+- Overlays are pages, so a deck with many steps repeats them; gzip folds them. Left as it is.
+- No deck of ours uses TikZ animations yet.
 
-### 1 — AGoT @ AIxIA 2026, 2026-10-11
+## When a deck shows a problem
 
-`agot-aixia2026-slides`: 20 pages, three TikZ pictures (two graphs and a pgfplots
-chart), one booktabs table, fifteen blocks, a three-page bibliography. Every page
-ended within about 5px of the PDF.
-
-* The line-break rule was found here. Reflowed text broke one word early on
-  every line TeX had squeezed.
-* The 40/60 rule was found here. Centred content sat up to 40px off, and by an
-  amount that depended on its height.
-* Per-frame corrections were needed on the two `allowframebreaks` pages of
-  *From Chain-of-Thought to Graph-of-Thoughts*, where TeX stretched list spacing
-  by 8–10px. Smaller nudges, 25–30px of padding, went on four other frames and
-  on the three reference pages.
-* An `<img>` with a class loses its margin to `img.figure { margin: 0 auto }`.
-  Size and space pictures with `img.<class>`.
-* `.block-body > :first-child { margin-top: 0 }` beats a plain class on a display
-  that opens a block. Qualify it as `.block-body > .displaymath`.
-* The page is standard HTML and CSS: no engine prefix, nothing loaded from the
-  network. Two `-webkit-` properties were found and removed after the first
-  commit; the rule is to write the standard property and nothing else.
-* The checks were first made in Chrome alone, which proves nothing about the
-  other engines. Redone in Firefox and in Playwright's WebKit 26.6, every page
-  matches the PDF within the same few pixels in both. Between the two engines,
-  0.3–3% of pixels differ, all of it glyph anti-aliasing, none of it position.
-* Safari 27 itself would not open a WebDriver session, with remote automation
-  allowed, `safaridriver --enable` done and the driver run from Terminal. Hence
-  Playwright's WebKit in `shoot.sh`.
-* Still visible, in every engine: NewCMMath's `→` is a little shorter than the
-  one in the PDF, so text after it sits a few pixels left.
-* Still open: the CSS of the theme and the script live in the deck's page. The
-  next deck should take them from here, which means extracting them into this
-  folder and having `assets.py` inline them as it does the fonts.
-
-* **Brought through the checklist, 2026-10-12**, by hand, measured with
-  `stats.py` and `blocks.py` from a `deck.json` alone. Before: blocks off by up
-  to 2.4pt and baselines by up to 3.1pt; experiment 1's ink-line overlays had
-  read the same page as within 5px. After: every block within 0.5pt of the PDF,
-  top and bottom, and every baseline within 0.4pt, in WebKit and Firefox.
-* Depth was not the fault here: every block's last line reaches as deep as a
-  `g`, and `depth.py` gives about 0 throughout. What moved the blocks was the
-  title bar padding, text set about 0.5–1.3pt high under its bar, and the
-  frames' glue.
-* By hand the corrections are one CSS block, keyed by page
-  (`.frame:nth-of-type(n)`), not attributes on the markup: a `translate` per
-  top-level element of a body, which moves nothing around it, and a padding on
-  the first element inside a block body where its text sits high. A body with
-  an inline padding cannot take a second padding from a rule; `translate`
-  sidesteps that. Iterate: shortening one element re-centres the frame by 0.4
-  of the change.
-* Found here: the enumerate's item spacing was 0.8pt short on a stretched page;
-  the bibliography's lines are 9.467pt apart, not 9.5pt, its entries 2.88pt
-  apart, not 3.5pt; a booktabs body's first row sits 1.36pt nearer the rule.
-* The footline number had a gap, not a box: the date moved with the number's
-  width, by up to 2.4pt, and an unnumbered page's date sat 8pt off. A 26.9pt
-  box with 0.73pt of padding inside it, 19.04pt when unnumbered, puts the date
-  within 0.01pt on both kinds of page.
-* `stats.py`'s worst numbers on page 8 (+135pt) and `blocks.py`'s on page 12
-  (+124pt) are the TikZ labels and the chart throwing the alignment off; the
-  rows themselves are right.
-
-### 2 — MAS tutorial @ AIxIA 2026, 2026-10-12
-
-`mastutorial-aixia2026`: 120 pages, of which 7 contents frames, 5
-`allowframebreaks` frames, two pictures (a PNG chart and a JPG cover in
-`picturecolumns`) and a bibliography of 108 entries over 21 pages. Every
-baseline ended within 1.0pt of the PDF in WebKit and 1.4pt in Firefox; left
-edges within 2.6pt, the worst where TeX shrank a line's interword glue.
-
-* Too many pages to write by hand: the page was generated from the `.tex` and
-  the `.bbl` by a converter for the deck's TeX subset, then checked like a
-  written one. Its text matched the PDF character for character on every page,
-  acronym first uses (reset on every page by the deck's `names.sty`) included.
-* Line breaks were copied by aligning the page's characters with the PDF's
-  (PyMuPDF), not its words: a break after an explicit hyphen has no space to
-  turn into a `<br>`.
-* The check that counts is the baseline of every text run, read in the
-  browser through a zero-height `inline-block` at its start and compared in
-  points with the PDF's glyph origins. `compare.py`'s ink lines misread block
-  title bars in Firefox and flag pages that are right.
-* TeX's glue was corrected per frame as in experiment 1, but computed: a
-  `margin-top` on the element where the PDF steps (338 of them) and one padding
-  per body (87). On a `[c]` body, a top padding moves the content by 0.6 of
-  itself, a bottom one by 0.4.
-* An item that wraps before its sub-list takes the sub-list's baselineskip,
-  12pt at the first level and 11pt at the second: the sub-list's font is set
-  before TeX ends the item's paragraph. `li.wrapsub` carries it.
-* Found here: third-level items are `\footnotesize`, 9/11; `\item[label]` is
-  right-aligned `.5em` before the text, in the item's size; `indquotation` has a
-  2em left margin in a block and none in an item, its first line indented
-  1.5em; a lone `$=$`, `$+$` or `$\times$` has no space around it, `\mid` has
-  5mu each side; `\smaller` from `\normalsize` in a quotation is
-  `\footnotesize`; a `[t]` frame has no top fill; an unnumbered page's date sits
-  9.58pt further right.
-* An `<i>` in a bibliography title is bold italic, as in the PDF; the theme's
-  `i` rule made it light. Experiment 1's page has the same rule and one such
-  title, not rechecked.
-* Tools: `subset-fonts.sh` and `assets.py` gained Merriweather Italic and the
-  three script letters, `assets.py` embeds `.png` and `.jpg` beside `.svg`, and
-  `shoot.sh` makes its output folder absolute: given a relative one, headless
-  Firefox wrote nothing and said nothing.
-* Over 99 pages `pdftoppm` names its files `p-001.png`, while `compare.py` reads
-  `p-01.png`: link them under two-digit names.
-* The converter, the measuring and the per-frame corrections are kept as
-  `tools/tex2html/`, the deck's inputs in its `html/tex2html/`.
-* Block bars, seen by Andrea on the live page: a correction put on a block's
-  body opened a light line under the title bar, or slid the body's gradient up
-  over it, which read as a blurred edge. The nudger now never moves a body,
-  only what is inside it, and an untitled block as a whole. The title bar was
-  also 0.7pt too tall in both engines: 1.03pt and 0.73pt of padding, not 1.5
-  and 1, give the PDF's bar. Experiment 1's page still has the old padding.
-* **TeX ends a block at the real depth of its last line**, a browser at the
-  font's descent: a last line with no descender (`own`, `social`) ends its
-  block 2.44pt higher in the PDF than one with a `g` or a `p`. `depth.py`
-  reads each block's last line in the PDF and the glyph outlines of its faces,
-  and pads the body by the difference. Every block now meets the PDF's drawn
-  box within about 1pt, top and bottom; `compare.py` could not have seen it.
-* The deck-size rule came the same night, from APICe: the page carries it
-  through the converter's `script.js`, and was checked framed in a sandboxed
-  `<iframe>` with the host listener above, in WebKit and Firefox.
-
-### 3 — the tools on Homebrew, and `html.sh`, 2026-10-24
-
-No new page: the tools moved off the pip venv, at Andrea's rule that everything
-comes from Homebrew, and the run became one command. Checked on experiments 1
-and 2, whose pages were rebuilt and measured again.
-
-* `browser.py` drives Firefox through `geckodriver` with plain WebDriver calls,
-  and WebKit through a small Node bridge to the Playwright library inside
-  `playwright-cli`; `shoot.sh`, `measure.py` and `blocks.py` use it. Playwright's
-  own Firefox is no longer needed: the Firefox cask is measured instead.
-* The numbers are the logged ones. Experiment 1: baselines within 1pt on every
-  page but 8, where the TikZ labels throw the alignment, and the block of page 12
-  the same way. Experiment 2: baselines within 1.02pt in WebKit and 1.36pt in
-  Firefox, left edges within 2.64pt, blocks within 1.05pt.
-* Headless Firefox counts its chrome in the window: a 1024 × 768 window gave a
-  683pt-high viewport. `browser.py` grows the window by what is missing.
-* **The corrections are not idempotent.** Four more `nudge.py` passes on the
-  settled page of experiment 2 added a margin and moved one block from −0.39pt to
-  −1.02pt. `html.sh` corrects a page only the first time, when there is no
-  `nudges.json`, or when asked with `--nudge`.
-* Rebuilt with the corrections it has, experiment 2's page came out byte for byte
-  the same, but for the seal, whose PNG is now encoded differently: all 120 pages
-  pixel-identical to before in both engines. Experiment 1's assets, refreshed,
-  gained Merriweather Italic and the three script letters of experiment 2; its 20
-  pages too are pixel-identical. Neither page was replaced.
-* The converter against `iag2627-slides`: of 19 decks one reads through
-  (`m3-ai`, which still lacks `\prolog`); the others stop at the first
-  environment it does not know — `description`, `enumerate`, `verbatim`, `quote`,
-  `tabular` — and two have no `.bbl`, which `build.py` still requires.
+Find the smallest case (the frame), see what dvisvgm does with it, and fix it in the way in or the
+way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
+then on two or three other decks where it could show.
