@@ -1111,3 +1111,24 @@ markup as it was, so the pages it moves keep corrections made for the old layout
 of the pages that measure off (`stats.py`, then `nudge.py` on those pages alone). Also: test a fix with `build.py` alone on the
 pages concerned (seconds), and run `html.sh` (nudges, both engines, minutes per deck) once per deck at the end;
 check against a visual tolerance of about 3pt, and count decks done against time.
+
+### 13 — DS 2025/2026, AMSBolognaFC, 2026-10-31
+
+`ds2526-slides`, 17 decks, inputs from ISE 25/26's generator reading `ds.sty` (run folder `2026.10.31 – DS 25·26 HTML`).
+Every deck page for page with its PDF, defects fixed by hand frame by frame, each drawn beside its PDF page.
+
+What the translator learnt, general (Andrea asked for it: "change the translator so that it can get FRAME BY FRAME"):
+
+* **Parts.** `\part{…}` under `\AtBeginPart{\frame{\partpage}}` makes a part page (`partpage` in `build.py`, its
+  geometry in `theme-AMSBolognaFC.css`, measured on C4); a frame holding only `\tableofcontents[part=<n>,…]` is an
+  outline under the frame's own title listing that part's sections (`hideallsubsections` honoured); the section and
+  subsection outlines list only the current part's sections, numbered across the deck, the first number set on the
+  first entry (`part_start`: a fills list is `display: contents`, so a `counter-reset` on it does nothing). A deck
+  without parts gives the same frames as before (ISE 25/26's M3 and A0 checked field by field).
+
+Found and left to hand fixes (listed in the run folder's README): BolognaFC has no rules for `cases`, `array`,
+`array.cols`, captions or tall-item bullets (copied into the deck's `deck.css`); math symbols dropped silently
+(`\iff`, `\Longleftrightarrow`, `\le`, `\ll`, `\Box`, `\Diamond`, `\parallel`, `\not\implies`); no dollar sign in
+any form; `quotation`; a `\\` between a picture and its caption; a page-only-pictures continuation of an
+`allowframebreaks` frame is lost unless the source gets a `\framebreak` (a deck.json `replace`, on the
+comment-stripped source).

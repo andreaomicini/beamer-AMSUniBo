@@ -256,6 +256,18 @@ img.figure { display: block; margin: 0 auto; }
 .tp-institute { margin-top: calc(9 * var(--pt)); color: var(--tp-institute); }
 .tp-date { margin-top: calc(13.5 * var(--pt)); color: var(--tp-date); }
 
+/* ----- part pages (\\AtBeginPart{\\frame{\\partpage}}): measured on DS 25/26's C4 ------------- */
+.partpage .body { position: absolute; inset: 0; padding: 0; }
+.pp-name, .pp-title { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-family: "LM Sans 17", "LM Sans 12", "LM Math";
+	font-weight: 400; font-size: calc(17.22 * var(--pt)); line-height: calc(17.22 * var(--pt)); }
+.pp-name { top: calc(78.2 * var(--pt)); color: #030507; }
+.pp-box {
+	position: absolute; left: calc(6.91 * var(--pt)); width: calc(349.02 * var(--pt)); top: calc(104.58 * var(--pt)); height: calc(53.18 * var(--pt));
+	border-radius: calc(4 * var(--pt)); background: var(--tp-box);
+	box-shadow: calc(1.6 * var(--pt)) calc(2 * var(--pt)) calc(2.2 * var(--pt)) rgba(0, 0, 0, .45);
+}
+.pp-title { top: calc(20.2 * var(--pt)); color: var(--tp-title); }
+
 /* ----- the bibliography ------------------------------------------------- */
 .bibitem { padding-left: calc(9.62 * var(--pt)); text-indent: calc(-9.62 * var(--pt)); margin-bottom: calc(5.88 * var(--pt)); }
 .bibitem > span { display: block; text-indent: 0; }

@@ -1619,12 +1619,30 @@ def pages():
             secs.append(C.inline(g))
             subs.append([])
             subsubs.append([])
+    # \\part: each section's part, by position (C4 of DS 25/26); a deck with no parts has them all in part 0
+    partat = [m.start() for m in re.finditer(r'\\part(?:\[[^]]*\])?\s*\{', doc)]
+    partof = [sum(1 for a in partat if a < m.start())
+              for m in re.finditer(r'\\section(?:<presentation>)?(\*?)(\[[^]]*\])?\s*\{', doc) if not m.group(1)]
+
+    def inpart(n, extra=None):
+        """beamer's contents within a part: only that part's sections, still numbered across the deck; n is the
+        part, 0 before any"""
+        ks = [k for k, q in enumerate(partof) if q == n] if partat else list(range(len(secs)))
+        if not ks:
+            return dict(secs=[], subs=[], subsubs=[], start=1)
+        a, b = ks[0], ks[-1] + 1
+        return dict(secs=secs[a:b], subs=subs[a:b], subsubs=subsubs[a:b], start=a + 1, **(extra or {}))
+    # \\AtBeginPart{\\frame{\\partpage}}: a page for each part (ds.sty)
+    partpages = bool(partat) and bool(re.search(r'\\AtBeginPart\s*\{[^}]*\\partpage', pre + ''.join(
+        f.read_text(errors='replace') for f in (ROOT / 'sty').glob('*.sty') if f.is_file())))
+    partno = 0
     out = []
     section = subsection = ''
     i = 0
     tok = re.compile(r'\\(sub)?section(?:<presentation>)?(\*?)(?:\[([^]]*)\])?\s*\{|\\frame(\[[^]]*\])?\{\\(titlepage|tableofcontents)(\[[^]]*\])?\}|\\begin\{frame\}'
                      r'|\\frame(?![A-Za-z])(\[[^]]*\])?\s*(?=\{)'
-                     r'|\\setbeamertemplate\{page number in head/foot\}\{\}')
+                     r'|\\setbeamertemplate\{page number in head/foot\}\{\}'
+                     r'|\\part(?:\[[^]]*\])?\s*\{')
     nonumber = False
     secno = subno = 0
     while True:
@@ -1635,6 +1653,14 @@ def pages():
             nonumber = True
             i = m.end()
             continue
+        if m.group(0).startswith('\\part'):
+            g, i = read_group(doc, m.end() - 1)
+            C.reset()
+            partno += 1
+            section = subsection = ''   # a part page has no section in its headline
+            if partpages:
+                out.append(dict(kind='part', section='', subsection='', number=partno, title=C.inline(g)))
+            continue
         if m.group(0).startswith('\\subsection'):
             g, i = read_group(doc, m.end() - 1)
             C.reset()
@@ -1642,8 +1668,9 @@ def pages():
             if not m.group(2):
                 subno += 1
                 if subtocs:
-                    out.append(dict(kind='subtoc', section=section, subsection=subsection, current=secno, shrink_auto=subshrink, shrink=subshrinkby,
-                                    currentsub=subno, secs=secs, subs=subs, subsubs=subsubs))
+                    ip = inpart(partno)
+                    out.append(dict(kind='subtoc', section=section, subsection=subsection, current=secno - ip['start'] + 1,
+                                    shrink_auto=subshrink, shrink=subshrinkby, currentsub=subno, **ip))
             continue
         if m.group(0).startswith('\\section'):
             g, i = read_group(doc, m.end() - 1)
@@ -1654,8 +1681,9 @@ def pages():
             if not m.group(2):
                 secno += 1
                 if sectocs:
-                    out.append(dict(kind='toc', section=section, current=secno, secs=secs, subs=subs, subsubs=subsubs,
-                                    shrink_auto=secshrink, shrink=secshrinkby))
+                    ip = inpart(partno)
+                    out.append(dict(kind='toc', section=section, current=secno - ip['start'] + 1,
+                                    shrink_auto=secshrink, shrink=secshrinkby, **ip))
             continue
         if m.group(5) == 'titlepage':
             out.append(dict(kind='titlepage', section=section, subsection=subsection))
@@ -1695,6 +1723,18 @@ def pages():
             title, j = read_group(fr, skip_ws(fr, j))
         else:   # a frame with no title (S2)
             title = ''
+        # a frame holding only \\tableofcontents[...]: an outline under the frame's own title; part=<n> lists that
+        # part's sections, hideallsubsections drops the subsections (C4 of DS 25/26's outlines of its three parts)
+        tm = re.fullmatch(r'\s*\\tableofcontents(?:\[([^\]]*)\])?\s*', fr[j:])
+        if tm:
+            o = [x.strip() for x in (tm.group(1) or '').split(',')]
+            pt = next((int(x.split('=')[1]) for x in o if x.startswith('part=')), None)
+            ip = inpart(pt) if pt is not None else dict(secs=secs, subs=subs, subsubs=subsubs, start=1)
+            if 'hideallsubsections' in o:
+                ip.update(subs=[[] for _ in ip['secs']], subsubs=[[] for _ in ip['secs']])
+            C.reset()
+            out.append(dict(kind='outline', section=section, subsection=subsection, title=C.inline(title), **ip))
+            continue
         # a body all in one group opened by a size, {\small ...}: that size declared for the body
         wrapped = re.fullmatch(r'\s*\{\s*\\(tiny|scriptsize|footnotesize|small)(?![A-Za-z])(.*)\}\s*', fr[j:], re.S)
         if wrapped:

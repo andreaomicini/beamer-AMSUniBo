@@ -94,13 +94,17 @@ def toc(n, p, title=True):
     out = [head]
     if title:
         out.append(f'{T}<h2 class="frametitle">{CFG["toc_title"]}</h2>')
+    elif p.get('title'):   # an outline frame with a title of its own (C4 of DS 25/26: "Outline of Part I. ...")
+        out.append(f'{T}<h2 class="frametitle">{p["title"]}</h2>')
     out.append(f'{T}<div class="body"{bst}>')
+    # within a part the sections keep their numbers across the deck: the list counts from the part's first
+    olst = f' style="counter-reset: enum {p["start"] - 1}"' if p.get('start', 1) > 1 else ''
     # "outline_fills": the outline alone (no frame title) takes the \vfill layout, sharing the space with the
     # [c] frame's own fills; the section frames keep the plain list (IAG 26/27)
     if CFG.get('toc_subsections') or (not title and CFG.get('outline_fills')):
         # beamer's \tableofcontents: \vspace*{-.5em}, a \vfill before each section and one after the
         # last; each section followed by its subsections, shaded with it when it is not the current one
-        out.append(f'{T}{T}<ol class="toc fills">')
+        out.append(f'{T}{T}<ol class="toc fills"{olst}>')
         out.append(f'{T}{T}{T}<li class="tocfill first"></li>')
         for k, s in enumerate(p['secs'], 1):
             sh = ' class="shaded"' if title and k != p['current'] else ''
@@ -111,12 +115,30 @@ def toc(n, p, title=True):
             out.append(f'{T}{T}{T}<li class="tocfill"></li>')
         out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
         return '\n'.join(out)
-    out.append(f'{T}{T}<ol class="toc">')
+    out.append(f'{T}{T}<ol class="toc"{olst}>')
     for k, s in enumerate(p['secs'], 1):
         sh = ' class="shaded"' if title and k != p['current'] else ''
         out.append(f'{T}{T}{T}<li{sh}>{s}</li>')
     out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
     return '\n'.join(out)
+
+def part_start(h):
+    """a contents list within a part counts from the part's first section: the starting number goes on the first
+    entry, since a "fills" list is display: contents and ignores a counter-reset (DS 25/26's C4)"""
+    m = re.search(r'(<ol class="toc[^"]*") style="counter-reset: enum (\d+)">', h)
+    if not m:
+        return h
+    h = h[:m.start()] + m.group(1) + '>' + h[m.end():]
+    k = re.compile(r'<li(?! class="toc(?:fill|mbox))( class="[^"]*")?>')
+    q = k.search(h, m.start())
+    return h[:q.start()] + f'<li{q.group(1) or ""} style="counter-increment: enum {int(m.group(2)) + 1}">' + h[q.end():]
+
+def partpage(n, p):
+    """\\AtBeginPart{\\frame{\\partpage}}: "Part I" over the part's title in the title page's box (DS 25/26's C4)"""
+    from frames import ROMAN
+    head, bst = section_open(n, 'frame partpage', '', '', centred=True)
+    return '\n'.join([head, f'{T}<div class="body"{bst}>', f'{T}{T}<p class="pp-name">Part {ROMAN[p["number"]]}</p>',
+                      f'{T}{T}<div class="pp-box"><p class="pp-title">{p["title"]}</p></div>', f'{T}</div>', '</section>'])
 
 def subtoc(n, p):
     """\\AtBeginSubsection's frame: every section shaded, the current one's subsections listed, the
@@ -131,8 +153,9 @@ def subtoc(n, p):
         # section with its subsections, all shaded but the current section and its current subsection
         # "subtoc_mbox": the frame's \\mbox{~} before and after the contents, a line each (IAG 26/27's iag.sty)
         mbox = f'{T}{T}{T}<li class="tocmbox"></li>' if CFG.get('subtoc_mbox') else None
+        olst = f' style="counter-reset: enum {p["start"] - 1}"' if p.get('start', 1) > 1 else ''   # within a part (DS 25/26's C4)
         out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
-               f'{T}{T}<ol class="toc fills">'] + ([mbox] if mbox else []) + [f'{T}{T}{T}<li class="tocfill first"></li>']
+               f'{T}{T}<ol class="toc fills"{olst}>'] + ([mbox] if mbox else []) + [f'{T}{T}{T}<li class="tocfill first"></li>']
         for k, s in enumerate(p['secs'], 1):
             subs = p['subs'][k - 1]
             # the subsubsections are all shaded, the current subsection's too: shaded once, where nothing
@@ -150,8 +173,9 @@ def subtoc(n, p):
             out.append(f'{T}{T}{T}<li class="tocfill"></li>')
         out += ([mbox] if mbox else []) + [f'{T}{T}</ol>', f'{T}</div>', '</section>']
         return '\n'.join(out)
+    olst = f' style="counter-reset: enum {p["start"] - 1}"' if p.get('start', 1) > 1 else ''
     out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
-           f'{T}{T}<ol class="toc">']
+           f'{T}{T}<ol class="toc"{olst}>']
     for k, sct in enumerate(p['secs'], 1):
         if k == p['current'] and p['subs'][k - 1]:
             out.append(f'{T}{T}{T}<li class="parent"><span class="shade">{sct}</span>')
@@ -371,11 +395,13 @@ for p in ps:
     if p['kind'] == 'titlepage':
         parts.append(sep + titlepage())
     elif p['kind'] == 'outline':
-        parts.append(sep + toc(n, p, title=False))
+        parts.append(sep + part_start(toc(n, p, title=False)))
     elif p['kind'] == 'toc':
-        parts.append(sep + toc(n, p))
+        parts.append(sep + part_start(toc(n, p)))
     elif p['kind'] == 'subtoc':
-        parts.append(sep + subtoc(n, p))
+        parts.append(sep + part_start(subtoc(n, p)))
+    elif p['kind'] == 'part':
+        parts.append(sep + partpage(n, p))
     elif p['kind'] == 'frame':
         parts.append(frame(n, p))
     elif p['kind'] == 'bib':
