@@ -1100,6 +1100,8 @@ def split_framebreaks(items):
                     stack.append((ind, m.group(0)))
             closing = '\n'.join(ind + f'</{re.match(r"<(\w+)", t).group(1)}>' for ind, t in reversed(stack))
             body = head + part.strip('\n') if k else part.rstrip()
+            if k:   # a cut between two items: the item opened again holds nothing, and would draw a bullet of its own (M10)
+                body = re.sub(r'\n[ \t]*<li>\s*</li>(?=\n)', '', body, count=1)
             if re.sub(r'<[^>]*>', '', body).strip() or '<img' in body:
                 out.append(body + ('' if k == len(parts) - 1 else '\n' + closing))
             opened = stack

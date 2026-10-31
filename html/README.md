@@ -1094,6 +1094,13 @@ and arrows are a little narrower than TeX's (up to 6pt over a proof tree's line:
 spacing came out wider still, so it waits); a shrunk outline with `toc_subsections` (SMA-LS 06/07's C4a) keeps its
 old correction, as its fills under a zoom are not matched yet.
 
+**A `\framebreak` between two items** (2026-10-31). The item opened again after the cut holds nothing and drew a
+bullet of its own (IAG 26/27's M10, page 33, mended by hand there): `split_framebreaks` now drops it. Tested in a
+sandbox on ISE 25/26's M11 (pages 27, 33) and M10 (71, 119, 122): one bullet per item, as in the PDF, nothing else
+changed. **Not handled:** a cut inside a nested list (ISE 25/26's M10, page 123): the outer item continues on the next
+page, holding only the nested list, and still draws a bullet the PDF does not have (a continuation, not a new
+item). No finished deck was rebuilt with the rule.
+
 **Method: frame by frame.** In Beamer every frame is independent, page numbers apart: a defect lives in one frame,
 and that frame is translated (`build.py`, with `TEX2HTML_NONUDGE=1` to see it as the translator sets it), drawn
 (`browser.py shoot <engine> <page> <dir> <p,q,r-s>`, which now takes single pages) and compared with its own PDF
