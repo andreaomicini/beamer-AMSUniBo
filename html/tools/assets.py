@@ -48,7 +48,7 @@ for p in sorted(assets.glob("ball-*.png")):   # the theme's balls, as the PDF dr
     css.append(f'.deck {{ --{p.stem}: url(data:image/png;base64,{b64(p)}); }}')
 
 names = sorted(set(re.findall(r'data-asset="([^"]+)"', html)))
-MIME = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg"}
+MIME = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
 def picture(n):
     p = next(assets / (n + e) for e in MIME if (assets / (n + e)).exists())
     return f'\t\t"{n}": "data:{MIME[p.suffix]};base64,{b64(p)}"'

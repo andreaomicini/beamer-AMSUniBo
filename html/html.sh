@@ -64,15 +64,16 @@ if [ ${#figs[@]} -gt 0 ]; then
 	"$T/externalize.sh" "tex/$deck.tex" "$A" >/dev/null
 	for i in "${!figs[@]}"; do mv "$A/fig-$i.svg" "$A/${figs[$i]}.svg"; done
 fi
-for name in $(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | sort -u); do
+# one name per line: a picture's name may hold a space (ISE 25/26's M0); .jpeg as .jpg (its M1)
+while IFS= read -r name; do
 	ls "$A/$name".* >/dev/null 2>&1 && continue
-	src=$(find -L img -name "$name.png" -o -name "$name.jpg" | head -1)
+	src=$(find -L img -name "$name.png" -o -name "$name.jpg" -o -name "$name.jpeg" | head -1)
 	if [ -n "$src" ]; then cp -L "$src" "$A/"; continue; fi
 	# a PDF picture, as pdflatex took it: to SVG, its text as outlines
 	src=$(find -L img -name "$name.pdf" | head -1)
 	[ -n "$src" ] || die "no picture for data-asset $name: list the TikZ ones in figures, in source order"
 	pdftocairo -svg "$src" "$A/$name.svg"
-done
+done < <(grep -o 'data-asset="[^"]*"' "$page" | sed 's/.*="\(.*\)"/\1/' | sort -u)
 python3 "$T/assets.py" "$page" "$A"
 
 ## corrected frame by frame the first time, or with --nudge: the corrections are not idempotent, and a
