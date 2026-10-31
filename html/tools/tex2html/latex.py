@@ -290,6 +290,14 @@ def load_bbl():
         entries.append((key, lab, rest.strip()))
     return labels, entries
 
+def _labels():
+    """\\newlabel{key}{{number}...} of the deck's .aux"""
+    try:
+        aux = (ROOT / CFG['pdf']).with_suffix('.aux').read_text(errors='replace')
+    except Exception:
+        return {}
+    return {m.group(1): m.group(2) for m in re.finditer(r'\\newlabel\{([^}]*)\}\{\{([^}]*)\}', aux)}
+LABELS = _labels()
 ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV',
          'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII']
 
@@ -297,7 +305,7 @@ ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 
 # math symbols: relations, binary operators, ordinary symbols
 MATHREL = {'approx': '≈', 'longrightarrow': '⟶', 'mapsto': '↦', 'neq': '≠', 'ne': '≠', 'geq': '≥', 'ge': '≥', 'leq': '≤',
            'sim': '∼', 'rightsquigarrow': '⇝', 'Downarrow': '⇓', 'Rightarrow': '⇒', 'equiv': '≡', 'in': '∈',
-           'models': '⊨', 'subseteq': '⊆', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑', 'downarrow': '↓',
+           'models': '⊨', 'vDash': '⊨', 'rightleftharpoons': '⇌', 'doteq': '≐', 'notin': '∉', 'subseteq': '⊆', 'subset': '⊂', 'supseteq': '⊇', 'supset': '⊃', 'backslash': '\\', 'leftarrow': '←', 'gets': '←', 'uparrow': '↑', 'downarrow': '↓',
            'leftrightarrow': '↔'}   # C10 of SMA-LS 07/08
 MATHBIN = {'cdot': '⋅', 'wedge': '∧', 'vee': '∨', 'circ': '∘', 'diamond': '⋄', 'rhd': '⊳', 'lhd': '⊲', 'land': '∧',
            'lor': '∨', 'cup': '∪', 'cap': '∩', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗'}
@@ -328,9 +336,9 @@ def tex_len(v):
     return f'calc({x * {"pt": 1, "mm": 2.84528, "cm": 28.4528, "in": 72.27, "bp": 1.00375}[u]:.2f} * var(--pt))'
 MATHORD = {'checkmark': '✓', 'varnothing': '∅', 'emptyset': '∅', 'infty': '∞', 'Delta': 'Δ', 'Xi': 'Ξ',
            'varepsilon': '\U0001D700', 'epsilon': '\U0001D716', 'ldots': '…', '%': '%', 'langle': '⟨', 'rangle': '⟩', 'Lambda': 'Λ',
-           'Theta': 'Θ', 'ell': 'ℓ', 'wp': '℘', 'exists': '∃', 'cdots': '⋯', 'dots': '…', 'bigwedge': '⋀',
+           'Theta': 'Θ', 'ell': 'ℓ', 'wp': '℘', 'exists': '∃', 'cdots': '⋯', 'dots': '…', 'dotsc': '…', 'vdots': '⋮', 'bigwedge': '⋀',
            'pi': '\U0001D70B', 'beta': '\U0001D6FD', 'theta': '\U0001D703', 'omega': '\U0001D714', 'sigma': '\U0001D70E',
-           '{': '{', '}': '}'}
+           '{': '{', '}': '}', 'lbrack': '[', 'rbrack': ']'}
 BLOCK_ENVS = {'block': '', 'alertblock': ' alert', 'exampleblock': ' example'}
 SIZES = {'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize', 'large', 'Large', 'LARGE', 'huge', 'Huge', 'smaller'}
 
@@ -361,7 +369,7 @@ class Conv:
             short_p, long_p = short + 's', long_ + 's'
         else:
             short_p, long_p = short, long_
-        if c in ('\\Acl', '\\Aclp', '\\Ac', '\\Acp'):
+        if c in ('\\Acl', '\\Aclp', '\\Ac', '\\Acp', '\\Acf'):
             long_p = cap(long_p)
         first = key not in self.used
         if not star:
@@ -370,7 +378,7 @@ class Conv:
             return short_p
         if c in ('\\acl', '\\aclp', '\\Acl', '\\Aclp'):
             return long_p
-        if c in ('\\acf', '\\acfp'):
+        if c in ('\\acf', '\\acfp', '\\Acf'):   # \\Acf capitalised (M4)
             return f'{long_p} ({short_p})'
         if c in ('\\ac', '\\acp', '\\Ac', '\\Acp'):
             return f'{long_p} ({short_p})' if first else short_p
@@ -482,7 +490,7 @@ class Conv:
                     out.append(self.inline(g) if name == 'mbox' else self.inline(f'\\{name}{{{g}}}'))
                 elif name == 'verb':   # \verb|...|: the text as it is, in the typewriter face
                     k = s.index(s[i], i + 1)
-                    out.append(f'<code>{esc(s[i + 1:k])}</code>')
+                    out.append(f'<code class="verb">{esc(s[i + 1:k])}</code>')
                     i = k + 1
                 elif name == 'left':   # \left ... \right: an inner atom, its delimiters at their natural size
                     d1, i = read_delim(s, i)
@@ -561,7 +569,16 @@ class Conv:
                             if part.startswith('\\math'):
                                 out.append(self.math(part))
                             elif part:
-                                out.append(f'<code>{esc(re.sub(r"\\([_{}%&#$])", r"\1", part))}</code>')
+                                # math mode: spaces go, a comma is punctuation with a thin space after it; \lbrack
+                                # and \rbrack are brackets (IAG 26/27's L1)
+                                t = re.sub(r'\\lbrack\s*', '[', re.sub(r'\\rbrack\s*', ']', part))
+                                t = re.sub(r'\\l?dots(?![A-Za-z])\s*', '…', t)
+                                t = re.sub(r'\s+', '', re.sub(r"\\([_{}%&#$])", r"\1", t))
+                                # only letters and digits are typewriter: newtx sets the brackets, bars and
+                                # commas of a \mathtt from the math fonts
+                                out.append(''.join(f'<code>{esc(r)}</code>' if re.match(r'[A-Za-z0-9]', r) else
+                                                   esc(r).replace(',', ',<span class="mthin"></span>')
+                                                   for r in re.findall(r'[A-Za-z0-9]+|[^A-Za-z0-9]+', t)))
                     elif name == 'mathsf':
                         out.append(f'<span class="msf">{self.math(g)}</span>')
                     elif name == 'variable':   # the deck's \left\langle{#1\/}\right\rangle
@@ -571,11 +588,15 @@ class Conv:
                         # \mathit sets the letters in the text italic, as words; anything else keeps its math font
                         out.append(re.sub(r'(?<![<&#/])\b([A-Za-z]+)\b(?![^<]*>)', r'<i class="mit">\1</i>', h) if name == 'mathit'
                                    else f'<span class="mrm">{h}</span>')
-                elif name in ('frac',):
+                elif name in ('frac', 'dfrac'):
                     a, i = read_arg(s, i)
                     b, i = read_arg(s, i)
-                    disp, self.display = self.display, False   # numerator and denominator in text style
-                    out.append(f'<span class="frac{" disp" if disp else ""}"><span class="num">{self.math(a)}</span>'
+                    disp, self.display = self.display or name == 'dfrac', name == 'dfrac'   # \\dfrac: display style, its parts too (M2)
+                    na = self.math(a)
+                    # a numerator holding a fraction runs deeper below its baseline, and the box stands on that
+                    # baseline: "tall" raises it so that its rule stays on the axis (M2's proof tree)
+                    tall = (' tall tall2' if 'tall' in na else ' tall') if 'class="frac' in na else ''
+                    out.append(f'<span class="frac{" disp" if disp else ""}{tall}"><span class="num">{na}</span>'
                                f'<span class="den">{self.math(b)}</span></span>')
                     self.display = disp
                 elif name == 'stackrel':
@@ -587,7 +608,7 @@ class Conv:
                     i += len(m2.group(0))
                     d = MATHORD.get(m2.group(1), '') if m2.group(1) else ('' if m2.group(2) == '.' else esc(m2.group(2)))
                     out.append(d)
-                elif name in ('sum', 'lim') and self.display:   # display style: limits under and over it
+                elif name in ('sum', 'prod', 'lim') and self.display:   # display style: limits under and over it
                     sub = sup = ''
                     for _ in range(2):
                         q = re.match(r'\s*([_^])', s[i:])
@@ -600,12 +621,22 @@ class Conv:
                         else:
                             sup = self.math(g)
                         self.display = disp
-                    sym = '<span class="op big">∑</span>' if name == 'sum' else '<span class="op lim">lim</span>'
+                    sym = {'sum': '<span class="op big">∑</span>', 'prod': '<span class="op big">∏</span>'}.get(name, '<span class="op lim">lim</span>')
                     sup = f'<span class="limsup">{sup}</span>' if sup else ''
                     sub = f'<span class="limsub">{sub}</span>' if sub else ''
                     out.append(f'<span class="oplim">{sup}{sym}{sub}</span>')
-                elif name in ('sum', 'lim'):
-                    out.append('<span class="op">∑</span>' if name == 'sum' else '<span class="op lim">lim</span>')
+                elif name in ('sum', 'prod', 'lim'):
+                    out.append({'sum': '<span class="op">∑</span>', 'prod': '<span class="op">∏</span>'}.get(name, '<span class="op lim">lim</span>'))
+                elif name in ('bigl', 'bigr', 'Bigl', 'Bigr', 'big', 'Big', 'biggl', 'biggr'):   # a delimiter's size: the delimiter (IAG 26/27)
+                    pass
+                elif name == 'emph':   # \\emph in maths (an \\mbox's text): its emphasis (M9)
+                    g, i = read_arg(s, i)
+                    out.append(f'<em>{self.inline(g)}</em>')
+                elif name in ('tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize'):   # a size inside maths: the text's (M9)
+                    pass
+                elif name == 'alert':   # \alert in maths: the alert colour (L7)
+                    g, i = read_arg(s, i)
+                    out.append(f'<span class="alert">{self.math(g)}</span>')
                 elif name == 'begin':
                     env, i = read_arg(s, i)
                     a, b = find_end(s, i, env)
@@ -632,7 +663,8 @@ class Conv:
                     else:
                         out.append('<span class="array">' + ''.join(f'<span>{c}</span>' for r in cells() for c in r) + '</span>')
                 elif name in (',', ';', ' ', '!'):
-                    out.append({',': '\u2009', ';': '\u2005', ' ': ' ', '!': ''}[name])
+                    # \! a negative thin space, -3mu (IAG 26/27's L4: $0\!-\!1$)
+                    out.append({',': '\u2009', ';': '\u2005', ' ': ' ', '!': '<span class="mkern" style="margin-left: -0.1667em"></span>'}[name])
                 else:
                     self.unknown.add('math\\' + name)
             elif c in '_^':
@@ -662,7 +694,12 @@ class Conv:
             elif c in '<>':
                 out.append(f'<span class="rel">{esc(c)}</span>'); i += 1
             elif c == "'":
-                out.append('′'); i += 1
+                q = re.match(r"'\s*_", s[i:])
+                if q:   # G'_1: TeX sets the prime as a superscript over the subscript, stacked (L2)
+                    g, i = read_arg(s, i + q.end())
+                    out.append(f'<span class="subsup"><sup>′</sup><sub>{self.math(g)}</sub></span>')
+                else:
+                    out.append('′'); i += 1
             elif c in ',;' and out and i + 1 < len(s):   # punctuation: a thin space after it, 3mu
                 out.append(f'{c}<span class="mthin"></span>'); i += 1
             elif c == '=' and out and re.fullmatch(r'<span class="rel">[^<]*</span>', out[-1]):
@@ -754,23 +791,69 @@ class Conv:
         c = re.match(r'\s*\\color\{([A-Za-z0-9]+)\}\s*', g)   # a palette colour (S5)
         if c:
             return f'<span style="color: var(--{c.group(1)})">' + self.group(g[c.end():]) + '</span>'
-        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|LARGE|smaller|bfseries|em|it|sl|sf|sc|itshape|ttfamily|normalfont|sffamily)(?![A-Za-z])\s*', g)
+        m = re.match(r'\s*\\(tiny|scriptsize|footnotesize|small|large|Large|LARGE|smaller|bfseries|bf|em|it|sl|sf|sc|itshape|ttfamily|normalfont|sffamily)(?![A-Za-z])\s*', g)
         if m:
             d = m.group(1)
+            # \\bf is \\normalfont\\bfseries: another old switch after it starts afresh (names.sty's {\\bf\\it {J}ason}: italic)
+            if d == 'bf' and re.match(r'\\(?:it|sl|sc|sf|rm|tt)(?![A-Za-z])', g[m.end():]):
+                return self.group(g[m.end():])
             inner = self.group(g[m.end():])   # declarations may follow one another
             if d in SIZES and inner.strip().startswith('\x00disp:<div class="displaymath">') and inner.strip().endswith('\x00'):
                 return inner.strip().replace('class="displaymath"', f'class="displaymath {d}"', 1)
-            tag = {'bfseries': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'it': ('<span class="it">', '</span>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
+            tag = {'bfseries': ('<b>', '</b>'), 'bf': ('<b>', '</b>'), 'em': ('<i>', '</i>'), 'it': ('<span class="it">', '</span>'), 'sl': ('<i>', '</i>'), 'itshape': ('<i>', '</i>'),
                    'sf': ('', ''), 'sc': ('<span class="sc">', '</span>'), 'ttfamily': ('<code>', '</code>'), 'normalfont': ('', ''),
                    'sffamily': ('', '')}.get(d, (f'<span class="{d}">', '</span>'))
             return tag[0] + inner + tag[1]
         return self.inline(g)
 
+    def qtree(self, t):
+        """qtree's \\Tree [.root child ... [.node ...] ]: an inline SVG, laid out as qtree does, leaves side by side,
+        each node centred over its children, straight lines from a node to each child; sizes in the text's em (M2)"""
+        toks = re.findall(r'\[\.(?:\{[^{}]*\}|\$[^$]*\$|\S+)|\]|\{[^{}]*\}|\$[^$]*\$|[^\s\[\]]+', t)
+        def parse(k):
+            label, k, kids = toks[k][2:], k + 1, []
+            while k < len(toks) and toks[k] != ']':
+                if toks[k].startswith('[.'):
+                    c, k = parse(k)
+                else:
+                    c, k = (toks[k], []), k + 1
+                kids.append(c)
+            return (label, kids), k + 1
+        if not toks or not toks[0].startswith('[.'):
+            return esc(t)
+        tree, _ = parse(0)
+        width = lambda lab: max(1.6, 0.62 * len(re.sub(r'[\\${}_^]', '', lab)))   # qtree's spacing, measured on M2
+        nodes, edges, x = [], [], [0.0]
+        def place(n, depth):
+            lab, kids = n
+            if not kids:
+                w = width(lab); cx = x[0] + w / 2; x[0] += w + 2.4
+            else:
+                cs = [place(c, depth + 1) for c in kids]
+                cx = (cs[0] + cs[-1]) / 2
+                for c in cs:
+                    edges.append((cx, depth, c, depth + 1))
+            nodes.append((cx, depth, lab))
+            return cx
+        place(tree, 0)
+        W, D = x[0] - 2.4, max(d for _, d, _ in nodes)
+        dy = 2.6
+        lines = ''.join(f'<line x1="{x1:.2f}" y1="{d1 * dy + 0.35:.2f}" x2="{x2:.2f}" y2="{d2 * dy - 0.95:.2f}"/>' for x1, d1, x2, d2 in edges)
+        def svgtext(lab):   # a label: math letters italic, as TeX sets $f$
+            lab = lab.strip('{}')
+            m = re.fullmatch(r'\$(.*)\$', lab)
+            txt = H.unescape(re.sub(r'<[^>]+>', '', self.inline(lab)))
+            return esc(txt), (' font-style="italic"' if m and re.fullmatch(r'[A-Za-z]+', m.group(1)) else '')
+        labels = ''.join('<text x="{:.2f}" y="{:.2f}" text-anchor="middle" font-size="1"{}>{}</text>'.format(cx, d * dy, *reversed(svgtext(lab)))
+                         for cx, d, lab in nodes)
+        return (f'<svg class="qtree" viewBox="0 -1 {W:.2f} {D * dy + 1.5:.2f}" style="width: {W:.2f}em; height: {D * dy + 1.5:.2f}em">'
+                f'<g stroke="currentColor" stroke-width="0.04">{lines}</g><g fill="currentColor">{labels}</g></svg>')
+
     def command(self, name, s, i):
         A = lambda: read_arg(s, i)
         simple = {'\\&': '&amp;', '\\_': '_', '\\%': '%', '\\#': '#', '\\ ': ' ', '\\,': '\u2009',
                   '\\ldots': '<span class="ldots">...</span>', '\\dots': '<span class="ldots">...</span>', '\\\\': '<br>', '\\newline': '<br>', '\\-': '',
-                  '\\refname': 'References', '\\appendixname': 'Appendix', '\\/': '', '\\allowbreak': '<wbr>', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '',
+                  '\\refname': 'References', '\\appendixname': 'Appendix', '\\/': '', '\\allowbreak': '<wbr>', '\\par': '\n\n', '\\relax': '', '\\{': '{', '\\}': '}', '\\selectfont': '', '\\lbrack': '[', '\\rbrack': ']', '\\quad': '<span class="mspace" style="--w: 1em"></span>', '\\qquad': '<span class="mspace" style="--w: 2em"></span>',
                   '\\beamertemplatebookbibitems': '', '\\beamertemplatearticlebibitems': ''}
         if name == '\\\\' and re.match(r'\s*\[', s[i:]):   # \\[<len>]: the break, and that much more space
             o, j = read_opt(s, i)
@@ -824,7 +907,8 @@ class Conv:
             return f'<span style="color: var(--{c})">{self.inline(g)}</span>', i
         if name == '\\verb' and i < len(s):   # \verb|...|: the text as it is, in the typewriter face
             k = s.index(s[i], i + 1)
-            return f'<code>{esc(s[i + 1:k])}</code>', k + 1
+            # its spaces as typed, each one visible, none collapsed (IAG 26/27's \verb|  :- goal.|)
+            return f'<code class="verb">{esc(s[i + 1:k])}</code>', k + 1
         if name in simple:
             if name in ('\\ldots', '\\dots') and s.startswith('{}', i):
                 i += 2
@@ -846,9 +930,29 @@ class Conv:
                  'textit': ('<i>', '</i>'), 'textsf': ('<span class="sf">', '</span>')}[n]
             return t[0] + self.inline(g) + t[1], i
         if re.match(r'[aA]c[a-z]*\*?$', n) and n.rstrip('*') in (
-                'ac', 'acs', 'acl', 'acf', 'acp', 'acsp', 'aclp', 'Aclp', 'Acl', 'Ac', 'Acp', 'acfp'):
+                'ac', 'acs', 'acl', 'acf', 'acp', 'acsp', 'aclp', 'Aclp', 'Acl', 'Ac', 'Acp', 'acfp', 'Acs', 'Acf'):
             g, i = A()
-            return self.acro(name, g), i
+            return self.acro(name.replace('\\Acs', '\\acs'), g), i   # \Acs: the short form, which is capitalised already
+        if n == 'textbar':   # (L3)
+            return '|', i + 2 if s.startswith('{}', i) else i
+        if n in ('textsl', 'textsuperscript'):   # slanted as italic, a superscript (M2, M8)
+            g, i = A()
+            return (f'<i>{self.inline(g)}</i>' if n == 'textsl' else f'<sup>{self.inline(g)}</sup>'), i
+        if n == 'framebreak':   # inside an environment (M7, M10): a mark, the frame is cut there when it is broken
+            return '\x00framebreak\x00', i + 2 if s.startswith('{}', i) else i
+        if n in ('toprule', 'midrule', 'bottomrule'):   # booktabs outside a tabular's row starts: nothing
+            return '', i
+        if n == 'bulletlist':   # courses.sty's \bulletlist{a, b, c}: the items, each unbroken, a bullet between them
+            g, i = A()
+            items, depth, cur = [], 0, ''   # split at top-level commas: {a, b} is one item, as for clist
+            for ch in g:
+                depth += {'{': 1, '}': -1}.get(ch, 0)
+                if ch == ',' and depth == 0:
+                    items.append(cur); cur = ''
+                else:
+                    cur += ch
+            items = [re.sub(r'^\{(.*)\}$', r'\1', x.strip(), flags=re.S) for x in items + [cur] if x.strip()]
+            return ' \u2022 '.join(f'<span class="nobr">{self.inline(x).strip()}</span>' for x in items), i
         if n == 'ccite':
             note, i = read_opt(s, i)
             g, i = read_arg(s, i)
@@ -868,6 +972,19 @@ class Conv:
             u, i = A()
             g, i = read_arg(s, i)
             return f'<a class="hhref" href="{H.escape(u.replace(chr(92), ""))}">{self.inline(g)}</a>', i
+        if n == 'parbox':   # \parbox[pos]{width}{text}: a box that wide, centred on the line as TeX's default (M9)
+            pos, i = read_opt(s, i)
+            w, i = read_arg(s, i)
+            g, i = read_arg(s, i)
+            from deck import STYLE
+            m = re.fullmatch(r'\s*([0-9.]*)\s*\\(?:text|line)width\s*', w)
+            pt = float(m.group(1) or 1) * STYLE.get('textwidth', 342.295) if m else None
+            st = f' style="width: calc({pt:.2f} * var(--pt))"' if pt else ''
+            va = {'t': ' top', 'b': ' bottom'}.get((pos or '').strip(), '')
+            # ~\\ ... \\~: lines of a space alone above and below, which TeX counts by their baselines only
+            if re.match(r'\s*~\s*\\\\', g) and re.search(r'\\\\\s*~\s*$', g):
+                va += ' spaced'
+            return f'<span class="parbox{va}"{st}>{self.inline(g)}</span>', i
         if n == 'mbox':
             g, i = A()
             return self.inline(g), i
@@ -907,11 +1024,27 @@ class Conv:
             g, i = A()
             cls = {'uurl': 'uurl', 'url': 'url', 'uuurl': 'uuurl'}[n]
             return f'<a class="{cls}" href="{H.escape(g.replace(chr(92), ""))}">{esc(g.replace(chr(92), ""))}</a>', i
-        if n == 'apice':
-            kind, i = A()
-            nm, i = read_arg(s, i)
-            host = {'talk': 'talks', 'pub': 'pubs', 'course': 'courses', 'event': 'events'}[kind]
-            return f'<a class="apice" href="https://{host}.apice.unibo.it/{nm}">{host}.apice.unibo.it/{nm}</a>', i
+        if n in ('LaTeX', 'TeX'):
+            # the logos as LaTeX draws them: the A raised and smaller, the E lowered by .5ex, kerned in
+            if s.startswith('{}', i):
+                i += 2
+            tex = 'T<span class="logo-e">E</span>X'
+            return f'<span class="logo">{"L<span class=" + chr(34) + "logo-a" + chr(34) + ">A</span>" if n == "LaTeX" else ""}{tex}</span>', i
+        if n in ('apice', 'aapice', 'apicesite', 'aapicesite', 'apicepage', 'aapicepage'):
+            # the style's APICe addresses: \apice{<kind>}{<Name>}, \apicesite{<alias>}, \apicepage{<Space/Page>},
+            # each with an optional [text] and a light twin (\aapice …, \tiny in amsgreyline)
+            text, i = read_opt(s, i)
+            if n.endswith('apice'):
+                kind, i = A()
+                nm, i = read_arg(s, i)
+                host = {'talk': 'talks', 'pub': 'pubs', 'course': 'courses', 'event': 'events'}[kind]
+                addr = f'{host}.apice.unibo.it/{nm}'
+            else:
+                g, i = A()
+                addr = f'{g}.apice.unibo.it' if n.endswith('site') else f'apice.unibo.it/bin/view/{g}'
+            cls = 'apice light' if n.startswith('aa') else 'apice'
+            shown = self.inline(text) if text is not None else esc(addr)
+            return f'<a class="{cls}" href="https://{H.escape(addr)}">{shown}</a>', i
         names = CFG.get('macros', {})   # the deck's own name macros, as plain text
         if n in names:
             if s.startswith('{}', i):
@@ -933,7 +1066,7 @@ class Conv:
             return f'<span class="{n}">{rest}</span>', len(s)
         if n == 'tt':
             return '<code>' + self.inline(s[i:]) + '</code>', len(s)
-        if n in ('bfseries', 'em', 'it', 'sf', 'sc'):
+        if n in ('bfseries', 'bf', 'em', 'it', 'sf', 'sc'):
             rest = self.inline(s[i:])
             return self.group('\\' + n + ' ' + s[i:]), len(s)
         if n == 'ensuremath':
@@ -952,6 +1085,29 @@ class Conv:
             return unicodedata.normalize('NFC', base + acc), i
         if n == 'newblock':
             return '\x00newblock\x00', i
+        if n == 'apicetalkpar':   # the talk's APICe link, as \\apicepubpar a publication's (L6)
+            g, i = A()
+            return f'<a class="apicepubpar" href="https://talks.apice.unibo.it/{g}">APICe</a>', i
+        if n == 'textbackslash':   # (L4)
+            return '\\', i + 2 if s.startswith('{}', i) else i
+        if n == 'raggedright':   # the text is set ragged right already (L5)
+            return '', i
+        if n == 'setbeamercolor':   # one the converter does not read: nothing (L5)
+            _, i = A()
+            _, i = read_arg(s, i)
+            return '', i
+        if n == 'ref':   # \\ref{key}: the number LaTeX gave it, from the deck's .aux (M9's \\xe of an enumerate's item)
+            g, i = A()
+            return esc(LABELS.get(g, '??')), i
+        if n == 'Tree':   # qtree: \\Tree [.root child ... [.node ...] ] as nested boxes, lines drawn by the theme (M2)
+            j = skip_ws(s, i)
+            depth, k = 0, j
+            while k < len(s):
+                depth += {'[': 1, ']': -1}.get(s[k], 0)
+                k += 1
+                if depth == 0:
+                    break
+            return self.qtree(s[j:k]), k
         if n == 'apicepubpar':
             g, i = A()
             return f'<a class="apicepubpar" href="https://pubs.apice.unibo.it/{g}">APICe</a>', i

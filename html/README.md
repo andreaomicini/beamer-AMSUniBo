@@ -317,6 +317,7 @@ From the deck's root:
 ```sh
 ../beamer-AMSUniBo/html/html.sh            # tex/ holds one deck
 ../beamer-AMSUniBo/html/html.sh l2-lp      # tex/ holds several: name one
+../beamer-AMSUniBo/html/html-frame.sh l2-lp   # after a change to some frames: only those corrected and measured
 ```
 
 It builds the PDF; for a generated page (a `deck.json` with a `title`) it writes
@@ -1019,3 +1020,87 @@ are of one version. What the new decks taught:
   short title; the wrapped-item quirk (the sub-list's baselineskip already in
   force) holds before an `enumerate` too; a control space closing a table
   cell.
+
+### 12 — IAG 2026/2027, AMSUniBo, 2026-10-30/31
+
+Nineteen course decks (`iag2627-slides`): the first course collection on AMSUniBo, and far richer in
+constructs than the talks of experiments 1–7. The inputs come from a generator in the deck's notes folder
+(`gen_iag.py`): title page, footline number box (it depends on the deck's page total: 43.27pt for 27 pages,
+43.94pt for 66), the course's name macros, `courses.sty`'s addresses and picture layouts rewritten into what the
+translator reads (`texmacros`, `replace`). Alt texts written per deck from the picture and its slide, read with the
+whole deck.
+
+What the translator learnt, all general:
+
+* **Breaking frames.** `allowframebreaks=<f>`; `\framebreak` mixed with TeX's own breaks (each part bounded where
+  the next begins, numerals counted from the part's first); a trailing `\framebreak` or `\framebreak{}` makes no
+  page; two-line frame titles read in full; minipage rows split by line; a verbatim split by its lines, each matched
+  to an equal PDF line; long items placed by most of their text (two tables with one header); a single-page
+  references frame has a numeral only where its PDF page shows one (IAG 26/27 none, SMA-LS 06/07's C2 "I").
+* **Lists.** What a list declares before its first item: a size (`\smaller` too), `\setbeamercolor{item}{fg=…}`,
+  `\setcounter{enumi}{-1}`; a size declared just before a list, a table or a verbatim (with `\setlength{\topsep}`);
+  a list in a description item takes nested margins but first-level items (LaTeX's `\@itemdepth` counts itemize
+  only); empty description items; label width fixed in pt, not in the list's em.
+* **Contents.** `outline_fills` for a `[c]` outline whose `\vfill`s share space with the frame's (1 above, 3
+  below); `subtoc_shade_section`, `subtoc_mbox` for iag.sty's "Focus on…" frames, with subsection balls.
+* **Text and maths.** `\apice`, `\apicesite`, `\apicepage` and light twins; `\LaTeX`, `\TeX`; `\verb` keeps its
+  spaces; `\lbrack`, `\rbrack`, `\textbar`, `\textsl`, `\textsuperscript`, `\quad`; `\parbox`; `\bulletlist`;
+  `\Acs`; `\newcommand` in a frame expanded; a control word before `#k` ends there; `\mathtt` with only its letters
+  typewriter; `\prod`, `\dfrac`, `\dotsc`, `\doteq`, `\notin`, `\vDash`, `\rightleftharpoons`, `\bigl`/`\bigr`,
+  `\alert` in maths; tables with `[pos]`, `p{}` columns, `@{}`, `\tabularnewline`, booktabs rules.
+* **AMSUniBo theme.** Measured `\textwidth` 341.02pt and `\textheight` 245.47pt for `\includegraphics` fractions,
+  `keepaspectratio` fitted from the picture's own size; verbatim in Inconsolata with straight quotes; typewriter
+  1.087 times the sans around it; `\textrm` Merriweather at 1.087, `\textsf` in a title at .923; `\smaller` as
+  relsize (to `\footnotesize`, or 1/1.2 in small sizes); TeX's math spacing; minipages, tables, quote, `\parbox`;
+  the title band grows with a two-line title; blocks after `\centering` not centred; addresses at line height 1.
+
+* **Later in the experiment.** Frames TeX breaks: a block cut at its items when a page would stay empty, an
+  enumerate's pieces counting on, a `\framebreak` inside a list or a `center` cutting it there (its open elements
+  closed and opened again), pages reserved for later parts with no text (TikZ), short verbatim lines placed by equal
+  PDF lines, pictures placed on the neighbouring page that has one in the PDF, enumerate numbers ignored when
+  matching text. qtree's `\Tree` as an inline SVG; `\ref` from the deck's `.aux`; `\apicetalkpar`; `\Acf`;
+  `\parbox`; columns and `onlytextwidth`; `[shrink]` and maths on the AMSUniBo theme; footnotes numbered at the
+  page's foot under `\footnoterule`; a frame title that is all a link wrapped inside the link; a table's `[h]`.
+  SVG is kept out of line alignment and measurement (a `<br>` in it breaks the page out of the SVG).
+* **Stale corrections.** `nudges.json` from an earlier layout of the page pushes frames far off (180pt in M1):
+  after a change to the translator, delete it and let `html.sh` measure again; after a change to frames,
+  `html-frame.sh` keeps the corrections of the unchanged ones.
+
+* **The final review, page beside page (2026-10-31).** What the measures did not say, the drawings did:
+  * a `\framebreak` whose piece before it holds no text (a picture and "…"): the piece after it goes where its own
+    text is, or two pages of the frame fall on one and every later frame of the deck slides (M7);
+  * corrections never on an element inside a fraction, a `<br>`, code or a line of a `<pre>`: a margin there breaks
+    a fraction apart or moves nothing; and every newline of a `<pre>` the alignment did not reach becomes a `<br>`,
+    or two lines are measured as one (M2, L6);
+  * a display fraction stands on its numerator's first line: one whose numerator holds a fraction is raised
+    (`tall`, `tall2`), so that what follows sits by its rule (M2's proof tree);
+  * `\AtBeginSection`'s `[shrink=<n>]` scales the section pages too (M7's eight sections);
+  * `\hfill` in a block title: a flex row, what follows at the right, a `\quad` after it as the row's gap, which a
+    wrapped line's ends do not take, as TeX's glue at a break (L6's `\labfilebar`);
+  * `\verb` never broken (`white-space: pre`): a break inside it made a line more than TeX's (L3, L5, L8);
+  * a size declared at the end of an item's text holds for the later items too, until `\normalsize` (L4, M9);
+  * a picture, `\quad` and text on one line: the picture inline, on the baseline, the line centred in a figure (M2);
+  * a description item whose text is a list: the list from the label's line (L7);
+  * semiverbatim: `\\` is a backslash, the first line's leading spaces go, a `\color` just before it colours it;
+  * `\bf` as `\normalfont\bfseries` (`{\bf\it Jason}` is italic); a block's title translated before its body, so
+    that an `\ac` there is the first use (M1); `\!`; booktabs' rules with their weights and spaces (M10);
+  * `\ttdot` spans made before the corrections apply, whose indices count them as the browser does;
+  * the generator: `\and` between authors and their addresses from `\institute` (L2, L3, L5); name macros with a
+    face of their own (`\jason`, `\linda`, `\tuprolog`) left to the translator, not flattened.
+
+**Open.** Justified paragraphs (a `quote`, a table's `p{}` cells) keep their line breaks but not the justification;
+qtree's lines are drawn straight from the parent's centre, close to but not exactly qtree's; the maths ellipsis
+and arrows are a little narrower than TeX's (up to 6pt over a proof tree's line: a three-dot `\dotsc` with TeX's
+spacing came out wider still, so it waits); a shrunk outline with `toc_subsections` (SMA-LS 06/07's C4a) keeps its
+old correction, as its fills under a zoom are not matched yet.
+
+**Method: frame by frame.** In Beamer every frame is independent, page numbers apart: a defect lives in one frame,
+and that frame is translated (`build.py`, with `TEX2HTML_NONUDGE=1` to see it as the translator sets it), drawn
+(`browser.py shoot <engine> <page> <dir> <p,q,r-s>`, which now takes single pages) and compared with its own PDF
+page, about 12 s; never a whole deck to look at one frame. After a change to some frames of a finished deck,
+`html/html-frame.sh <deck>` rebuilds the page and corrects and measures only the frames that changed
+(`tools/tex2html/frames_diff.py`). It compares markup: a change to the theme's CSS alone leaves every frame's
+markup as it was, so the pages it moves keep corrections made for the old layout; after one, redo the corrections
+of the pages that measure off (`stats.py`, then `nudge.py` on those pages alone). Also: test a fix with `build.py` alone on the
+pages concerned (seconds), and run `html.sh` (nudges, both engines, minutes per deck) once per deck at the end;
+check against a visual tolerance of about 3pt, and count decks done against time.

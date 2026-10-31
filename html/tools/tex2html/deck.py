@@ -20,6 +20,8 @@ def rgb(h):
 STYLES = {
     'AMSUniBo': dict(
         theme='theme.css', bottom=2.8, head=12.9, title=37.2, foot=262.0, cite=0xc7c9cb,
+        textwidth=341.02, textheight=245.47,   # measured on IAG 26/27's M9: what \includegraphics' fractions are of
+        straightquotes=True, fnarabic=True,   # footnotes: LaTeX's numbers at the page's foot (L7)   # Inconsolata with varqu: ' and ` stay straight in verbatim (IAG 26/27's L5)
         cites=[0xc7c9cb, 0xf0f1f1],   # \ccite on white and on a dark title (amsgreymid, on the example title, is \aalert's too)
         titles=[(0.212, 0.408, 0.38), (0.733, 0.18, 0.161), (0.698, 0.843, 0.824)],
         bodies=[(0.867, 0.929, 0.922), (0.965, 0.851, 0.847), (0.882, 0.937, 0.929)],

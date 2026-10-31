@@ -6,7 +6,7 @@ webkit:  Playwright's WebKit, through the Node library in the playwright-cli for
     with Browser('webkit', 1024, 768) as b:
         b.goto(url); b.eval(js); b.shot(png)
 
-As a command: browser.py shoot <engine> <deck.html> <outdir> <pages> [scale] -- s-01.png ...
+As a command: browser.py shoot <engine> <deck.html> <outdir> <n | p,q,r-s> [scale] -- s-01.png ...
 """
 import base64, json, os, socket, subprocess, sys, time, urllib.request
 from pathlib import Path
@@ -109,12 +109,17 @@ class Browser:
 
 
 if __name__ == '__main__' and len(sys.argv) >= 6 and sys.argv[1] == 'shoot':
-    eng, page, out, n = sys.argv[2], Path(sys.argv[3]).resolve(), Path(sys.argv[4]).resolve(), int(sys.argv[5])
+    eng, page, out = sys.argv[2], Path(sys.argv[3]).resolve(), Path(sys.argv[4]).resolve()
+    # <pages>: the first n, or single pages and ranges, 12,17,30-32: a frame is drawn on its own
+    sel = sys.argv[5]
+    pages = ([q for part in sel.split(',') for q in (range(int(part.split('-')[0]), int(part.split('-')[1]) + 1)
+                                                    if '-' in part else [int(part)])]
+             if (',' in sel or '-' in sel) else None)
     scale = float(sys.argv[6]) if len(sys.argv) > 6 else 1
     out.mkdir(parents=True, exist_ok=True)
     with Browser(eng, 1024, 768, scale) as b:
         b.goto(page.as_uri() + '#1'); b.wait(500)
-        for i in range(1, n + 1):
+        for i in (pages or range(1, int(sel) + 1)):
             b.eval(f'location.hash = "#{i}"'); b.wait(400)
             b.shot(out / f's-{i:02d}.png')
 elif __name__ == '__main__':

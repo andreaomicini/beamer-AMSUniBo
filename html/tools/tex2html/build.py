@@ -9,7 +9,9 @@ from depth import depths
 
 HERE = pathlib.Path(__file__).parent
 OUT = path('page')
-NUD = json.load(open(DIR / 'nudges.json')) if (DIR / 'nudges.json').exists() else {}
+# TEX2HTML_NONUDGE=1: the page without its corrections, to check a frame as the translator sets it
+import os as _os
+NUD = json.load(open(DIR / 'nudges.json')) if (DIR / 'nudges.json').exists() and not _os.environ.get('TEX2HTML_NONUDGE') else {}
 
 # an overlay's slides share one layout (a covered part keeps its space), so every slide takes the
 # corrections of a slide that shows the whole frame, when there is one (experiment 8)
@@ -83,12 +85,19 @@ def subsub(p, k, q, shaded=False):
 
 def toc(n, p, title=True):
     cls = 'frame toc' + ('' if title else ' outline')
-    head, bst = section_open(n, cls, secname(p['section']), centred=TOCC, sub=p.get('subsection', ''))
+    # the \\AtBeginSection frame [shrink]ed, as subtoc's (IAG 26/27's M7); not yet the fills outline below, whose
+    # shrunk spacing is not matched (SMA-LS 06/07's C4a keeps its corrections: README, Open)
+    fills = CFG.get('toc_subsections') or (not title and CFG.get('outline_fills'))
+    sh = shrink_of(n, p) if title and not fills else 0
+    extra = f' style="--shrink: {round(1 - sh / 100, 5)}"' if sh else ''
+    head, bst = section_open(n, cls + (' shrink' if sh else ''), secname(p['section']), extra, centred=TOCC, sub=p.get('subsection', ''))
     out = [head]
     if title:
         out.append(f'{T}<h2 class="frametitle">{CFG["toc_title"]}</h2>')
     out.append(f'{T}<div class="body"{bst}>')
-    if CFG.get('toc_subsections'):
+    # "outline_fills": the outline alone (no frame title) takes the \vfill layout, sharing the space with the
+    # [c] frame's own fills; the section frames keep the plain list (IAG 26/27)
+    if CFG.get('toc_subsections') or (not title and CFG.get('outline_fills')):
         # beamer's \tableofcontents: \vspace*{-.5em}, a \vfill before each section and one after the
         # last; each section followed by its subsections, shaded with it when it is not the current one
         out.append(f'{T}{T}<ol class="toc fills">')
@@ -120,8 +129,10 @@ def subtoc(n, p):
     if CFG.get('subtoc_all'):
         # \tableofcontents[currentsection,currentsubsection] (experiment 8): the outline's layout, every
         # section with its subsections, all shaded but the current section and its current subsection
+        # "subtoc_mbox": the frame's \\mbox{~} before and after the contents, a line each (IAG 26/27's iag.sty)
+        mbox = f'{T}{T}{T}<li class="tocmbox"></li>' if CFG.get('subtoc_mbox') else None
         out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
-               f'{T}{T}<ol class="toc fills">', f'{T}{T}{T}<li class="tocfill first"></li>']
+               f'{T}{T}<ol class="toc fills">'] + ([mbox] if mbox else []) + [f'{T}{T}{T}<li class="tocfill first"></li>']
         for k, s in enumerate(p['secs'], 1):
             subs = p['subs'][k - 1]
             # the subsubsections are all shaded, the current subsection's too: shaded once, where nothing
@@ -131,9 +142,13 @@ def subtoc(n, p):
                           for q, x in enumerate(subs, 1)) if k == p['current'] else ''.join(f'<li>{x}{subsub(p, k, q)}</li>'
                                                                                           for q, x in enumerate(subs, 1))
             sub = f'<ul class="tocsub">{lis}</ul>' if subs else ''
-            out.append(f'{T}{T}{T}<li{"" if k == p["current"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{s}{sub}</li>')
+            if k == p['current'] and CFG.get('subtoc_shade_section'):
+                # sectionstyle=shaded: the current section shaded too, its current subsection not (IAG 26/27)
+                out.append(f'{T}{T}{T}<li class="parent"><span class="shade">{s}</span>{sub}</li>')
+            else:
+                out.append(f'{T}{T}{T}<li{"" if k == p["current"] else chr(32) + "class=" + chr(34) + "shaded" + chr(34)}>{s}{sub}</li>')
             out.append(f'{T}{T}{T}<li class="tocfill"></li>')
-        out += [f'{T}{T}</ol>', f'{T}</div>', '</section>']
+        out += ([mbox] if mbox else []) + [f'{T}{T}</ol>', f'{T}</div>', '</section>']
         return '\n'.join(out)
     out = [head, f'{T}<h2 class="frametitle">{CFG["subtoc_title"]}</h2>', f'{T}<div class="body"{bst}>',
            f'{T}{T}<ol class="toc">']
@@ -211,12 +226,17 @@ def shrink_of(n, p):
         return pdf_shrink(n) or p.get('shrink') or 0   # logged when TeX went beyond the frame's shrink=<n>
     return 0
 
+def tt_ellipsis(h):
+    """an ellipsis in the typewriter face: TeX's \\textellipsis there is three periods, a third of an em after each (L1)"""
+    return re.sub(r'<code\b[^>]*>[^<]*…[^<]*</code>', lambda m: m.group(0).replace('…', '.<span class="ttdot"></span>' * 3), h)
+
 def processed(n, p):
     """the page's body: the PDF's line breaks, TeX's quirks, the corrections, the blocks' depths"""
     if n not in PROC:
         body = '\n'.join(p['body'])
         body, probs, k = add_breaks(body, n)
         body = quirks(body)
+        body = tt_ellipsis(body)   # before the corrections: their indices count its spans, as the browser does (L6)
         body = margins(n, body)
         body = columns(n, body)
         PROC[n] = block_depths(n, body, 1 - shrink_of(n, p) / 100)
@@ -244,6 +264,7 @@ def transplant(raw, raw_m, proc_m):
 def wrap_title(n, t):
     """a frame title TeX wrapped on its own (no \\\\ in the source): a <br> before the second line's first
     word, read on the PDF (C4a); the theme's two-line title then applies"""
+    t = re.sub(r'^\s*(<br>\s*)+', '', t)   # a break before anything is no line (M7's title in an \\href)
     if '<br>' in t:
         return t
     # in the first line's size: a first body line can sit in the same band (C7)
@@ -257,7 +278,8 @@ def wrap_title(n, t):
         before = t[:m.start()]
         if before.count('<') == before.count('>') and before.strip():   # outside a tag, not at the start
             a = before.rfind('<a ')
-            at = a if a != -1 and before.rfind('</a>') < a else m.start()   # inside a link: before the link
+            at = a if a != -1 and before.rfind('</a>') < a and before[:a].strip() else m.start()   # inside a link: before it,
+            # unless the link is the whole title (M7): then inside it
             return t[:at].rstrip() + '<br>' + t[at:]
     return t
 
@@ -310,6 +332,9 @@ def bib_pages(n0, p):
                 page.setdefault(own[i1 + t], pc[j1 + t]['pn'])
     from frames import ROMAN
     last = max(page.values())   # frames may follow the bibliography
+    # one page alone: a numeral only where the PDF shows one (IAG 26/27 has none; SMA-LS 06/07's C2 has "References I")
+    from frames import pdf_title, plain
+    numbered = last > n0 or pdf_title(n0) == plain(p['title']) + 'I'
     for pn in range(n0, last + 1):
         items = [h for k, (key, h) in enumerate(es) if page[k] == pn]
         body = '\n'.join(f'{T}{T}{h}' for h in items)
@@ -317,7 +342,7 @@ def bib_pages(n0, p):
         body = margins(pn, body)
         head, bst = section_open(pn, 'frame' + (' top' if p.get('top', True) else ''), secname(p['section']),
                                  ' data-noframenumbering' if p.get('nonum', True) else '', centred=not p.get('top', True))
-        out.append('\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]} {ROMAN[pn - n0 + 1]}</h2>',
+        out.append('\n'.join([head, f'{T}<h2 class="frametitle">{p["title"]}{" " + (ROMAN[pn - n0 + 1] if pn - n0 + 1 < len(ROMAN) else str(pn - n0 + 1)) if numbered else ""}</h2>',
                               f'{T}<div class="body {p.get("size", "tiny")} refs"{bst}>', body, f'{T}</div>', '</section>']))
     return out
 
@@ -361,10 +386,14 @@ for p in ps:
     if OVER and p['kind'] != 'bib':
         parts[k0] = parts[k0].replace('<section ', f'<section data-frameno="{p["frameno"]}" ', 1)
 frames_html = '\n\n'.join(parts)
+# an ellipsis in the typewriter face: TeX's \textellipsis there is three dots, a third of an em after each (IAG 26/27's L1)
+frames_html = tt_ellipsis(frames_html)
 ALT = CFG.get('alt', {})
 for k, v in ALT.items():
     frames_html = frames_html.replace(f'alt="ALT-{k}"', f'alt="{v}"')
-assert 'ALT-' not in frames_html
+# TEX2HTML_DRAFT=1: a page to check before its alt texts are written; never one to publish
+import os
+assert 'ALT-' not in frames_html or os.environ.get('TEX2HTML_DRAFT'), 'no alt text in deck.json for: ' + ' '.join(sorted(set(re.findall(r'alt="ALT-([^"]*)"', frames_html))))
 
 theme = (HERE / STYLE['theme']).read_text()
 deck_css = (DIR / 'deck.css').read_text()

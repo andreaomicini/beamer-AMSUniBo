@@ -5,6 +5,7 @@
 	--amsreddark: #8E2320;
 	--amsblack: #000000;
 	--amstext: #040404;
+	--text: var(--amstext);   /* the text colour, as the other themes name it (tables, verbatim) */
 	--amsgreen: #56A49A;
 	--amsgreenlight: #74BDAD;
 	--amsgreendark: #366861;
@@ -55,24 +56,59 @@ body { overflow: hidden; }
 .small { font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
 .large { font-size: calc(12 * var(--fs)); line-height: calc(14 * var(--pt)); }
 .Large { font-size: calc(14.4 * var(--fs)); line-height: calc(18 * var(--pt)); }
+.LARGE { font-size: calc(17.28 * var(--fs)); line-height: calc(22 * var(--pt)); }   /* the 11pt class's (M6) */
+.huge { font-size: calc(20.74 * var(--fs)); line-height: calc(25 * var(--pt)); }
+.Huge { font-size: calc(24.88 * var(--fs)); line-height: calc(30 * var(--pt)); }
 /* \emph \alert \aalert \textbf \textsc \texttt, and math */
 b { font-weight: 700; }
 em { font-style: italic; color: var(--amsgreendark); }
+.block-title:has(> .hfill) { display: flex; flex-wrap: wrap; align-items: baseline; }   /* \hfill in a title (L6) */
+.block-title > .hfill { flex: 1; }
 .block-title em { color: inherit; }   /* \emph in a block title: italic only, as in the PDF */
 .alert { color: var(--amsred); }
 .aalert { font-style: italic; font-weight: 300; color: var(--amsgreymid); }
 .sc { font-variant-caps: small-caps; }
-code, .tt { font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(10.95 * var(--pt)); font-feature-settings: "ss01", "ss03"; }
+.it { font-style: italic; }   /* \it, the old declaration */
+.nobr { white-space: nowrap; }   /* \bulletlist: each item unbroken */
+/* \textrm in the sans text: Merriweather Regular, which the style loads 1.087 times larger (11.96pt beside 11pt);
+   \textsf in a serif title: Merriweather Sans Light, .923 times smaller (13.2pt beside 14.3pt) (IAG 26/27's \tuprolog) */
+.rm { font-family: "Merriweather", serif; font-weight: 400; font-size: 1.087em; }
+:is(.frametitle, h1) .rm { font-size: 1em; }
+:is(.frametitle, h1) .sf { font-family: "Merriweather Sans", sans-serif; font-weight: 300; font-size: .923em; }
+/* the typewriter face 1.087 times the sans around it, as the style loads it (10.91pt beside 10.04pt, 9.96pt beside 9.17pt) */
+code, .tt { font-family: "Inconsolata", monospace; font-weight: 400; font-size: 1.087em; font-feature-settings: "ss01", "ss03"; }
+.ttdot { margin-right: calc(2.7 * var(--pt)); }
+code.verb { white-space: pre; }   /* \verb: \obeyspaces, every space kept, and never broken (L8) */
 i { font-style: italic; font-weight: 300; }
-.rel { margin: 0 0.1em; }
+/* TeX's math spacing, in mu of the math font (an em is 18mu): relations 5mu each side, binary operators 4mu,
+   punctuation 3mu after; none in scripts (IAG 26/27's L1, as the AMSCesena theme has it) */
+.rel { margin: 0 0.278em; }
+.bin { margin: 0 0.222em; }
+.mthin { display: inline-block; width: 0.167em; }
+.mspace { display: inline-block; width: var(--w); }
+sub .rel, sup .rel, sub .bin, sup .bin { margin: 0; }
 sub { font-size: 70%; line-height: 0; vertical-align: -0.25em; }
 a { color: inherit; text-decoration: none; }
 p { margin: 0; }
 .center { text-align: center; }
+/* a block after a \centering is not centred: beamer's block sets its own paragraphs (IAG 26/27's L1) */
+.center .block { text-align: left; }
+pre.verbatim.center { text-align: center; }   /* \centering in a semiverbatim (L7) */
+.center :is(.quoteenv, dl) { text-align: left; }   /* list environments: \centering is not theirs (M7's description, M9's quotes) */
+.center .block-body.center { text-align: center; }
+/* \LaTeX, \TeX: LaTeX's own kerns, -.36em before the A, -.15em after it, -.1667em before the E and -.125em after,
+   the E .5ex lower; the A at the next smaller size (about .7em), raised to the T's cap height */
+.logo { white-space: nowrap; }
+.logo-a { font-size: .7em; vertical-align: .32em; margin: 0 -.15em 0 -.36em; }
+.logo-e { position: relative; top: .5ex; margin: 0 -.125em 0 -.1667em; }
 /* \ccite, \uurl, \apice */
 .ccite { color: var(--amsgreyline); font-size: calc(6 * var(--fs)); line-height: 0; vertical-align: calc(3.3 * var(--pt)); }
 .url { font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
 .uurl, .apice { color: var(--amsred); font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(8 * var(--pt)); }
+.apice.light { color: var(--amsgreyline); font-size: calc(6 * var(--pt)); }
+/* an address is smaller than the text: its own inline box, at the text's line height, would hang below the
+   line's strut and deepen a block that ends with it; TeX's line ends at the text's depth (IAG 26/27's A0) */
+.uurl, .apice, .url { line-height: 1; }
 /* surfaces, as in the theme: block and alerted titles dark, the example title tinted */
 .block:not(.example) > .block-title :is(.ccite, .uurl, .uuurl, .dddoi, .apice) { color: var(--amsgreybg); }
 .block:not(.example) > .block-title :is(.alert, .aalert) { color: var(--amsgreyline); }
@@ -93,13 +129,14 @@ p { margin: 0; }
 
 /* ----- frame title and text area ---------------------------------------- */
 .frametitle {
-	position: absolute; left: 0; top: calc(12.8 * var(--pt)); width: 100%; height: calc(24.4 * var(--pt));
-	box-sizing: border-box; margin: 0; padding-left: calc(8.5 * var(--pt));
+	position: absolute; left: 0; top: calc(12.8 * var(--pt)); width: 100%; min-height: calc(24.4 * var(--pt));
+	box-sizing: border-box; margin: 0; padding: calc(4.04 * var(--pt)) 0 calc(2.44 * var(--pt)) calc(8.5 * var(--pt));
 	background: var(--amsgreentint); color: var(--amsblack);
 	font-family: "Merriweather", serif; font-weight: 400;
-	font-size: calc(14.4 * var(--pt)); line-height: calc(26 * var(--pt));
+	font-size: calc(14.4 * var(--pt)); line-height: calc(17.92 * var(--pt));
 }
-.frametitle .sc { font-family: "Merriweather Sans", sans-serif; font-weight: 300; font-size: calc(14.4 * var(--fs)); }
+/* the band grows with a title of two lines, 17.92pt apart (IAG 26/27's M9: 42.32pt for two); one line sits as on a
+   26pt line, its baseline 18.38pt under the band's top */
 .frametitle .ccite { font-size: calc(6 * var(--pt)); }
 .body {
 	position: absolute; top: calc(37.2 * var(--pt)); bottom: calc(9.9 * var(--pt));
@@ -127,16 +164,21 @@ ul > li::before {
 	width: calc(5.2 * var(--pt)); height: calc(5.2 * var(--pt)); border-radius: 50%;
 	background: var(--ball); box-shadow: 0.5px 0.8px 1px rgba(0, 0, 0, .4);
 }
-li ul { margin: var(--subtopsep) 0 0; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
+li :is(ul, ol) { margin: var(--subtopsep) 0 0; font-size: calc(10 * var(--fs)); line-height: calc(12 * var(--pt)); }
 li li + li { margin-top: var(--subitemsep); }
+/* a list in a description's item: LaTeX's \@itemdepth counts itemize alone, so its items are first-level ones,
+   but it is a nested list, with a nested list's margins (IAG 26/27's L1) */
+dd > :is(ul, ol) { margin: var(--subtopsep) 0 0; }
 li li::before { left: calc(11.6 * var(--pt)); top: calc(4.2 * var(--pt)); width: calc(4 * var(--pt)); height: calc(4 * var(--pt)); }
-li li ul { font-size: calc(9 * var(--fs)); line-height: calc(11 * var(--pt)); }
-li li ul { margin-bottom: calc(1.13 * var(--pt)); }
+li li :is(ul, ol) { font-size: calc(9 * var(--fs)); line-height: calc(11 * var(--pt)); }
+li li :is(ul, ol) { margin-bottom: calc(1.13 * var(--pt)); }
+/* but not where the third level ends the block: TeX's box ends at its last line (IAG 26/27's A0, page 22) */
+.block-body > ul:last-child > li:last-child > ul:last-child > li:last-child > ul:last-child { margin-bottom: 0; }
 li li li::before { left: calc(12 * var(--pt)); top: calc(3.8 * var(--pt)); width: calc(3.4 * var(--pt)); height: calc(3.4 * var(--pt)); }
 /* \item[label]: the label right-aligned, labelsep .5em before the text */
 ul > li[data-label]::before {
 	content: attr(data-label); left: auto; right: calc(100% - 21.818 * var(--pt) + 5.4545 * var(--pt)); top: 0;
-	width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; color: var(--amsred);
+	width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; color: var(--itemfg, var(--amsred));
 }
 /* an item that wraps before its sub-list takes the sub-list's baselineskip */
 li.wrapsub { line-height: calc(12 * var(--pt)); }
@@ -154,13 +196,29 @@ ol > li::before {
 	color: var(--amswhite); background: var(--ball); box-shadow: 0.5px 0.8px 1px rgba(0, 0, 0, .4);
 }
 ul.tight { --itemsep: calc(1 * var(--pt)); --topsep: calc(2 * var(--pt)); }
-/* description: labels right-aligned in a 2cm column, .5em labelsep */
-dl { margin: var(--topsep) 0; display: grid; grid-template-columns: calc(56.905 * var(--pt)) 1fr; column-gap: calc(5.4545 * var(--pt)); }
-dt { color: var(--amsred); text-align: right; }
-dd { margin: 0; }
-dd + dt, dd + dt + dd { margin-top: var(--itemsep); }
+/* description, an item per div.ditem: the text at 2cm + labelsep, the label right-aligned before
+   it, or from the left edge when longer; the text's other lines at its indent (as the AMS families
+   since experiment 8; the old dl grid broke on the div.ditem rows the converter writes) */
+dl { margin: var(--topsep) 0; }
+.ditem { padding-left: calc(62.15 * var(--pt)); }
+.ditem + .ditem { margin-top: var(--itemsep); }
+dt { display: inline-block; min-width: calc(56.7 * var(--pt)); margin-left: calc(-62.15 * var(--pt)); margin-right: 0.5em;
+	text-align: right; color: var(--itemfg, var(--amsred)); }
+dd { display: inline; margin: 0; }
+/* an item whose text is a list: the list from the label's line, as in TeX (L7's Conclusion); the label floats into
+   the indent, beside the list's first item */
+.ditem:has(> dd > :is(ul, ol):first-child) > dt { float: left; }
+.ditem:has(> dd > :is(ul, ol):first-child) > dd > :is(ul, ol):first-child { margin-top: 0; }
+/* description[<widest label>]: the label column is that label's width, measured by the browser on a
+   hidden first row; labels right-aligned in it, every line of the text at its indent */
+dl.widest { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 0.5em; }
+dl.widest > .ditem { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 0; }   /* a row: margins work */
+dl.widest dt { min-width: 0; margin: 0; }
+dl.widest dd { display: block; white-space: nowrap; }
+dl.widest > .sizer { height: 0; overflow: hidden; visibility: hidden; }
+dl.widest > .sizer + .ditem { margin-top: 0; }
+dl.widest dd > ul:last-child { margin-bottom: 0; }   /* a list closing an item adds no space below it */
 dl.tight { --itemsep: calc(1 * var(--pt)); }
-dd > ul { margin-top: var(--subtopsep); margin-bottom: 0; margin-left: calc(-62.36 * var(--pt)); padding-left: calc(62.36 * var(--pt)); font-size: inherit; line-height: inherit; }
 
 /* ----- blocks: rounded, shadowed ---------------------------------------- */
 .block {
@@ -189,12 +247,139 @@ dd > ul { margin-top: var(--subtopsep); margin-bottom: 0; margin-left: calc(-62.
 /* indquotation: quotation's 2em margins, the first line indented by 1.5em */
 .quote { margin: 0 calc(21.818 * var(--pt)); text-indent: calc(1.5 * 10.95 * var(--fs)); font-style: italic; white-space: nowrap; }
 .quote .sc, .quote code { font-style: normal; }
+/* \begin{quote}: both margins 21.818pt, italic in beamer's quote colour, amsgreymid (IAG 26/27's L1) */
+.quoteenv { margin: var(--topsep) calc(21.818 * var(--pt)); font-style: italic; color: var(--amsgreymid); }
+/* last in a block, the list's bottom skip and the paragraph's: TeX's block ends 4.5pt under it (L1, page 31) */
+.block-body > .quoteenv:last-child { margin-bottom: calc(4.5 * var(--pt)); }
 .block-body > .quote:last-child { margin-bottom: calc(2.92 * var(--pt)); }
 li > .quote { margin-left: 0; margin-top: calc(-1.87 * var(--pt)); }
 /* \begin{center} */
 div.center { text-align: center; }
 .block-body > :first-child { margin-top: 0; }
 .block-body > :last-child { margin-bottom: 0; }
+
+/* verbatim: Inconsolata as typed, 10.91pt on 13.55pt, a trivlist's topsep around it; never centred, as TeX
+   sets its lines full width (IAG 26/27's L1); in the size declared before it, or its body's or block's */
+pre.verbatim { margin: var(--topsep) 0; white-space: pre; text-align: left; color: var(--text); font-family: "Inconsolata", monospace;
+	font-weight: 400; font-feature-settings: "ss01", "ss03"; font-size: calc(10.91 * var(--pt)); line-height: calc(13.55 * var(--pt)); }
+:is(pre.verbatim.small, .small pre.verbatim) { font-size: calc(9.96 * var(--pt)); line-height: calc(11.95 * var(--pt)); }
+:is(pre.verbatim.footnotesize, .footnotesize pre.verbatim, pre.verbatim.smaller) { font-size: calc(8.97 * var(--pt)); line-height: calc(10.96 * var(--pt)); }
+:is(pre.verbatim.scriptsize, .scriptsize pre.verbatim) { font-size: calc(7.97 * var(--pt)); line-height: calc(9.5 * var(--pt)); }
+:is(pre.verbatim.tiny, .tiny pre.verbatim) { font-size: calc(5.98 * var(--pt)); line-height: calc(7 * var(--pt)); }
+/* \smaller (relsize): one step down, to the named size when one is near (\normalsize to \footnotesize, 8.25pt
+   sans beside 10.04pt), else 1/1.2 (\scriptsize to 6.64pt typewriter); an address in it, or in \tiny, is the
+   typewriter of that size (IAG 26/27's \smallurl, L1's \smaller\begin{description}) */
+.smaller { font-size: calc(9 * var(--fs)); line-height: calc(11 * var(--pt)); }
+:is(.scriptsize, .tiny) .smaller { font-size: calc(1em / 1.2); line-height: inherit; }
+:is(.tiny, .smaller) .url { font-size: 1.087em; }
+
+/* tabular, as on the AMSCesena theme: \tabcolsep 6pt, rules 0.4pt, \hline\hline 2pt apart; a p{} column a paragraph
+   that wide, wrapping, its first line on the row's baseline; @{} no space on that side (IAG 26/27's M9, M10) */
+table.tabular { border-collapse: collapse; }
+table.tabular td { padding: 0 calc(6 * var(--pt)); white-space: nowrap; vertical-align: baseline; }
+table.tabular td.c { text-align: center; }
+table.tabular td.l, table.tabular td.p { text-align: left; }
+table.tabular td.r { text-align: right; }
+table.tabular td.p { white-space: normal; box-sizing: content-box; }
+table.tabular td.nol { padding-left: 0; }
+table.tabular td.nor { padding-right: 0; }
+table.tabular td.vl { border-left: calc(0.4 * var(--pt)) solid var(--text); }
+table.tabular td.vr { border-right: calc(0.4 * var(--pt)) solid var(--text); }
+table.tabular td:empty::after { content: "\200b"; }
+table.tabular tr.hl1 > td { border-top: calc(0.4 * var(--pt)) solid var(--text); }
+table.tabular tr.hb1 > td { border-bottom: calc(0.4 * var(--pt)) solid var(--text); }
+table.tabular tr.hl2 > td { border-top: calc(2.8 * var(--pt)) double var(--text); }
+table.tabular tr.hb2 > td { border-bottom: calc(2.8 * var(--pt)) double var(--text); }
+/* booktabs (M10): its lengths fixed when it is loaded, at the normal size: \heavyrulewidth .08em (0.8pt) for
+   \toprule and \bottomrule, \lightrulewidth .05em (0.5pt) for \midrule; \belowrulesep .65ex (2.8pt) under a
+   rule, \aboverulesep .4ex (1.72pt) over one, \abovetopsep 0 */
+table.tabular tr:is(.bka-t, .bka-m, .bka-b) > td, table.tabular tr.bkb-m + tr > td { padding-top: calc(2.8 * var(--pt)); }
+table.tabular tr.bka-t > td { border-top: calc(0.8 * var(--pt)) solid var(--text); }
+table.tabular tr:is(.bkb-m, .bkb-b, .bkb-t) > td { padding-bottom: calc(1.72 * var(--pt)); }
+table.tabular tr.bkb-m > td { border-bottom: calc(0.5 * var(--pt)) solid var(--text); }
+table.tabular tr:is(.bkb-b, .bkb-t) > td { border-bottom: calc(0.8 * var(--pt)) solid var(--text); }
+
+/* \parbox: a box of its own width, its lines broken inside it, centred on the line (top or bottom with [t], [b]);
+   its lines the PDF's, copied, and no more: TeX justifies it, shrinking spaces to fit, which a browser cannot (M9) */
+.parbox { display: inline-block; vertical-align: middle; white-space: nowrap; text-align: left; }
+.parbox.top { vertical-align: top; }
+.parbox.bottom { vertical-align: bottom; }
+/* a parbox opened and closed by lines of a space alone (~\\ ... \\~): TeX's box ends at those lines' baselines,
+   half a line inside the browser's line boxes (M9's \plancell) */
+.parbox.spaced { margin-block: -0.5lh; }
+/* a cell holding a parbox is as tall as the box: TeX centres it on the row, with no strut of the cell's own
+   around it (M9's tables) */
+table.tabular td:has(.parbox) { line-height: 0; }
+/* and the row's other cells sit on the box's middle, the math axis TeX centres it on */
+table.tabular tr:has(.parbox) > td { vertical-align: middle; }
+
+/* beamer's columns, as on the other themes: the total width \paperwidth less the margins, fills before, between
+   and after; with onlytextwidth the text width, no fill outside (IAG 26/27's M1) */
+.columns { display: flex; align-items: center; margin-left: calc(-10.909 * var(--pt)); width: calc(363.43 * var(--pt)); }
+.columns::before, .columns::after { content: ""; flex: 1 1 0; }
+.columns.onlytextwidth { margin-left: 0; width: calc(341.02 * var(--pt)); }
+.columns.onlytextwidth::before, .columns.onlytextwidth::after { display: none; }
+.columns.top { align-items: baseline; }
+.column { flex: none; width: calc(var(--w) * 341.02 * var(--pt)); }
+.columns > .fill { flex: 1 1 0; }
+/* maths: scripts at 73%; a text fraction in the script size, a display one at full size; \sum and \prod with
+   their limits stacked in display; \stackrel (as on the AMSCesena theme, the fonts the page's own: M2) */
+sub { font-size: 73%; }
+sup { font-size: 73%; line-height: 0; vertical-align: 0.565em; }
+.subsup { display: inline-flex; flex-direction: column; vertical-align: 0.631em; line-height: 1.036; font-size: 73%; }
+.subsup > sup, .subsup > sub { font-size: 100%; vertical-align: 0; line-height: inherit; }
+.op { line-height: 0; }   /* \sum in the text: its glyph, from a math font, does not open the line (L4) */
+.op.lim { margin-right: 0.17em; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: 0.674em; font-size: 73%; line-height: 1.145; text-align: center; margin: 0 0.12em; }
+.frac > .num { border-bottom: calc(0.4 * var(--pt)) solid currentColor; padding: 0 0.1em; }
+.frac.disp { font-size: 100%; vertical-align: 0.677em; line-height: 1.15; margin: 0 0.17em; }
+.frac.disp > .den { padding-top: 0.22em; }
+.frac .frac.disp { vertical-align: 0.677em; }
+.frac.disp.tall, .frac .frac.disp.tall { vertical-align: 1.486em; }
+.frac.disp.tall2, .frac .frac.disp.tall2 { vertical-align: 1.366em; }
+/* \xrightarrow, \xleftarrow: the arrow as long as its label, the label over it (as on the AMSCesena theme: M1) */
+.xarrow { display: inline-block; text-align: center; min-width: 1em; }
+.xarrow > .over { display: block; font-size: 73%; line-height: 1; padding: 0 0.5em 0 0.278em; }
+.xarrow > .xa { display: block; line-height: 1; margin-top: -0.32em; text-align: right; white-space: nowrap; }
+.xarrow > .xa::before { content: ""; display: inline-block; width: calc(100% - 0.5em); margin-right: -0.5em; height: 0; border-top: 0.04em solid; vertical-align: 0.23em; }
+/* in the script styles TeX spaces neither relations nor binary operators */
+sub .rel, sup .rel, sub .bin, sup .bin, .subsup .rel, .subsup .bin, .xarrow > .over .rel, .xarrow > .over .bin { margin: 0; }
+.oplim { display: inline-block; position: relative; vertical-align: -0.26em; margin: 0 0.17em; line-height: 1; }
+.oplim > .op.big { font-size: 144%; line-height: 1; }
+.oplim > .limsub, .oplim > .limsup { position: absolute; left: 50%; transform: translateX(-50%); font-size: 70%; line-height: 1.1; }
+.oplim > .limsub { top: 100%; }
+.oplim > .limsup { bottom: calc(100% - 0.2em); }
+.rel.stack { position: relative; display: inline-block; text-align: center; }
+.rel.stack > .over { position: absolute; left: -50%; right: -50%; bottom: 0.92em; font-size: 75%; font-style: italic; line-height: 1; }
+.displaymath { text-align: center; margin: calc(6 * var(--pt)) 0; }
+
+/* qtree's \\Tree, an inline SVG in em: labels centred in their slots (M2) */
+svg.qtree { vertical-align: top; overflow: visible; }
+
+/* [shrink]: beamer sets the content at \\textwidth / f and scales it by f (as on the AMSCesena theme: L7) */
+.frame.shrink .body > * { zoom: var(--shrink); }
+.frame.toc.shrink ol.toc.fills > li.tocfill:not(.first) { flex: 0 0 0; }
+.frame.shrink .body { width: calc(341.02 * var(--shrinkr, 1) * var(--pt)); }
+
+/* \\hfill between the pieces of a line: spread from margin to margin; with fills at both ends too, evenly */
+p.spread { display: flex; justify-content: space-between; }
+p.spread.around { justify-content: space-evenly; }
+
+/* footnotes: a frame's, LaTeX's, numbered, at the page's foot in \\tiny (6.69pt), the mark right-aligned in a 1.8em box,
+   \\footnoterule 0.4pt and 136.4pt long 7.2pt above the first baseline (IAG 26/27's L7, measured); a block's: under
+   its text */
+.fnmark { font-size: 0.7em; vertical-align: 0.45em; line-height: 0; color: var(--amsred); }   /* in the text: amsred */
+.footnote > .fnmark { color: inherit; }
+.footnotes { position: absolute; left: 0; right: 0; bottom: calc(2.6 * var(--pt)); font-size: calc(6.69 * var(--pt));
+	line-height: calc(8.2 * var(--pt)); white-space: nowrap; }
+.footnote > .fnmark { display: inline-block; width: calc(12.04 * var(--pt)); text-align: right; vertical-align: 0.45em; }
+.footnotes::before { content: ""; position: absolute; left: 0; top: calc(-1 * var(--pt)); width: calc(136.4 * var(--pt));
+	border-top: calc(0.4 * var(--pt)) solid currentColor; }
+.block-body .footnotes.inblock { position: relative; left: auto; right: auto; bottom: auto; margin-top: calc(9 * var(--pt)); white-space: normal; }
+
+/* minipages side by side, as on the other styles' themes (IAG 26/27's L1) */
+.minipages { display: flex; align-items: center; column-gap: calc(3.65 * var(--pt)); }
+.minipage { flex: none; }
 
 /* ----- tables of contents: numbered balls, the other sections shaded ---- */
 ol.toc { margin: 0; }
@@ -207,9 +392,32 @@ ol.toc > li::before {
 	font-size: calc(8 * var(--fs)); line-height: calc(12.4 * var(--pt)); font-weight: 300; color: #f8eaea;
 }
 ol.toc > li.shaded { opacity: .2; }
+/* the \vfill layout of \tableofcontents (deck.json "toc_subsections"): the list's items are the body's flex items, so beamer's \vfill before each section and after
+   the last share the free space with the frame's own fills; \vspace*{-.5em} first */
+ol.toc.fills { display: contents; }
+ol.toc.fills > li + li { margin-top: 0; }
+ol.toc.fills > li.tocfill { flex: 2 1 0; padding: 0; counter-increment: none; }
+ol.toc.fills > li.tocfill::before { display: none; }
+ol.toc.fills > li.tocfill.first { margin-top: calc(-5.45 * var(--pt)); }
+/* subsections in the contents (deck.json "subtoc_all"): 12.58pt in from their section, amsgreymid, a line of
+   13.55pt each; the current section shaded with its ball, its current subsection not (IAG 26/27's M9, measured) */
+ul.tocsub { margin: 0; padding: 0; color: var(--amsgreymid); line-height: calc(13.3 * var(--pt)); }
+ul.tocsub > li { padding-left: calc(12.58 * var(--pt)); }
+ul.tocsub > li::before { left: calc(3.8 * var(--pt)); top: calc(4.6 * var(--pt)); width: calc(4 * var(--pt)); height: calc(4 * var(--pt)); }
+ul.tocsub > li + li { margin-top: 0; }
+ul.tocsub > li.shaded { opacity: .2; }
+ol.toc > li.parent > .shade, ol.toc > li.parent::before { opacity: .2; }
+ol.toc.fills > li.tocmbox { padding: 0; height: calc(13.55 * var(--pt)); counter-increment: none; flex: none; }
+ol.toc.fills > li.tocmbox::before { display: none; }
+/* deck.json "outline_fills": the outline's \vfill's and its [c] frame's share the free space, the frame's
+   1 above and 3 below (measured on IAG 26/27's A0: four sections, page 2 within 1.5pt) */
+.toc:is(.outline, .subtoc) .body:has(> ol.toc.fills)::before { display: block; flex: 1 1 0; }
+.toc:is(.outline, .subtoc) .body:has(> ol.toc.fills)::after { display: block; flex: 3 1 0; }
 
 /* ----- pictures --------------------------------------------------------- */
 img.figure { display: block; margin: 0 auto; }
+img.figure.inl { display: inline-block; vertical-align: baseline; margin: 0; }   /* a picture in a line of text (M2) */
+.figure > p:has(> img.figure.inl) { text-align: center; }   /* the figure environment centres its line */
 
 /* ----- title page ------------------------------------------------------- */
 .titlepage .body { text-align: center; top: calc(12.8 * var(--pt)); }
@@ -237,6 +445,9 @@ img.figure { display: block; margin: 0 auto; }
 .bib-title .nb { font-weight: 300; }
 .bib-location { color: var(--amsgreymid); }
 .bib-note { color: var(--amsgreendark); }
+/* a note that is only the APICe link (\apicetalkpar): on the line of the links after it, as in the PDF (L6) */
+.bibitem > .bib-note:has(> a:only-child:is(.apicepubpar, .apicetalkpar)):has(+ .bib-links),
+.bibitem > .bib-note:has(> a:only-child:is(.apicepubpar, .apicetalkpar)) + .bib-links { display: inline; }
 .apicepubpar { color: var(--amsgreendark); font-size: calc(6 * var(--fs)); margin-right: calc(5 * var(--pt)); }
 .dddoi { color: var(--amsgreyline); font-size: calc(6 * var(--fs)); }
 .uuurl { color: var(--amsgreyline); font-family: "Inconsolata", monospace; font-weight: 400; font-size: calc(6 * var(--pt)); }

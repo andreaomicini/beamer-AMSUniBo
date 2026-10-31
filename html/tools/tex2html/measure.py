@@ -26,7 +26,7 @@ JS = r'''() => {
   const marks = [];
   for (n of nodes) {
     const p = n.parentElement;
-    if (p.closest('.headline, .footline')) continue;
+    if (p.closest('.headline, .footline, svg')) continue;   // an SVG is a picture (M2's \\Tree)
     const t = n.data;
     const i = t.search(/\S/);
     if (i < 0) continue;
@@ -40,7 +40,7 @@ JS = r'''() => {
     for (let e = p; e && !e.classList.contains('frame'); e = e.parentElement) {
       if (['SPAN', 'EM', 'A', 'B', 'I', 'CODE', 'SUB'].includes(e.tagName)) continue;
       let d = e.tagName.toLowerCase();
-      if (e.className) d += '.' + e.className.split(' ')[0];
+      if (e.getAttribute('class')) d += '.' + e.getAttribute('class').split(' ')[0];   // an SVG's className is not a string (M2)
       if (e.tagName === 'LI' && e.dataset.label !== undefined) d += '[l]';
       chain.unshift(d);
     }
@@ -56,10 +56,14 @@ JS = r'''() => {
           continue;
         }
         if (getComputedStyle(e).display.startsWith('inline')) continue;
+        // nor a <br>, nor code or a line inside a <pre>: a margin there moves nothing (IAG 26/27's L6)
+        if (['BR', 'CODE'].includes(e.tagName) || e.parentElement.closest('pre')) continue;
         // never inside multicols: a margin there rebalances the columns
         if (e.parentElement.closest('.multicols')) continue;
         // never inside an array: its cells are a grid, a margin there moves a whole row of it
         if (e.parentElement.closest('.array')) continue;
+        // never inside a fraction: a margin on a numerator or denominator breaks it apart (IAG 26/27's M2 proof tree)
+        if (e.parentElement.closest('.frac')) continue;
         const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let t0;
         while ((t0 = w.nextNode()) && !/\S/.test(t0.data));
@@ -73,7 +77,8 @@ JS = r'''() => {
     const brk = prevSib && prevSib.nodeName === 'BR';
     const colEl = p.closest('.column');
     const col = colEl ? [...f.querySelectorAll('.column')].indexOf(colEl) : -1;
-    out.push({t, x, base: 0, cite: !!p.closest('.ccite'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin, col});
+    // a big operator's glyph (\\sum) is set by its math font's own origin, which the eye does not see: out, as a cite (L4)
+    out.push({t, x, base: 0, cite: !!p.closest('.ccite, .op'), fs: getComputedStyle(p).fontSize, path: chain.join('>'), brk, eidx, emargin, col});
     marks.push([n, i, m]);
   }
   // all markers in, read, then all out: inserting splits text nodes

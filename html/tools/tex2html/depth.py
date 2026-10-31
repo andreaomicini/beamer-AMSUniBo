@@ -77,5 +77,14 @@ def depths(n):
         lb = max(c[0] for c in main)
         deep = max(y - lb + max(0.0, -ymin(face, c)) * s for y, _, face, s, c, _ in line)
         g = -ymin(main[0][2], 'g') * size
+        if all(c[2].startswith('Inconsolata') for c in main):
+            # a last line that is an address alone (\uurl, \apice …), smaller than the text: the browser
+            # keeps the item's strut under it, so the 'g' to measure against is the text's, a line up (IAG 26/27)
+            above = [c for c in inside if c[0] < lb - 4.5 and not c[2].startswith('Inconsolata') and not c[5]]
+            if above:
+                ya = max(c[0] for c in above)
+                prev = [c for c in above if abs(c[0] - ya) < 0.5]
+                ps = max(c[3] for c in prev)
+                g = -ymin(next(c for c in prev if c[3] == ps)[2], 'g') * ps
         out.append(round(deep - g, 2))
     return out

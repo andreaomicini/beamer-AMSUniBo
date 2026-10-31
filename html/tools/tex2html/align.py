@@ -54,8 +54,8 @@ def html_chars(h):
                 elif not tag.endswith('/'):
                     boxes[-1][1] += 1
             # so are an array's cells, each a flow of its own, and the two scripts of a subsup
-            # and a display \sum's limits (C10 of SMA-LS 07/08)
-            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr]|limsub|limsup)\b', tag)
+            # and a display \sum's limits (C10 of SMA-LS 07/08), and the raised A and lowered E of \LaTeX (IAG 26/27)
+            if not closing and (re.search(r'class="(?:num|den|over|rows|array|subsup|a[lcr]|limsub|limsup|logo-[ae])\b', tag)
                                 or (name in ('sub', 'sup') and re.search(r'class="subsup"', h[max(0, i - 200):i]) and h.rfind('</span>', 0, i) < h.rfind('class="subsup"', 0, i))):
                 boxes.append([name, 1, flow])
                 fresh += 1
@@ -68,7 +68,8 @@ def html_chars(h):
                             skip.pop()
                     elif not tag.endswith('/'):
                         skip[-1][1] += 1
-            elif not closing and re.search(r'class="[^"]*\b(ccite|sizer|covered)\b', tag):   # a sizer row, a covered overlay are hidden
+            elif not closing and (re.search(r'class="[^"]*\b(ccite|sizer|covered)\b', tag) or name == 'svg'):   # a sizer row, a covered
+                # overlay are hidden; an SVG (M2's \\Tree) is a picture: a <br> in it would break the page out of the SVG
                 skip.append([name, 1])
             lab = re.search(r'data-label="([^"]*)"', tag)
             if lab and not skip:
@@ -161,4 +162,7 @@ def add_breaks(h, pn, report=True, **kw):
                 done.add(pos)
     for s, e, t in sorted(inserts, reverse=True):
         h = h[:s] + t + h[e:]
+    # a <pre>'s newline the alignment did not reach (lines alike: IAG 26/27's L6) is a break all the same: a <br>, as
+    # the others, or the line is measured as one with the next; a newline right after <pre> is no line in HTML
+    h = re.sub(r'(<pre\b[^>]*>\n?)(.*?)(</pre>)', lambda m: m.group(1) + m.group(2).replace('\n', '<br>') + m.group(3), h, flags=re.S)
     return h, problems, len(inserts)
