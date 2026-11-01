@@ -31,3 +31,6 @@ beamer's frame total changes them without asking for a rerun — stops on no err
 
 `zip/` belongs in the deck's `.gitignore`; the script warns when it is not. Needs TeX Live,
 `latexmk`, `perl` and poppler's `pdftoppm`.
+
+A brace group holding `://` is a web address and is never rewritten (2026-11-01: AS 20·21's
+`{https://gitlab.com/…/lab-session/t4-respect}` had become `{t4-respect}`, the deck's own name).
