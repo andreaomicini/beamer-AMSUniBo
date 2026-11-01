@@ -85,7 +85,9 @@ the text.** The row is given a fixed height, which makes beamer typeset each col
 `minipage[c][<height>]` — whose *inner* position defaults to the outer one, `c`, so the
 content is centred inside a box of known height. The image is then constrained on both axes
 (`width=\linewidth`, `height=<row height>`, `keepaspectratio`), so any aspect ratio fits and
-is centred both ways.
+is centred both ways. Measured on a probe deck at 100 dpi: portrait 400x1200, landscape 1600x500
+and square 800x800 images all land on the same centre line, and moving from a one-line text to
+four long items does not shift the picture by a single pixel.
 
 Three things to know:
 
@@ -132,12 +134,23 @@ out:
 needs more room. The image name goes without its extension.
 
 **It also works inside `picturecolumns`**, in the text column, which is how a frame gets two
-credited pictures side by side, or a credited picture beside a plain one. Both fractions are
-then read against the column rather than the frame: `width` is the text column's width, and
+credited pictures side by side, or a credited picture beside a plain one:
+
+```latex
+\begin{picturecolumns}{img/foo}
+  \creditedpicture{img/bar}{bibkey}
+\end{picturecolumns}
+```
+
+Both fractions are then read against the column rather than the frame: `width` is the text column's width, and
 `height` is the *row's* height — so the default `0.70` inside a default `0.80` row is 0.56 of
 the frame, and the picture cannot outgrow the box it sits in. Nothing has to be passed
 between the two: the environment publishes the row height and `\creditedpicture` picks it up,
-falling back to the frame's height everywhere else.
+falling back to the frame's height everywhere else. Measured on a probe deck at 100 dpi,
+portrait, landscape and square images, with and without a `credit`, `side=left` and
+`side=right`: the picture in the picture column never moves, and the credited picture keeps its
+place whatever its aspect ratio; changing the row to `height=0.60` and the picture to
+`height=0.50` scales both together and shifts neither independently.
 
 **`\creditedpicture` cites its second argument**, so the set of works a deck cites is not what a
 grep of the `.tex` for `\cite` finds. Take it from the deck's `.aux`.
@@ -168,6 +181,10 @@ Three things to know:
 
 It takes no position of its own on size or alignment, so the usual frame is
 `\begin{center}\smaller{}` around it when the run is an aside under an `\item`.
+
+It is not about decks, and nothing in it depends on the rest of the file: the block between
+`\ExplSyntaxOn` and `\ExplSyntaxOff` can be lifted into any other style file as it stands. Its
+internal names say `bulletlist` for that reason.
 
 ## a long quotation, with its translation
 
@@ -200,7 +217,7 @@ second line looks redundant, since `quotation` already sets `\parindent` to `\li
 `\parindent\z@`, so it destroys that indentation on its way past. Without the restore, the
 first paragraph keeps its indent anyway, because `quotation` applies it through `\itemindent`
 at `\begin`, before `\raggedright` runs; every *later* paragraph then starts flush, and the
-quotation goes out of step with itself.
+quotation goes out of step with itself. The restore puts all of them back on 15.11pt.
 
 It takes no arguments and no keys. Three conventions go with it rather than in it, because
 they are the writer's choice and not the environment's:
@@ -234,6 +251,14 @@ break the sentence around them and invent grammar errors instead.
 
 A command whose argument really is prose stays undeclared — `\emph`, `\alert`, `\aalert`, and
 `\bulletlist`, whose argument is a comma-list of phrases.
+
+To check what the extension sees, without the editor in the way (the versions are those installed
+on 2026-11-01):
+
+```bash
+~/.vscode/extensions/ltex-plus.vscode-ltex-plus-15.7.1/lib/ltex-ls-plus-18.7.0/bin/ltex-cli-plus \
+  tex/<deck>.tex
+```
 
 ## typesetting from TeXShop
 
