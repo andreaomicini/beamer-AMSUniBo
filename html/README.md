@@ -60,7 +60,8 @@ to `#<page>`, external ones open a new tab). Keys → ← space PgUp PgDn Home E
 3. Video commands the tool does not handle are named in a WARNING at the start.
 4. `latex`, through a wrapper that only sets drivers: PGF `pgfsys-dvisvgm.def`, graphicx and xcolor
    `dvisvgm`, hyperref `hypertex`; PGF's driver is given graphicx's image formats; `\videolink` becomes
-   its poster in a marked group. A fatal latex error stops the conversion.
+   its poster in a marked group; `dvips.def` counts as loaded and `\Gin@PS@raw`/`\Gin@PS@restored` are
+   given, for `pict2e` (below). A fatal latex error stops the conversion.
 5. The DVI is repaired in its text form (`dv2dt`/`dt2dv`): colour groups for Beamer's `\color` inside
    pictures, closed before PGF's own `</g>`, and balanced groups (`fixdvi.py`); word spaces marked
    (`spaces.py`); one more page with every character of the deck, font by font (`allglyphs.py`).
@@ -103,3 +104,12 @@ SMA-LS C1; videos in AS C7; TikZ pictures in IAG L2 and SMA-LS S4.
 Find the smallest case (the frame), see what dvisvgm does with it, and fix it in the way in or the
 way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
 then on two or three other decks where it could show.
+
+- **`pict2e` (loaded by `qtree`)**, 2026-11-01: in DVI mode its `pict2e.cfg` picks `dvips` and inputs
+  `dvips.def` over graphicx's `dvisvgm.def`. The layout then moves: about 2pt after nested lists and
+  3pt after blocks (AS S4, pages at 7–8%), and frames with `allowframebreaks` break elsewhere, so pages
+  are lost (AS P1 85 of 88, IAG M2 72 of 74). Found by bisecting S4's preamble on one frame (`latex` +
+  `dvipdfmx` against `pdflatex`). The wrapper marks `dvips.def` as loaded and gives the two macros
+  `p2e-dvips.def` needs, whose PostScript specials dvisvgm draws: S4, P1, M2 all under 3% in WebKit
+  and Firefox, page counts and `qtree` trees as in the PDF. Decks loading `qtree`: AS P1, S4; IAG M2;
+  ISE M8; SA S0.

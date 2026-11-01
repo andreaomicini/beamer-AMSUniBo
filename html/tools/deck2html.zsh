@@ -33,13 +33,18 @@ find . -name '*.pdf' -not -path './out/*' | while read f; do
 done
 # the drivers: PGF and graphicx write dvisvgm specials, hyperref hypertex links (dvisvgm turns them
 # into SVG links); PGF's dvisvgm driver lists no image formats, so it is given graphicx's;
-# \videolink (an MP4 embedded in the PDF, pdfTeX only) becomes its poster in a marked group
+# \videolink (an MP4 embedded in the PDF, pdfTeX only) becomes its poster in a marked group;
+# pict2e (qtree loads it) would input dvips.def over graphicx's dvisvgm.def, which moves the layout
+# (AS S4, P1, IAG M2, 2026-11-01): dvips.def counts as loaded, and pict2e gets its two PostScript macros
 cat > tex/__dvi.tex <<EOF
 \\def\\pgfsysdriver{pgfsys-dvisvgm.def}
 \\PassOptionsToPackage{dvisvgm}{graphicx}
 \\PassOptionsToPackage{dvisvgm}{xcolor}
 \\PassOptionsToPackage{hypertex}{hyperref}
 \\makeatletter
+\\@namedef{ver@dvips.def}{}
+\\providecommand\\Gin@PS@raw[1]{\\special{ps: #1}}
+\\providecommand\\Gin@PS@restored[1]{\\special{" #1}}
 \\AddToHook{file/pgfsys-dvisvgm.def/after}{\\def\\pgfsys@imagesuffixlist{.svg:.pdf:.png:.jpg:.jpeg:.eps:}}
 \\makeatother
 \\AtBeginDocument{\\ifdefined\\videolink\\renewcommand{\\videolink}[2]{\\leavevmode\\special{dvisvgm:raw <g class='videolink' data-video='#1'>}#2\\special{dvisvgm:raw </g>}}\\fi}
