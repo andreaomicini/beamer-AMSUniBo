@@ -36,6 +36,8 @@ done
 # \videolink (an MP4 embedded in the PDF, pdfTeX only) becomes its poster in a marked group;
 # pict2e (qtree loads it) would input dvips.def over graphicx's dvisvgm.def, which moves the layout
 # (AS S4, P1, IAG M2, 2026-11-01): dvips.def counts as loaded, and pict2e gets its two PostScript macros
+# every image placed in a marked group, its alt= key and its figure's caption written to __dvi.alt for
+# altfix.py; what Beamer's background templates draw is marked as decoration
 cat > tex/__dvi.tex <<EOF
 \\def\\pgfsysdriver{pgfsys-dvisvgm.def}
 \\PassOptionsToPackage{dvisvgm}{graphicx}
@@ -46,6 +48,16 @@ cat > tex/__dvi.tex <<EOF
 \\providecommand\\Gin@PS@raw[1]{\\special{ps: #1}}
 \\providecommand\\Gin@PS@restored[1]{\\special{" #1}}
 \\AddToHook{file/pgfsys-dvisvgm.def/after}{\\def\\pgfsys@imagesuffixlist{.svg:.pdf:.png:.jpg:.jpeg:.eps:}}
+\\newwrite\\dvialt@out\\immediate\\openout\\dvialt@out=\\jobname.alt
+\\newcount\\dvialt@n\\newcount\\dvialt@figs\\newcount\\dvialt@fig\\gdef\\dvialt@cur{}\\gdef\\dvialt@deco{0}
+\\AddToHook{package/graphicx/after}{\\define@key{Gin}{alt}{\\gdef\\dvialt@cur{#1}}}
+\\def\\dvialt@setfileX#1#2#3{\\global\\advance\\dvialt@n\\@ne\\protected@edef\\dvialt@t{\\dvialt@cur}%
+\\edef\\dvialt@f{#3}\\immediate\\write\\dvialt@out{I \\the\\dvialt@n\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space\\detokenize\\expandafter{\\dvialt@f}\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}%
+\\special{dvisvgm:raw <g class='dvialt' data-alt='\\the\\dvialt@n'>}\\dvialt@setfile{#1}{#2}{#3}\\special{dvisvgm:raw </g>}\\gdef\\dvialt@cur{}}
+\\NewDocumentCommand\\dvialt@captionX{om}{\\protected@edef\\dvialt@t{#2}\\immediate\\write\\dvialt@out{C \\the\\dvialt@fig\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}\\IfValueTF{#1}{\\dvialt@caption[#1]{#2}}{\\dvialt@caption{#2}}}
+\\AddToHook{env/figure/begin}{\\global\\advance\\dvialt@figs\\@ne\\global\\dvialt@fig\\dvialt@figs}
+\\AddToHook{env/figure/end}{\\global\\dvialt@fig\\z@}
+\\AtBeginDocument{\\let\\dvialt@setfile\\Gin@setfile\\let\\Gin@setfile\\dvialt@setfileX\\NewCommandCopy\\dvialt@caption\\caption\\let\\caption\\dvialt@captionX\\ifdefined\\addtobeamertemplate\\addtobeamertemplate{background}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\addtobeamertemplate{background canvas}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\fi}
 \\makeatother
 \\AtBeginDocument{\\ifdefined\\videolink\\renewcommand{\\videolink}[2]{\\leavevmode\\special{dvisvgm:raw <g class='videolink' data-video='#1'>}#2\\special{dvisvgm:raw </g>}}\\fi}
 \\input{$name.tex}
@@ -73,6 +85,10 @@ for f in ../svg/p0*.svg(N); do b=${f:t:r}; mv "$f" "../svg/p$((10#${b#p})).svg";
 for p in $(seq 1 $n); do
   [ -s "../svg/p$p.svg" ] && timeout 60 python3 -I "$H/svgfix.py" "../svg/p$p.svg" "../svgf/p$p.svg" "$W/src" > /dev/null
 done
+# the deck's language: its "% !TeX spellcheck" line (en_GB -> en-GB), else en
+lang=$(sed -n 's/^% *!TeX spellcheck *= *\([A-Za-z_]*\).*/\1/p' "$deck" | head -1 | tr _ -); lang=${lang:-en}
+timeout 60 python3 -I "$H/altfix.py" out/__dvi.alt ../svgf $n $lang
 timeout 120 dvisvgm --page=$g --font-format=woff2 --bbox=papersize -o ../glyphs.svg out/fixed.dvi > /dev/null 2>&1 || { echo "dvisvgm failed on the glyph page ($g)"; exit 1; }
 timeout 300 python3 -I "$H/assemble.py" ../svgf $n "$name" "$out" ../glyphs.svg
+sed -i '' "s/<html lang=\"en\">/<html lang=\"$lang\">/" "$out"
 echo "gzip: $(gzip -9 -c "$out" | wc -c | tr -d ' ') bytes"

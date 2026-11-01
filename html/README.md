@@ -42,7 +42,27 @@ One `.html` file that loads nothing from the network, so it works offline and ca
 APICe page like the PDF. Each PDF page is a `<section class="frame">` holding the page's SVG; the text
 is real text in the deck's fonts (selectable, searchable, read aloud), the links work (internal ones go
 to `#<page>`, external ones open a new tab). Keys → ← space PgUp PgDn Home End, `f` for full screen,
-`#n` opens page *n*; inside an APICe page it sends the `deck-size` message.
+`#n` opens page *n*; inside an APICe page it sends the `deck-size` message. The page declares the deck's
+language (its `% !TeX spellcheck` line, `en_GB` → `en-GB`; else `en`); each page is a `role="group"`, so
+its text and pictures reach a screen reader one by one.
+
+## Text alternatives (2026-11-01)
+
+Every picture a deck places with `\includegraphics` gets a text alternative, `role="img"` with an
+`aria-label` (and the deck's `lang`), by these rules, in order:
+
+1. its `alt={…}` key: `\includegraphics[alt={…}]{…}`, always first (graphicx accepts the key and
+   ignores it, so the PDF does not change);
+2. else the `\caption` of the `figure` it is in, the official description of the picture;
+3. else none, and the conversion names it at the end, `WARNING: no alt and no caption: page <n>, <file>`.
+   Never left so: its text is written into the deck's source as `alt=`, after reading the frame (title
+   and text, the whole deck if needed) and looking at the picture; from then on rule 1 holds.
+
+What Beamer's `background` and `background canvas` templates draw (the styles' seal) is decoration:
+`aria-hidden`, no text, no warning. The texts of the pages made by hand (before 2026-11-01) are taken
+back into the sources as `alt=` by the image's file name (their `data-asset`), not written again.
+Tried on AS P1 (5 texts taken back), S5 (a caption), S4 (12 written): every picture named in WebKit's
+accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
 
 ## The pipeline
 
@@ -60,7 +80,8 @@ to `#<page>`, external ones open a new tab). Keys → ← space PgUp PgDn Home E
 3. Video commands the tool does not handle are named in a WARNING at the start.
 4. `latex`, through a wrapper that only sets drivers: PGF `pgfsys-dvisvgm.def`, graphicx and xcolor
    `dvisvgm`, hyperref `hypertex`; PGF's driver is given graphicx's image formats; `\videolink` becomes
-   its poster in a marked group; `dvips.def` counts as loaded and `\Gin@PS@raw`/`\Gin@PS@restored` are
+   its poster in a marked group; every picture is placed in a marked group and its `alt=` key and its
+   figure's caption are written to `__dvi.alt`; `dvips.def` counts as loaded and `\Gin@PS@raw`/`\Gin@PS@restored` are
    given, for `pict2e` (below). A fatal latex error stops the conversion.
 5. The DVI is repaired in its text form (`dv2dt`/`dt2dv`): colour groups for Beamer's `\color` inside
    pictures, closed before PGF's own `</g>`, and balanced groups (`fixdvi.py`); word spaces marked
@@ -77,7 +98,9 @@ to `#<page>`, external ones open a new tab). Keys → ← space PgUp PgDn Home E
 2. `assemble.py`: one page; ids and classes prefixed per page; a repeated picture stored once; the
    extra page's fonts replace every per-page subset (one WOFF2 per font); private-use glyphs
    (old-style figures) given their real characters too (`fontfix.py`); ligatures as plain letters;
-   each video embedded once, laid over its poster and played on a click.
+   each video embedded once, laid over its poster and played on a click. Before it, `altfix.py` gives
+   each marked picture its text (see *Text alternatives*), hides the background's, and makes each page
+   `role="group"`.
 
 ## Results
 
@@ -90,7 +113,8 @@ SMA-LS C1; videos in AS C7; TikZ pictures in IAG L2 and SMA-LS S4.
 
 - The text is placed word by word: a paragraph copies as words with spaces, not as flowing lines, and
   a word hyphenated by TeX stays broken. Not relevant: the HTML is for viewing, the PDF for the text.
-- Images carry no description (`alt`), unlike the hand-made pages.
+- A screen reader speaks the texts in the voice its own settings choose: VoiceOver on an Italian Mac read
+  `lang="en-GB"` with the Italian voice. The page declares the language; switching voice is the reader's.
 - Beamer's shadow is redrawn, not translated: it matches at the eye, a hair darker than the PDF's.
   The block's title is found as the first picture at the block's x since the previous block; if none
   is found, the shadow goes just before the body.
