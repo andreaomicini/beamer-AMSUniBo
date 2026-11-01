@@ -1,0 +1,25 @@
+# Releases the style on every push to main that changes it: style.zip (the .sty, .bst and background
+# files and the LICENSE) as <version>-<UTC stamp>, here (package registry + release) and on GitHub.
+# GitLab is the primary repository, so the CI runs here (Andrea, 2026-11-01); GitHub is the mirror.
+# The style is built and checked by its template repository; here it is only packed.
+#
+# ci/release.py; GITHUB_TOKEN is a fine-grained token (the style and template repositories, Contents
+# read and write) kept as a masked, protected variable in Settings > CI/CD > Variables.
+
+release:
+  image: python:3-alpine
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - changes:
+        - "*.sty"
+        - "*.bst"
+        - "*.pdf"
+        - LICENSE
+        - .gitlab-ci.yml
+        - ci/compute-version.py
+        - ci/release.py
+  script:
+    - apk add --no-cache zip
+    - zip style.zip *.sty *.bst *.pdf LICENSE
+    - python3 ci/release.py beamerthemeAMSUniBo.sty style.zip "AMSUniBo Beamer style"
