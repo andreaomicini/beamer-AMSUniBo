@@ -129,6 +129,12 @@ Find the smallest case (the frame), see what dvisvgm does with it, and fix it in
 way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
 then on two or three other decks where it could show.
 
+- **Options with free text**, 2026-11-01: the step that drops `.pdf` from `\includegraphics{x.pdf}` read the
+  options up to the first `]`, and an `alt={…}` holding `[10]` stopped it (AS T3 p. 55, a picture missing):
+  options are now read with their braces.
+- **`transparent.sty`** loads only under pdfTeX: in DVI `\transparent{.1}` printed `.1` at each listing line
+  (AS L4, a `backgroundcolor=\transparent{.1}\color{white}`). The wrapper defines `\transparent` as nothing
+  and `\texttransparent` as its text when the package did not; in the PDF that background is invisible anyway.
 - **`pict2e` (loaded by `qtree`)**, 2026-11-01: in DVI mode its `pict2e.cfg` picks `dvips` and inputs
   `dvips.def` over graphicx's `dvisvgm.def`. The layout then moves: about 2pt after nested lists and
   3pt after blocks (AS S4, pages at 7–8%), and frames with `allowframebreaks` break elsewhere, so pages

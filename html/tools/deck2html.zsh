@@ -18,7 +18,7 @@ v=$(cat "$deck" $(find sty -name '*.sty' 2>/dev/null) 2>/dev/null | sed 's/%.*//
 # own PDF route (mutool) names a PDF's images by object number, and two PDFs with an image 4 on the
 # same page swap their pictures
 # a picture named with its .pdf extension would bypass the choice below: the extension goes, in this copy
-find tex sty -name '*.tex' -o -name '*.sty' 2>/dev/null | while read f; do perl -pi -e 's/(\\includegraphics(?:\[[^\]]*\])?\{[^}]*?)\.pdf\}/$1}/g' "$f"; done
+find tex sty -name '*.tex' -o -name '*.sty' 2>/dev/null | while read f; do perl -pi -e 's/(\\includegraphics(?:\[(?:[^\]{}]|\{[^{}]*\})*\])?\{[^}]*?)\.pdf\}/$1}/g' "$f"; done
 # bitmaps whose resolution has no unit: the size pdflatex gives them (72 dpi), in an .xbb
 find . \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) -not -path './out/*' -print0 | xargs -0 python3 -I "$H/imgbb.py" || true
 find . -name '*.pdf' -not -path './out/*' | while read f; do
@@ -38,6 +38,7 @@ done
 # (AS S4, P1, IAG M2, 2026-11-01): dvips.def counts as loaded, and pict2e gets its two PostScript macros
 # every image placed in a marked group, its alt= key and its figure's caption written to __dvi.alt for
 # altfix.py; what Beamer's background templates draw is marked as decoration
+# \transparent (transparent.sty, pdfTeX only) would print its argument in DVI: harmless if undefined
 cat > tex/__dvi.tex <<EOF
 \\def\\pgfsysdriver{pgfsys-dvisvgm.def}
 \\PassOptionsToPackage{dvisvgm}{graphicx}
@@ -59,6 +60,7 @@ cat > tex/__dvi.tex <<EOF
 \\AddToHook{env/figure/end}{\\global\\dvialt@fig\\z@}
 \\AtBeginDocument{\\let\\dvialt@setfile\\Gin@setfile\\let\\Gin@setfile\\dvialt@setfileX\\NewCommandCopy\\dvialt@caption\\caption\\let\\caption\\dvialt@captionX\\ifdefined\\addtobeamertemplate\\addtobeamertemplate{background}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\addtobeamertemplate{background canvas}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\fi}
 \\makeatother
+\\AtBeginDocument{\\providecommand\\transparent[1]{}\\providecommand\\texttransparent[2]{#2}}
 \\AtBeginDocument{\\ifdefined\\videolink\\renewcommand{\\videolink}[2]{\\leavevmode\\special{dvisvgm:raw <g class='videolink' data-video='#1'>}#2\\special{dvisvgm:raw </g>}}\\fi}
 \\input{$name.tex}
 EOF
