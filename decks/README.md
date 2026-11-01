@@ -9,8 +9,11 @@ For talks the mechanisms are `talks.sty`, one file kept in `decks/` of **every**
 (`beamer-AMSUniBo`, `beamer-AMSBolognaFC`, `beamer-AMSCesena`, `beamer-AMSPurpleAndGold`,
 `beamer-AMSRedGrey`, `beamer-AMSSilverBlue`), the six copies identical; a talk reaches it through
 its own `.style` submodule, `sty/talks.sty -> ../.style/decks/talks.sty` (decided, Andrea,
-2026-11-01). Courses keep a `sty/courses.sty` each for now, to become a shared `courses.sty` in the
-same way. The names below hold for both.
+2026-11-01). Courses have their own shared file beside it, `decks/courses.sty`: the same mechanisms (prefix
+`\courses@`) plus two link helpers, `\smallurl` — the style's `\uurl` one relsize step down, in the
+style's own colour — and `\expandurl`, with the repository hosts `\aorepoprimary` and
+`\aoreposecondary`; anything about one course (a lab repository, say) goes in that course's
+`sty/course.sty`. The names below hold for both.
 
 ## writing a new deck
 

@@ -1,0 +1,137 @@
+%%%% Generic mechanisms for course slide decks
+%%%% by Andrea Omicini <mailto:andrea.omicini@unibo.it>
+%%%%
+%% Course-independent, so it serves any deck: the deck label, the PDF file name
+%% and metadata built out of it, the picture layouts, \bulletlist, indquotation,
+%% and the link helpers \smallurl and \expandurl.
+%% Load FIRST, ahead of course.sty, names.sty (if any) and the subject's .sty.
+%% Shared by every course through .style/decks/; usage in beamer-AMSUniBo/decks/README.md.
+\ProvidesPackage{courses}[2026/11/01 Generic deck mechanisms for course slides]
+%% dealing with font sizes in a relative way
+\usepackage{relsize}
+%% A comma-separated list printed as "a \textbullet\ b \textbullet\ c", each
+%% item trimmed of surrounding spaces and \mbox-ed. Empty list prints nothing.
+%% Not expandable: keep it out of \title and any other PDF string.
+\ExplSyntaxOn
+\clist_new:N \l__bulletlist_items_clist
+\bool_new:N  \l__bulletlist_first_bool
+\NewDocumentCommand \bulletlist { m }
+	{
+		\clist_set:Nn \l__bulletlist_items_clist { #1 }
+		\bool_set_true:N \l__bulletlist_first_bool
+		\clist_map_inline:Nn \l__bulletlist_items_clist
+			{
+				\bool_if:NTF \l__bulletlist_first_bool
+					{ \bool_set_false:N \l__bulletlist_first_bool }
+					{ \space \textbullet \space }
+				\mbox{##1}
+			}
+	}
+\ExplSyntaxOff
+%% A picture beside a text, the picture vertically centred whatever either is
+%% \begin{picturecolumns}[width=0.43,gap=0.02,height=0.80,side=left]{<image>}
+\RequirePackage{keyval}
+\RequirePackage{graphicx}
+\define@key{picturecolumns}{width}{\def\courses@pic@width{#1}}
+\define@key{picturecolumns}{gap}{\def\courses@pic@gap{#1}}
+\define@key{picturecolumns}{height}{\def\courses@pic@height{#1}}
+\define@key{picturecolumns}{side}{\def\courses@pic@side{#1}}
+\def\courses@pic@rightname{right}
+%% How tall a picture may be here: the row's height inside picturecolumns'
+%% text column, the frame's anywhere else. Read by \creditedpicture.
+\newif\ifcourses@inpiccolumn
+\newlength{\courses@availheight}
+\newcommand{\courses@pic@column}[1]{%
+	\begin{column}{\courses@pic@width\textwidth}%
+		\centering\includegraphics[width=\linewidth,%
+			height=\courses@pic@height\textheight,keepaspectratio]{#1}%
+	\end{column}}
+\newenvironment{picturecolumns}[2][]{%
+	\def\courses@pic@width{0.43}\def\courses@pic@gap{0.02}%
+	\def\courses@pic@height{0.80}\def\courses@pic@side{left}%
+	\setkeys{picturecolumns}{#1}%
+	\def\courses@pic@file{#2}%
+	\begin{columns}[c,onlytextwidth,height=\courses@pic@height\textheight]%
+		\ifx\courses@pic@side\courses@pic@rightname\else\courses@pic@column{#2}\fi
+		\begin{column}{\dimexpr\textwidth-\courses@pic@width\textwidth%
+			-\courses@pic@gap\textwidth\relax}%
+		\courses@inpiccolumntrue
+		\setlength{\courses@availheight}{\courses@pic@height\textheight}%
+		\ignorespaces}%
+	{\end{column}%
+		\ifx\courses@pic@side\courses@pic@rightname
+			\courses@pic@column{\courses@pic@file}\fi
+	\end{columns}}
+%% A centred picture with a credit line under it, in the deck's own colour.
+%% Works inside picturecolumns too: there the fractions are the column's.
+%% \creditedpicture[width=1.00,height=0.70,credit={<text>}]{<image>}{<bibkey>}
+\define@key{creditedpicture}{width}{\def\courses@cpic@width{#1}}
+\define@key{creditedpicture}{height}{\def\courses@cpic@height{#1}}
+\define@key{creditedpicture}{credit}{\def\courses@cpic@credit{#1}}
+\newcommand{\creditedpicture}[3][]{%
+	\def\courses@cpic@width{1.00}\def\courses@cpic@height{0.70}%
+	\def\courses@cpic@credit{}%
+	\setkeys{creditedpicture}{#1}%
+	\ifcourses@inpiccolumn\else\setlength{\courses@availheight}{\textheight}\fi
+	\begingroup\centering
+		\includegraphics[width=\courses@cpic@width\textwidth,%
+			height=\courses@cpic@height\courses@availheight,keepaspectratio]{#2}%
+		\par\smallskip
+		\smaller\ifx\courses@cpic@credit\@empty\else\courses@cpic@credit~\fi\cite{#3}%
+	\par\endgroup}
+%% The deck's label: \decklabel{M1} in the preamble, ahead of \title, read back
+%% as \thedecklabel. Optional; unset, name and metadata fall back to the title.
+\newcommand{\decklabel}[1]{\def\thedecklabel{#1}}
+\decklabel{}
+%% Writes "<label> – <full title>" to aux/<jobname>.pdfname; the END block in
+%% .latexmkrc reads it and renames the copy of the PDF in pdf/.
+%% The title is EXPANDED first: \detokenize alone writes the characters of a
+%% macro's name, so \title{\talktitlelong} used to land in the file verbatim.
+\newwrite\courses@pdfnamefile
+\AtBeginDocument{%
+	\protected@edef\courses@thetitle{\inserttitle}%
+	\protected@edef\courses@thelabel{\thedecklabel}%
+	\immediate\openout\courses@pdfnamefile=\jobname.pdfname\relax
+	\ifx\courses@thelabel\@empty
+		\immediate\write\courses@pdfnamefile{%
+			\detokenize\expandafter{\courses@thetitle}}%
+	\else
+		\immediate\write\courses@pdfnamefile{%
+			\detokenize\expandafter{\courses@thelabel}\detokenize{ – }\detokenize\expandafter{\courses@thetitle}}%
+	\fi
+	\immediate\closeout\courses@pdfnamefile}
+%% The same "<label> – <title>" into the PDF /Title, subtitle left out.
+%% Appended to beamer's own hook, not \AtBeginDocument, or beamer's line wins.
+\ifbeamer@autopdfinfo
+	\g@addto@macro\beamer@firstminutepatches{%
+		\begingroup
+			\let\thanks=\@gobble%
+			\hypersetup{pdftitle={%
+				\ifx\thedecklabel\@empty\else\thedecklabel\ – \fi
+				\inserttitle}}%
+		\endgroup}
+\fi
+%% Indented quotation for long citations, with possibly a translation. The two
+%% lines are an ordered pair: \raggedright zeroes \parindent, the next restores it.
+\newenvironment{indquotation}{%
+	\begin{quotation}%
+		\raggedright
+		\setlength{\parindent}{\listparindent}%
+}{%
+	\end{quotation}}
+%% \smallurl: the style's \uurl one relsize step down, for an address too long
+%% for its \scriptsize; the colour is the style's own, light or dark surface alike.
+\newcommand{\smallurl}[1]{{\let\courses@scriptsize\scriptsize
+	\def\scriptsize{\let\scriptsize\courses@scriptsize\scriptsize\smaller}%
+	\uurl{#1}}}
+%% Repository hosts, no trailing slash; decks use primary/secondary, never a host.
+%% Write \aorepoprimary/<project> inside \expandurl, e.g. \expandurl\uurl{...}.
+\newcommand{\aodisigitlab}{https://gitlab.disi.unibo.it/andrea.omicini}
+\newcommand{\aogithub}{https://github.com/andreaomicini}
+\newcommand{\aorepoprimary}{\aodisigitlab}
+\newcommand{\aoreposecondary}{\aogithub}
+%% APICe addresses are the style's: \apice, \apicesite, \apicepage (style README).
+%% \expandurl<url command>{<address>}: expands the address fully, then hands it on.
+\newcommand{\courses@link@arg}{}
+\newcommand{\expandurl}[2]{{\edef\courses@link@arg{#2}%
+	\expandafter#1\expandafter{\courses@link@arg}}}
