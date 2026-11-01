@@ -5,9 +5,12 @@ the deck label, the PDF file name, `picturecolumns`, `\creditedpicture`, `\bulle
 `indquotation` — and how to typeset a deck from TeXShop. Written once here, for every deck of every
 style; each deck's README says only what is its own.
 
-The mechanisms are today a copy in each repository, `sty/talks.sty` in a talk and
-`sty/courses.sty` in a course; they are to become one shared `decks.sty` here, reached through the
-`.style` submodule (`TALK-DECKS.md`, decided 2026-10-31). The names below hold for both.
+For talks the mechanisms are `talks.sty`, one file kept in `decks/` of **every** style repository
+(`beamer-AMSUniBo`, `beamer-AMSBolognaFC`, `beamer-AMSCesena`, `beamer-AMSPurpleAndGold`,
+`beamer-AMSRedGrey`, `beamer-AMSSilverBlue`), the six copies identical; a talk reaches it through
+its own `.style` submodule, `sty/talks.sty -> ../.style/decks/talks.sty` (decided, Andrea,
+2026-11-01). Courses keep a `sty/courses.sty` each for now, to become a shared `courses.sty` in the
+same way. The names below hold for both.
 
 ## writing a new deck
 

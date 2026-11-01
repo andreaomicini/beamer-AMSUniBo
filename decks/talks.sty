@@ -1,0 +1,120 @@
+%%%% Generic mechanisms for slide decks
+%%%% by Andrea Omicini <mailto:andrea.omicini@unibo.it>
+%%%%
+%% Deck-independent, so it serves any deck: the deck label, the PDF file name
+%% and metadata built out of it, the picture layouts, \bulletlist, indquotation.
+%% Load FIRST, ahead of talk.sty, names.sty (if any) and <repo>.sty.
+%% Shared by every talk through .style/decks/; usage in beamer-AMSUniBo/decks/README.md.
+\ProvidesPackage{talks}[2026/11/01 Generic deck mechanisms for slide decks]
+%% dealing with font sizes in a relative way
+\usepackage{relsize}
+%% A comma-separated list printed as "a \textbullet\ b \textbullet\ c", each
+%% item trimmed of surrounding spaces and \mbox-ed. Empty list prints nothing.
+%% Not expandable: keep it out of \title and any other PDF string.
+\ExplSyntaxOn
+\clist_new:N \l__bulletlist_items_clist
+\bool_new:N  \l__bulletlist_first_bool
+\NewDocumentCommand \bulletlist { m }
+	{
+		\clist_set:Nn \l__bulletlist_items_clist { #1 }
+		\bool_set_true:N \l__bulletlist_first_bool
+		\clist_map_inline:Nn \l__bulletlist_items_clist
+			{
+				\bool_if:NTF \l__bulletlist_first_bool
+					{ \bool_set_false:N \l__bulletlist_first_bool }
+					{ \space \textbullet \space }
+				\mbox{##1}
+			}
+	}
+\ExplSyntaxOff
+%% A picture beside a text, the picture vertically centred whatever either is
+%% \begin{picturecolumns}[width=0.43,gap=0.02,height=0.80,side=left]{<image>}
+\RequirePackage{keyval}
+\RequirePackage{graphicx}
+\define@key{picturecolumns}{width}{\def\talks@pic@width{#1}}
+\define@key{picturecolumns}{gap}{\def\talks@pic@gap{#1}}
+\define@key{picturecolumns}{height}{\def\talks@pic@height{#1}}
+\define@key{picturecolumns}{side}{\def\talks@pic@side{#1}}
+\def\talks@pic@rightname{right}
+%% How tall a picture may be here: the row's height inside picturecolumns'
+%% text column, the frame's anywhere else. Read by \creditedpicture.
+\newif\iftalks@inpiccolumn
+\newlength{\talks@availheight}
+\newcommand{\talks@pic@column}[1]{%
+	\begin{column}{\talks@pic@width\textwidth}%
+		\centering\includegraphics[width=\linewidth,%
+			height=\talks@pic@height\textheight,keepaspectratio]{#1}%
+	\end{column}}
+\newenvironment{picturecolumns}[2][]{%
+	\def\talks@pic@width{0.43}\def\talks@pic@gap{0.02}%
+	\def\talks@pic@height{0.80}\def\talks@pic@side{left}%
+	\setkeys{picturecolumns}{#1}%
+	\def\talks@pic@file{#2}%
+	\begin{columns}[c,onlytextwidth,height=\talks@pic@height\textheight]%
+		\ifx\talks@pic@side\talks@pic@rightname\else\talks@pic@column{#2}\fi
+		\begin{column}{\dimexpr\textwidth-\talks@pic@width\textwidth%
+			-\talks@pic@gap\textwidth\relax}%
+		\talks@inpiccolumntrue
+		\setlength{\talks@availheight}{\talks@pic@height\textheight}%
+		\ignorespaces}%
+	{\end{column}%
+		\ifx\talks@pic@side\talks@pic@rightname
+			\talks@pic@column{\talks@pic@file}\fi
+	\end{columns}}
+%% A centred picture with a credit line under it, in the deck's own colour.
+%% Works inside picturecolumns too: there the fractions are the column's.
+%% \creditedpicture[width=1.00,height=0.70,credit={<text>}]{<image>}{<bibkey>}
+\define@key{creditedpicture}{width}{\def\talks@cpic@width{#1}}
+\define@key{creditedpicture}{height}{\def\talks@cpic@height{#1}}
+\define@key{creditedpicture}{credit}{\def\talks@cpic@credit{#1}}
+\newcommand{\creditedpicture}[3][]{%
+	\def\talks@cpic@width{1.00}\def\talks@cpic@height{0.70}%
+	\def\talks@cpic@credit{}%
+	\setkeys{creditedpicture}{#1}%
+	\iftalks@inpiccolumn\else\setlength{\talks@availheight}{\textheight}\fi
+	\begingroup\centering
+		\includegraphics[width=\talks@cpic@width\textwidth,%
+			height=\talks@cpic@height\talks@availheight,keepaspectratio]{#2}%
+		\par\smallskip
+		\smaller\ifx\talks@cpic@credit\@empty\else\talks@cpic@credit~\fi\cite{#3}%
+	\par\endgroup}
+%% The deck's label: \decklabel{M1} in the preamble, ahead of \title, read back
+%% as \thedecklabel. Optional; unset, name and metadata fall back to the title.
+\newcommand{\decklabel}[1]{\def\thedecklabel{#1}}
+\decklabel{}
+%% Writes "<label> – <full title>" to aux/<jobname>.pdfname; the END block in
+%% .latexmkrc reads it and renames the copy of the PDF in pdf/.
+%% The title is EXPANDED first: \detokenize alone writes the characters of a
+%% macro's name, so \title{\talktitlelong} used to land in the file verbatim.
+\newwrite\talks@pdfnamefile
+\AtBeginDocument{%
+	\protected@edef\talks@thetitle{\inserttitle}%
+	\protected@edef\talks@thelabel{\thedecklabel}%
+	\immediate\openout\talks@pdfnamefile=\jobname.pdfname\relax
+	\ifx\talks@thelabel\@empty
+		\immediate\write\talks@pdfnamefile{%
+			\detokenize\expandafter{\talks@thetitle}}%
+	\else
+		\immediate\write\talks@pdfnamefile{%
+			\detokenize\expandafter{\talks@thelabel}\detokenize{ – }\detokenize\expandafter{\talks@thetitle}}%
+	\fi
+	\immediate\closeout\talks@pdfnamefile}
+%% The same "<label> – <title>" into the PDF /Title, subtitle left out.
+%% Appended to beamer's own hook, not \AtBeginDocument, or beamer's line wins.
+\ifbeamer@autopdfinfo
+	\g@addto@macro\beamer@firstminutepatches{%
+		\begingroup
+			\let\thanks=\@gobble%
+			\hypersetup{pdftitle={%
+				\ifx\thedecklabel\@empty\else\thedecklabel\ – \fi
+				\inserttitle}}%
+		\endgroup}
+\fi
+%% Indented quotation for long citations, with possibly a translation. The two
+%% lines are an ordered pair: \raggedright zeroes \parindent, the next restores it.
+\newenvironment{indquotation}{%
+	\begin{quotation}%
+		\raggedright
+		\setlength{\parindent}{\listparindent}%
+}{%
+	\end{quotation}}
