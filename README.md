@@ -114,7 +114,9 @@ font packages listed under [typography](#typography) — it does not bundle font
 style) as a single HTML page matching its PDF, through latex and dvisvgm — see
 [html/README.md](html/README.md). Nor is `zip/`, whose script packs a deck into
 one flat folder that builds with a plain `pdflatex` — see
-[zip/README.md](zip/README.md).
+[zip/README.md](zip/README.md). Nor is `decks/`, whose README holds the recipes every deck
+shares (a picture beside a text, a long quotation, the TeXShop engine…) — see
+[decks/README.md](decks/README.md).
 
 Beyond the beamer furniture, the theme defines:
 
