@@ -28,7 +28,8 @@ bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
 - The work is done on a copy of the sources in `aux/html/<deck>/`; the repository is only read.
 - `--compare` draws every page in Playwright WebKit and in Firefox headless and measures it against
   `aux/<deck>.pdf` (ImageMagick AE at 12% fuzz): `aux/html/cmp-<deck>/wk.txt` and `ff.txt`, one line
-  per page. Never Chrome.
+  per page. Never Chrome. Firefox runs on a new empty profile each time (`-no-remote -profile`): with
+  Firefox open, a headless run on the usual profile made no picture (2026-11-02).
 
 A deck takes 6–27 s for a talk, about 70 s for a 329-page course deck.
 

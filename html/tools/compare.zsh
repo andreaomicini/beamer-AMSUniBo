@@ -14,7 +14,8 @@ for (let i = 1; i <= $n; i++) { await p.evaluate(k => { location.hash = '#' + k;
 await b.close();
 JS
 timeout 900 node $C/shot.mjs
-[ -n "$SKIPFF" ] || for i in $(seq 1 $n); do j=$(printf "%0${#n}d" $i); timeout 60 /Applications/Firefox.app/Contents/MacOS/firefox --headless --window-size=$w,$h --screenshot "$PWD/$C/ff-$j.png" "file://$html#$i" >/dev/null 2>&1; done
+# a private profile: an open Firefox holds the usual one, and a headless run on it makes no picture
+[ -n "$SKIPFF" ] || { P=$(mktemp -d); for i in $(seq 1 $n); do j=$(printf "%0${#n}d" $i); timeout 60 /Applications/Firefox.app/Contents/MacOS/firefox --headless -no-remote -profile $P --window-size=$w,$h --screenshot "$PWD/$C/ff-$j.png" "file://$html#$i" >/dev/null 2>&1; done; rm -rf $P; }
 engines=(wk); [ -z "$SKIPFF" ] && engines+=(ff)
 for e in $engines; do
   for i in $(seq 1 $n); do j=$(printf "%0${#n}d" $i); r=$(ls $C/ref-*$j.png | head -1); printf "%s %s\n" $j "$(compare -metric AE -fuzz 12% $r $C/$e-$j.png null: 2>&1 | sed 's/.*(\(.*\))/\1/')"; done > $C/$e.txt
