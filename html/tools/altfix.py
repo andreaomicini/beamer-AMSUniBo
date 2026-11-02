@@ -7,8 +7,9 @@ import re, sys, html, os
 alt_file, d, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
 lang = sys.argv[4] if len(sys.argv) > 4 else 'en'
 def clean(t):
-    t = re.sub(r'\\(%|&|_|#|\$|\{|\})', r'\1', t)
+    t = re.sub(r'\\(%|&|_|#|\$)', r'\1', t).replace('\\{', '\x01').replace('\\}', '\x02')  # \{ \} are printed
     t = re.sub(r'\\[a-zA-Z@]+\*?\s?', '', t).replace('{', '').replace('}', '').replace('~', ' ')
+    t = t.replace('\x01', '{').replace('\x02', '}')
     t = t.replace('---', '—').replace('--', '–').replace('``', '“').replace("''", '”')
     return re.sub(r'\s+', ' ', t).strip()
 imgs, caps = {}, {}

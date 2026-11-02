@@ -61,6 +61,9 @@ Every picture a deck places with `\includegraphics` gets a text alternative, `ro
    Never left so: its text is written into the deck's source as `alt=`, after reading the frame (title
    and text, the whole deck if needed) and looking at the picture; from then on rule 1 holds.
 
+In a text, markup is dropped (`\emph{x}` is *x*, `{J}ason` is *Jason*) and escaped characters are printed:
+`\%`, `\&`, `\{ \}` (a set, AS C6's `\{on(A,B), on(B,C)\}`, had lost its braces until 2026-11-02).
+
 What Beamer's `background` and `background canvas` templates draw (the styles' seal) is decoration:
 `aria-hidden`, no text, no warning. The texts of the pages made by hand (before 2026-11-01) are taken
 back into the sources as `alt=` by the image's file name (their `data-asset`), not written again.
