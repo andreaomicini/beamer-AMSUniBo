@@ -78,11 +78,14 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
 
 1. PDF pictures become SVG beside them (`pdftocairo -svg`), which PGF and graphicx then prefer:
    dvisvgm's own PDF route names images by object number, and two PDFs with an image 4 on one page
-   swapped their pictures. A PDF whose SVG needs soft-mask filters becomes a transparent 200-dpi PNG on
+   swapped their pictures. A PDF whose SVG needs soft-mask or blend filters (`feImage`, which Firefox does not
+   draw: ISE M1's IEEE pages, 2026-11-02) becomes a transparent 200-dpi PNG on
    its crop box instead, with an `.xbb` of that box (pdflatex reads a PDF on its crop box). Large photo
    bitmaps inside the SVGs become JPEG when that halves them (`svgjpeg.py`); `\includegraphics{x.pdf}`
    loses its extension so that the choice applies.
-2. Bitmaps whose resolution has no unit get an `.xbb` at 72 dpi, pdflatex's reading (`imgbb.py`).
+2. Bitmaps whose resolution has no unit get an `.xbb` at 72 dpi, pdflatex's reading (`imgbb.py`); so does a bitmap
+   whose name has a space, at its own resolution: `extractbb` cuts such a name, graphicx made the picture square,
+   and the frame lost its last blocks to `allowframebreaks` (ISE M0, *tuttofuoco-between words.png*, 2026-11-02).
 3. Video commands the tool does not handle are named in a WARNING at the start.
 4. `latex`, through a wrapper that only sets drivers: PGF `pgfsys-dvisvgm.def`, graphicx and xcolor
    `dvisvgm`, hyperref `hypertex`; PGF's driver is given graphicx's image formats; `\videolink` becomes
