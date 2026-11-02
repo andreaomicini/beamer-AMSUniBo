@@ -24,7 +24,8 @@ bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
 - `<deck>` is the jobname (`l2-lp`, or `tex/l2-lp.tex`); it may be omitted when `tex/` holds one
   `.tex`.
 - The page goes to `html/<name>.html`, `<name>` being the PDF's name in `pdf/` (latexmk's
-  `aux/<deck>.pdfprev`, else `aux/<deck>.pdfname`, else the jobname).
+  `aux/<deck>.pdfprev`, else `aux/<deck>.pdfname` turned into a name by `.latexmkrc`'s rules, else the jobname;
+  until 2026-11-02 the title was taken raw, and a talk repo without the ledger got `…\\& …\\\\….html`).
 - The work is done on a copy of the sources in `aux/html/<deck>/`; the repository is only read.
 - `--compare` draws every page in Playwright WebKit and in Firefox headless and measures it against
   `aux/<deck>.pdf` (ImageMagick AE at 12% fuzz): `aux/html/cmp-<deck>/wk.txt` and `ff.txt`, one line

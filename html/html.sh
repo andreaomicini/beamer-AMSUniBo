@@ -22,9 +22,11 @@ fi
 ## the page is named like the deck's PDF in pdf/: the name latexmk gave it last (aux/<deck>.pdfprev),
 ## or the title it read (aux/<deck>.pdfname), or else the jobname
 name=$deck
-for f in "aux/$deck.pdfprev" "aux/$deck.pdfname"; do
-	[ -s "$f" ] && { name=$(head -1 "$f"); break; }
-done
+if [ -s "aux/$deck.pdfprev" ]; then name=$(head -1 "aux/$deck.pdfprev")
+elif [ -s "aux/$deck.pdfname" ]; then    # the title as .latexmkrc turns it into a name (a repo without the ledger)
+	name=$(head -1 "aux/$deck.pdfname" | perl -pe 's/\\\\/ /g; s/\\textendash\s*/\xe2\x80\x93/g; s/\\textemdash\s*/\xe2\x80\x94/g;
+		s/\\[{}]/ /g; s/\\[a-zA-Z\@]+\s*//g; s/[{}\$\\]//g; s/:/ /g; tr{/}{-}; s/\s+/ /g; s/^[\s.-]+|[\s.-]+$//g')
+fi
 mkdir -p html
 page="html/$name.html"
 
