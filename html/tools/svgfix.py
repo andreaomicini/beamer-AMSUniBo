@@ -59,13 +59,25 @@ s = re.sub(r"<g fill='#000'>\s*<path d='M0-7\.02625H([\d.]+)V([\d.]+)H0Z' stroke
 # first one at the same x since the previous block), inside the body picture's transform
 SH = re.compile(r"<defs><filter id='bsf\d+'.*?</defs><g><rect [^>]*/></g>")
 GR = re.compile(r"<g stroke-miterlimit='10' transform='(translate\(([-\d.]+),[-\d.]+\)scale\([-\d.]+,[-\d.]+\))'>")
+def frame_of(t, pos):
+    # the transforms of the groups open at pos, outermost first: the coordinates a group placed there gets
+    out = []
+    for k in re.finditer(r"<g\b([^>]*?)(/?)>|</g>", t[:pos]):
+        if k.group(0) == '</g>':
+            out.pop()
+        elif not k.group(2):
+            out.append(re.search(r"transform='[^']*'", k.group(1)))
+    return [m.group(0) for m in out if m]
 floor = 0
 while True:
     m = next((k for k in SH.finditer(s) if k.start() > floor), None)
     if not m:
         break
     body = [g for g in GR.finditer(s, 0, m.start())][-1]
-    first = next((g for g in GR.finditer(s, floor, body.end()) if g.group(2) == body.group(2)), body)
+    # only where the body's coordinates hold: before a group outside the body's transforms (the picture
+    # of a frame that [shrink] scales) the shadow would leave the scaling and land a frame height off
+    first = next((g for g in GR.finditer(s, floor, body.end())
+                  if g.group(2) == body.group(2) and frame_of(s, g.start()) == frame_of(s, body.start())), body)
     ins = f"<g transform='{body.group(1)}'>{m.group(0)}</g>"
     s = s[:m.start()] + s[m.end():]
     s = s[:first.start()] + ins + s[first.start():]

@@ -125,8 +125,12 @@ SMA-LS C1; videos in AS C7; TikZ pictures in IAG L2 and SMA-LS S4.
 - A screen reader speaks the texts in the voice its own settings choose: VoiceOver on an Italian Mac read
   `lang="en-GB"` with the Italian voice. The page declares the language; switching voice is the reader's.
 - Beamer's shadow is redrawn, not translated: it matches at the eye, a hair darker than the PDF's.
-  The block's title is found as the first picture at the block's x since the previous block; if none
-  is found, the shadow goes just before the body.
+  The block's title is found as the first picture at the block's x since the previous block, **in the
+  body's coordinates** (the same transforms around it); if none is found, the shadow goes just before the
+  body. Until 2026-11-02 the coordinates were not compared: in a frame that `[shrink]` really scales, the
+  first picture at that x was the frame's own scaled picture, and the shadow, moved before it, left the
+  scaling: a dark band over the frame title (SA C3 p. 36, SMA-LS 07·08 C6 on 100 pages); where title and
+  body sit in sibling groups, the shadow fell over the title or was lost (AS S4 p. 65, T3 p. 39).
 - Videos: only `\videolink{<mp4>}{<poster>}`; another video command gets its own method when the
   warning names it.
 - Overlays are pages, so a deck with many steps repeats them; gzip folds them. Left as it is.
