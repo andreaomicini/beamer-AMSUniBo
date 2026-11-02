@@ -109,7 +109,7 @@ for i, l in enumerate(lines):
     # a colour group of ours still open when PGF closes one of its own groups is closed first: in
     # XML, PGF's </g> would otherwise close ours, and every count after it would be off by one
     parts, pos = [], 0
-    for m in re.finditer(r'<g[ >/]|</g>', raw):
+    for m in re.finditer(r'<g\b[^>]*>|</g>', raw):     # a self-closing <g .../> opens nothing
         t = m.group(0)
         if t == '</g>':
             while tags and isinstance(tags[-1], dict):
@@ -118,7 +118,7 @@ for i, l in enumerate(lines):
                 stats['colour_closed'] = stats.get('colour_closed', 0) + 1
             if tags:
                 tags.pop()
-        elif t != '<g/':
+        elif not t.endswith('/>'):
             tags.append('pic' if PIC in raw[m.start():m.start() + 120] else 'g')
     parts.append(raw[pos:]); raw = ''.join(parts)
     out.append(make('dvisvgm:raw ' + raw))
@@ -134,7 +134,9 @@ for l in out:
     if c is not None and c.startswith('dvisvgm:raw '):
         raw, keep = c[len('dvisvgm:raw '):], []
         pos = 0
-        for m in re.finditer(r'<g[ >]|</g>', raw):
+        for m in re.finditer(r'<g\b[^>]*>|</g>', raw):
+            if m.group(0).endswith('/>'):
+                continue
             if m.group(0) == '</g>':
                 if depth == 0:
                     keep.append(raw[pos:m.start()]); pos = m.end(); dropped += 1; continue

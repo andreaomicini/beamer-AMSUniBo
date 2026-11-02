@@ -23,15 +23,17 @@ for p in range(1, n + 1):
     f = os.path.join(d, 'p%d.svg' % p)
     if not os.path.exists(f): continue
     s = open(f, encoding='utf-8').read()
+    # the marker before each picture names the picture's own group, the one that follows it
     def put(m):
         fig, name, a = imgs.get(m.group(1), ('0', '?', ''))
         if fig == 'D':
-            return "<g class='dvialt' aria-hidden='true'>"
+            return m.group(2) + "<g class='dvialt' aria-hidden='true'"
         a = a or caps.get(fig, '')
         if not a:
-            missing.append((p, name)); return m.group(0)
-        return "<g class='dvialt' role='img' lang='%s' aria-label=\"%s\">" % (lang, html.escape(a, quote=True))
-    t = re.sub(r"<g class='dvialt' data-alt='(\d+)'>", put, s)
+            missing.append((p, name)); return m.group(2) + '<g'
+        return m.group(2) + "<g class='dvialt' role='img' lang='%s' aria-label=\"%s\"" % (lang, html.escape(a, quote=True))
+    t = re.sub(r"<g class='dvialt' data-alt='(\d+)'/>(\s*)<g\b", put, s)
+    t = re.sub(r"<g class='dvialt' data-alt='\d+'/>", '', t)
     # the page is a group of text and pictures, not one picture: its children reach the accessibility tree
     t = re.sub(r'<svg\b(?![^>]*\brole=)', '<svg role="group"', t, count=1)
     if t != s: open(f, 'w', encoding='utf-8').write(t)

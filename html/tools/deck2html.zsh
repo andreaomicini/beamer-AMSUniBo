@@ -36,7 +36,7 @@ done
 # \videolink (an MP4 embedded in the PDF, pdfTeX only) becomes its poster in a marked group;
 # pict2e (qtree loads it) would input dvips.def over graphicx's dvisvgm.def, which moves the layout
 # (AS S4, P1, IAG M2, 2026-11-01): dvips.def counts as loaded, and pict2e gets its two PostScript macros
-# every image placed in a marked group, its alt= key and its figure's caption written to __dvi.alt for
+# every image preceded by an empty marker (a wrapping group broke frames that [shrink] scales), its alt= key and its figure's caption written to __dvi.alt for
 # altfix.py; what Beamer's background templates draw is marked as decoration
 # \transparent (transparent.sty, pdfTeX only) would print its argument in DVI: harmless if undefined
 cat > tex/__dvi.tex <<EOF
@@ -54,7 +54,7 @@ cat > tex/__dvi.tex <<EOF
 \\AddToHook{package/graphicx/after}{\\define@key{Gin}{alt}{\\gdef\\dvialt@cur{#1}}}
 \\def\\dvialt@setfileX#1#2#3{\\global\\advance\\dvialt@n\\@ne\\protected@edef\\dvialt@t{\\dvialt@cur}%
 \\edef\\dvialt@f{#3}\\immediate\\write\\dvialt@out{I \\the\\dvialt@n\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space\\detokenize\\expandafter{\\dvialt@f}\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}%
-\\special{dvisvgm:raw <g class='dvialt' data-alt='\\the\\dvialt@n'>}\\dvialt@setfile{#1}{#2}{#3}\\special{dvisvgm:raw </g>}\\gdef\\dvialt@cur{}}
+\\special{dvisvgm:raw <g class='dvialt' data-alt='\\the\\dvialt@n'/>}\\dvialt@setfile{#1}{#2}{#3}\\gdef\\dvialt@cur{}}
 \\NewDocumentCommand\\dvialt@captionX{om}{\\protected@edef\\dvialt@t{#2}\\immediate\\write\\dvialt@out{C \\the\\dvialt@fig\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}\\IfValueTF{#1}{\\dvialt@caption[#1]{#2}}{\\dvialt@caption{#2}}}
 \\AddToHook{env/figure/begin}{\\global\\advance\\dvialt@figs\\@ne\\global\\dvialt@fig\\dvialt@figs}
 \\AddToHook{env/figure/end}{\\global\\dvialt@fig\\z@}
