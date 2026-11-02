@@ -26,7 +26,7 @@ find . -name '*.pdf' -not -path './out/*' | while read f; do
   if grep -q -E 'filter-color-to-alpha|<feImage' "${f%.pdf}.svg"; then
     # soft masks and blend modes become SVG filters (feImage) that Firefox ignores: a transparent PNG instead
     # (200 dpi, the PDF's own size); the PDF steps aside, in this copy only, so that the PNG is found
-    rm "${f%.pdf}.svg"; timeout 120 pdftocairo -cropbox -png -singlefile -transp -r 200 "$f" "${f%.pdf}" 2>/dev/null && mv "$f" "$f.aside" && pdfinfo -box "$f.aside" | LC_ALL=C awk '/^CropBox/{w=$4-$2; h=$5-$3; printf "%%%%BoundingBox: 0 0 %d %d\n%%%%HiResBoundingBox: 0 0 %.2f %.2f\n", w+0.5, h+0.5, w, h}' > "${f%.pdf}.xbb"
+    rm "${f%.pdf}.svg"; timeout 120 pdftocairo -cropbox -png -singlefile -transp -r 200 "$f" "${f%.pdf}" 2>/dev/null && mv "$f" "$f.aside" && pdfinfo -box "$f.aside" | LC_ALL=C awk '/^Page rot/{r=$3} /^CropBox/{w=$4-$2; h=$5-$3} END{if (r==90||r==270) {t=w; w=h; h=t}; printf "%%%%BoundingBox: 0 0 %d %d\n%%%%HiResBoundingBox: 0 0 %.2f %.2f\n", w+0.5, h+0.5, w, h}' > "${f%.pdf}.xbb"
   else
     timeout 120 python3 -I "$H/svgjpeg.py" "${f%.pdf}.svg" > /dev/null || true
   fi

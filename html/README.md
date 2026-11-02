@@ -80,7 +80,8 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    dvisvgm's own PDF route names images by object number, and two PDFs with an image 4 on one page
    swapped their pictures. A PDF whose SVG needs soft-mask or blend filters (`feImage`, which Firefox does not
    draw: ISE M1's IEEE pages, 2026-11-02) becomes a transparent 200-dpi PNG on
-   its crop box instead, with an `.xbb` of that box (pdflatex reads a PDF on its crop box). Large photo
+   its crop box instead, with an `.xbb` of that box (pdflatex reads a PDF on its crop box). Large photo A rotated page (`/Rotate` 90 or 270) has its sides swapped in that `.xbb`: `pdftocairo` draws it turned, and
+   the picture came out squeezed into the unturned box (SMA-LS 06·07 C3a, *Tropos*, 2026-11-02).
    bitmaps inside the SVGs become JPEG when that halves them (`svgjpeg.py`); `\includegraphics{x.pdf}`
    loses its extension so that the choice applies.
 2. Bitmaps whose resolution has no unit get an `.xbb` at 72 dpi, pdflatex's reading (`imgbb.py`); so does a bitmap
