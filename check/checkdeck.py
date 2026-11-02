@@ -13,6 +13,21 @@ import re, subprocess, sys
 
 tex, pdf = sys.argv[1], sys.argv[2]
 src = open(tex, encoding='utf-8').read()
+
+def uncomment(s):
+    # a commented-out frame is not in the PDF: drop comments, verbatim kept as it is
+    out, verb = [], False
+    for line in s.split('\n'):
+        if verb:
+            verb = '\\end{verbatim}' not in line
+            out.append(line)
+            continue
+        line = re.sub(r'(?<!\\)%.*', '', line)
+        verb = '\\begin{verbatim}' in line and '\\end{verbatim}' not in line
+        out.append(line)
+    return '\n'.join(out)
+
+src = uncomment(src)
 txt = subprocess.run(['pdftotext', '-layout', pdf, '-'],
                      capture_output=True, text=True, check=True).stdout
 
