@@ -30,6 +30,8 @@ bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
   `aux/<deck>.pdf` (ImageMagick AE at 12% fuzz): `aux/html/cmp-<deck>/wk.txt` and `ff.txt`, one line
   per page. Never Chrome. Firefox runs on a new empty profile each time (`-no-remote -profile`): with
   Firefox open, a headless run on the usual profile made no picture (2026-11-02).
+  The page's address is escaped: a `?` in its name (AS C0, *…Systems?*) cut it, and no browser drew a page
+  (2026-11-02).
 
 A deck takes 6–27 s for a talk, about 70 s for a 329-page course deck.
 
