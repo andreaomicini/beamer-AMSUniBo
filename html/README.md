@@ -93,7 +93,9 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    `dvisvgm`, hyperref `hypertex`; PGF's driver is given graphicx's image formats; `\videolink` becomes
    its poster in a marked group; every picture is preceded by an empty marker, `<g class='dvialt' data-alt='n'/>`,
    and its `alt=` key and its figure's caption are written to `__dvi.alt` (`altfix.py` then puts the text on the
-   picture's own group, the one after the marker). Until 2026-11-02 the picture was wrapped in an open and a close
+   picture's own group, the one after the marker). A TikZ drawing takes its text the same way, from
+   `\begin{tikzpicture}[alt={…}]` (TikZ accepts the key and ignores it, so the PDF does not change: AGoT, 2026-11-02);
+   a drawing with neither `alt=` nor a caption is named in a warning. Until 2026-11-02 the picture was wrapped in an open and a close
    group: inside a frame that `[shrink]` really scales, `dvisvgm` then put everything after the picture outside the
    scaling, the frame enlarged and shifted (SMA-LS 06·07 C0, the aliCE logo in a block title); `dvips.def` counts as loaded and `\Gin@PS@raw`/`\Gin@PS@restored` are
    given, for `pict2e` (below). A fatal latex error stops the conversion.
