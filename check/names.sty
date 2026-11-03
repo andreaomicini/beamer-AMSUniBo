@@ -1,0 +1,113 @@
+%% names.sty -- the canonical vocabulary of every deck repository (talks and courses)
+%% Andrea Omicini <mailto:andrea.omicini@unibo.it>
+%%
+%% Never loaded by a deck. Each repository's own sty/names.sty is a FILE (never a link) holding the
+%% lines of this file it uses, copied as they are, plus what is its own (marked `% local`).
+%% Late binding (Andrea, 2026-11-03): a change here is not propagated; a repository is aligned when it is
+%% next worked on. /course-check and /deck-check report a name defined otherwise than here (align it),
+%% and a name not here and not marked local (promote it here, or mark it local).
+%% One line per name. `% decision:` marks a name whose forms in use print differently: the line is the
+%% majority form until Andrea chooses; the other forms are listed.
+%%
+\ProvidesPackage{names}[2026/11/03 The canonical vocabulary -- beamer-AMSUniBo/check]
+
+\newcommand{\aea}{\mbox{A\&A}}  % also, printing the same: {A\&A} [3]
+\newcommand{\aearespect}{\aea{} \respect{}}  % decision: also \acs{aea} \acs{respect} [1]
+\newcommand{\agentspeak}{{A}gent{S}peak}
+\newcommand{\agentspeakl}{\agentspeak({L})}
+\newcommand{\amuse}{{AMUSE}}
+\newcommand{\apice}{{\textsf{APICe}}}
+\newcommand{\apicename}{{\sf APICe}}  % also, printing the same: {\sf{APICe}} [5]
+\newcommand{\aurora}{{Aurora}}
+\newcommand{\bdi}{{BDI}}
+\newcommand{\biopepa}{{BioPEPA}}
+\newcommand{\blockchain}{blockchain}
+\newcommand{\Blockchain}{{B}lockchain}
+\newcommand{\cartago}{\mbox{\sf{{CA}rt{A}g{O}}}}  % also, printing the same: {\sf {CA}rt{A}g{O}} [2] | {\sf CArtAgO} [1] | {\sf{{CA}rt{A}g{O}}} [1]
+\newcommand{\chatgpt}{ChatGPT}
+\newcommand{\chip}{{CHIP}}
+\newcommand{\choco}{{Choco}}
+\newcommand{\chuffed}{{Chuffed}}
+\newcommand{\clpb}{CLP(B)}
+\newcommand{\clpfd}{CLP(FD)}
+\newcommand{\clph}{CLP(H)}
+\newcommand{\clpq}{CLP(Q)}
+\newcommand{\clpr}{CLP(R)}
+\newcommand{\clpx}{CLP(X)}
+\newcommand{\cofields}{{Co-fields}}
+\newcommand{\corba}{{CORBA}}
+\newcommand{\corda}{{CORDA}}
+\newcommand{\cplint}{{\textsf{cplint}}}
+\newcommand{\cplintswish}{\cplint{} on \swish{}}
+\newcommand{\cpmpy}{{CPMpy}}
+\newcommand{\cpsat}{{CP}-{SAT}}
+\newcommand{\deepproblog}{{D}eep\problog{}}
+\newcommand{\dtproblog}{{DT}\problog{}}
+\newcommand{\eclipseclp}{\texorpdfstring{ECL\textsuperscript{\textit{i}}PS\textsuperscript{\textit{e}}}{ECLiPSe}}
+\newcommand{\elda}{{ELDA}}
+\newcommand{\emblem}{{EMBLEM}}
+\newcommand{\erlang}{{E}rlang}
+\newcommand{\ethereum}{{E}thereum}
+\newcommand{\exat}{{eXAT}}
+\newcommand{\fipa}{{FIPA}}  % decision: also {\sf FIPA} [2]
+\newcommand{\flatzinc}{{F}lat{Z}inc}
+\newcommand{\gammamodel}{Gamma}
+\newcommand{\gecode}{{Gecode}}
+\newcommand{\geolinda}{{\sc GeoLinda}}
+\newcommand{\gprolog}{{GNU} {P}rolog}
+\newcommand{\hedera}{{Hedera Hashgraph}}
+\newcommand{\iotadlt}{{IOTA}}
+\newcommand{\jacamo}{{\sf JaCaMo}}  % also, printing the same: {\textsf{JaCaMo}} [1]
+\newcommand{\jason}{{\bf\it {J}ason}}  % decision: also {\textbf{\textit{J}ason}} [1]
+\newcommand{\jedi}{{JEDI}}
+\newcommand{\klaim}{{\sc{K}laim}}
+\newcommand{\lime}{{\sc{{L}ime}}}
+\newcommand{\linda}{{\sc{{L}inda}}}  % also, printing the same: {\textsc{{L}inda}} [1]
+\newcommand{\lpaas}{{LPaaS}}
+\newcommand{\luce}{\mbox{\sf{{L}u{C}e}}}
+\newcommand{\mas}{{MAS}}
+\newcommand{\mathbench}{{\textsc{MATH}}}
+\newcommand{\mcintyre}{{MCINTYRE}}
+\newcommand{\minizinc}{{M}ini{Z}inc}
+\newcommand{\moise}{{\sc Moise}}  % also, printing the same: {\textsc{Moise}} [1]
+\newcommand{\mokf}{$\mathcal{F}_{\mathcal{M}o\mathcal{K}}$}
+\newcommand{\moknews}{{\sc MoK}-{\tt News}}
+\newcommand{\ortools}{{OR}-{T}ools}
+\newcommand{\pepa}{{PEPA}}
+\newcommand{\pita}{{PITA}}
+\newcommand{\pogo}{\pokemon{} {G}o}
+\newcommand{\pokemon}{{P}ok{\'e}mon}
+\newcommand{\prism}{{PRISM}}
+\newcommand{\problog}{{P}rob{L}og}
+\newcommand{\prode}{{PRoDe}}
+\newcommand{\prolog}{{P}rolog}
+\newcommand{\prs}{{PRS}}
+\newcommand{\react}{{ReAct}}
+\newcommand{\respect}{{\sf{{R}e{S}pec{T}}}}  % also, printing the same: \mbox{\sf{{R}e{S}pec{T}}} [3] | {\textsf{{R}e{S}pec{T}}} [1]
+\newcommand{\sapere}{{SAPERE}}
+\newcommand{\scala}{{Scala}}
+\newcommand{\sicstus}{{SICStus Prolog}}  % decision: also {SICStus \prolog} [3]
+\newcommand{\simpa}{\mbox{simp{A}}}  % also, printing the same: {simp{A}} [1]
+\newcommand{\smartcontract}{smart contract}
+\newcommand{\SmartContract}{{S}mart {C}ontract}
+\newcommand{\Smartcontract}{Smart contract}
+\newcommand{\soda}{{\sf SODA}}  % also, printing the same: \mbox{\sf{SODA}} [2]
+\newcommand{\spatialrespect}{{S}patial {\sf {R}e{S}pec{T}}}
+\newcommand{\spatialtuples}{{\sf {S}patial {T}uples}}
+\newcommand{\stoklaim}{{\sc{S}to{K}laim}}
+\newcommand{\subsym}{{subsymbolic}}
+\newcommand{\Subsym}{{Subsymbolic}}
+\newcommand{\swarmlinda}{{S}warm{L}inda}
+\newcommand{\swiprolog}{{SWI}-{P}rolog}
+\newcommand{\swish}{{SWISH}}
+\newcommand{\sym}{{symbolic}}
+\newcommand{\Sym}{{Symbolic}}
+\newcommand{\tforj}{\tucson{}$4$\acs{jade}}  % decision: also \acs{tucson}$4$\acs{jade} [1]
+\newcommand{\tforjn}{\tucson{}$4$\jason{}}  % decision: also \acs{tucson}$4$\jason{} [1]
+\newcommand{\tota}{{TOTA}}
+\newcommand{\tpkt}{{{\textsf{2}P-\textsc{Kt}}}}
+\newcommand{\tucson}{\mbox{\sf{{T}u{CS}o{N}}}}  % also, printing the same: {\sf{T}u{CS}o{N}} [3] | {\sf{{T}u{CS}o{N}}} [2] | {\textsf{{T}u{CS}o{N}}} [1]
+\newcommand{\tuprolog}{{\textsf{tu}\textrm{{P}rolog}}}  % decision: also \mbox{{tu}\sf{{P}rolog}} [3] | {{tu}\sf{{P}rolog}} [2]
+\newcommand{\typeonedm}{Type~1 DM}
+\newcommand{\ulinda}{{\sc uLinda}}
+\newcommand{\wade}{{WADE}}

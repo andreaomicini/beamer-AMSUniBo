@@ -14,3 +14,17 @@ the PDF, and was reported as missing (AS L1 16 times, L4, T1, SA T0) until 2026-
 
 They need `pdftotext` (poppler) and `mutool` (mupdf), both from Homebrew. A change here counts for no
 deck's `style-lag` (it ignores `check/`, as `html/` and `ci/`).
+
+## `names.sty` — the canonical vocabulary (2026-11-03)
+
+One line per name of a system, model or language the decks print (`\jason`, `\cartago`, `\tuprolog`…), in its
+one canonical form. **No deck loads it.** Each repository's `sty/names.sty` is a file of its own, never a link: the
+lines it uses, copied as they are, and what is its own, marked `% local`.
+
+Consistency is bound late (Andrea, 2026-11-03): a change here is not propagated. `/course-check` and `/deck-check`
+report a name a repository defines otherwise (*align it when you next work there*) and a name neither here nor
+marked local (*promote it here, or mark it local*); the skills that work on a repository align its `names.sty` with
+this file and promote new names here. A name whose forms in use print differently is marked `% decision:`, its
+other forms listed, until Andrea chooses.
+
+The CI job `names` (`../.gitlab-ci.yml`) typesets every name once (`test/names-test.sh`): run it before a push.
