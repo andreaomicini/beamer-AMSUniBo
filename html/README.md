@@ -107,7 +107,7 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    asks for no rerun, and DS M2's footer read 64 for 66 after a fixed three passes (2026-11-03). A fatal latex error stops the conversion.
 5. The DVI is repaired in its text form (`dv2dt`/`dt2dv`): colour groups for Beamer's `\color` inside
    pictures, closed before PGF's own `</g>`, and balanced groups (`fixdvi.py`); word spaces marked
-   (`spaces.py`); one more page with every character of the deck, font by font (`allglyphs.py`).
+   (`spaces.py`); one more page with every character of the deck, font by font (`allglyphs.py`). That includes the characters `dv2dt` writes as `\XX` in hex — in T1 the quotes “ ” (`\10` `\11`), the dashes – — (`\15` `\16`), the ligatures fi fl ff — which until 2026-11-03 were left out: every page then drew them from a fallback font of another width, and the text after them shifted (M1's title read *“I nformation*).
 
 **dvisvgm**: `--font-format=woff2 --linkmark=none --bbox=papersize`, all pages in one run.
 

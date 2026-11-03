@@ -35,6 +35,10 @@ for l in lines:
     m = re.match(r'^[sp][1-4] (\d+)$', l)          # set1/put1 … a character by its code
     if m:
         used.setdefault(font, set()).add(int(m.group(1)))
+        continue
+    m = re.match(r'^\\([0-9A-Fa-f]{2})$', l)       # dv2dt writes a non-printable character as \XX, in hex
+    if m:                                          # (T1: “ ” \10 \11, – — \15 \16, fi fl \1C \1D)
+        used.setdefault(font, set()).add(int(m.group(1), 16))
 
 page = [re.sub(r'^bop( -?\d+)', f'bop {pages + 1}', last_bop)]
 for f, codes in sorted(used.items()):
