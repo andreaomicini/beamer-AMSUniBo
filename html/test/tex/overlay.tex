@@ -1,0 +1,14 @@
+% The CI's test deck for html.sh: one PDF picture, rotated, shown plainly and with an overlay
+% specification (\includegraphics<1>…{x.pdf}, which until 2026-11-03 kept its .pdf and went through
+% dvisvgm's own PDF route: black boxes, SMA-LS 08·09 C7). Build from html/test/: latexmk tex/overlay.tex
+\documentclass{beamer}
+\begin{document}
+\begin{frame}{Plain}
+  \centering\includegraphics[width=5cm,alt={The test picture}]{img/rotated.pdf}
+\end{frame}
+\begin{frame}{With an overlay specification}
+  \centering
+  \includegraphics<1>[width=5cm,alt={The test picture, first slide}]{img/rotated.pdf}
+  \includegraphics<2>[width=4cm,alt={The test picture, second slide}]{img/rotated.pdf}
+\end{frame}
+\end{document}

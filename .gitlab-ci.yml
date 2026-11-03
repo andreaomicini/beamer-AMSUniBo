@@ -23,3 +23,27 @@ release:
     - apk add --no-cache zip
     - zip style.zip *.sty *.bst *.pdf LICENSE
     - python3 ci/release.py beamerthemeAMSUniBo.sty style.zip "AMSUniBo Beamer style"
+
+# Checks html.sh on every push to main that changes html/ (2026-11-03: the html tools had no CI, and a fix to
+# them would have gone out unchecked): html/test/check.sh makes the test deck's page, with a rotated PDF picture
+# shown plainly and with an overlay specification, and fails on an error or on a .pdf left in the working copy.
+# The tools are written for Andrea's Mac: Homebrew's fonttools interpreter and ImageMagick 7's `magick` are
+# linked here to Debian's, in this job only.
+html:
+  image: texlive/texlive:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - changes:
+        - html/**/*
+        - .gitlab-ci.yml
+  script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends zsh rsync perl poppler-utils ghostscript imagemagick mupdf-tools python3 python3-fonttools python3-brotli > /dev/null
+    - mkdir -p /opt/homebrew/opt/fonttools/libexec/bin && ln -sf "$(command -v python3)" /opt/homebrew/opt/fonttools/libexec/bin/python3
+    - command -v magick || ln -sf "$(command -v convert)" /usr/local/bin/magick
+    - bash html/test/check.sh
+  artifacts:
+    when: always
+    paths:
+      - html/test/html/
+    expire_in: 1 week

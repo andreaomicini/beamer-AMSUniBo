@@ -35,6 +35,10 @@ bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]
 
 A deck takes 6–27 s for a talk, about 70 s for a 329-page course deck.
 
+The CI (`../.gitlab-ci.yml`, job `html`, since 2026-11-03) runs `test/check.sh` on every push to `main` that
+changes `html/`: the test deck in `test/` (a rotated PDF picture, plainly and with an overlay specification)
+made into its page, failing on an error or on a `.pdf` left in the working copy. Run it locally before a push.
+
 Needs: TeX Live (`latex`, `bibtex`, `dvisvgm`, `dv2dt`, `dt2dv`), and from Homebrew `poppler`
 (`pdftocairo`, `pdfinfo`, `pdftoppm`), `ghostscript`, `imagemagick`, `fonttools` (its own interpreter, which
 has brotli for WOFF2); for `--compare` also `playwright-cli` with WebKit, and Firefox.

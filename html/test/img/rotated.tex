@@ -1,0 +1,9 @@
+% The test picture: a page turned by /Rotate 90 with a crop box inside its media box, as the 2008 SODA
+% figures of SMA-LS 08·09 C7 (Acrobat Distiller 7). pdflatex rotated.tex makes rotated.pdf, committed.
+\documentclass{article}
+\usepackage[paperwidth=300bp,paperheight=200bp,margin=10bp]{geometry}
+\pagestyle{empty}
+\pdfpageattr{/Rotate 90 /CropBox [20 20 280 180]}
+\begin{document}
+\centering\fbox{\parbox{220bp}{\centering\Huge Agent\\[10bp]\Large Society}}
+\end{document}
