@@ -36,19 +36,24 @@
 \define@key{picturecolumns}{gap}{\def\courses@pic@gap{#1}}
 \define@key{picturecolumns}{height}{\def\courses@pic@height{#1}}
 \define@key{picturecolumns}{side}{\def\courses@pic@side{#1}}
+\define@key{picturecolumns}{alt}{\def\courses@pic@alt{#1}}
 \def\courses@pic@rightname{right}
+%% \includegraphics with alt={<text>} added when <text> is not empty (html.sh reads it).
+\newcommand{\courses@altgraphics}[3]{\ifx#1\@empty\includegraphics[#2]{#3}%
+	\else\expandafter\courses@@altgraphics\expandafter{#1}{#2}{#3}\fi}
+\newcommand{\courses@@altgraphics}[3]{\includegraphics[alt={#1},#2]{#3}}
 %% How tall a picture may be here: the row's height inside picturecolumns'
 %% text column, the frame's anywhere else. Read by \creditedpicture.
 \newif\ifcourses@inpiccolumn
 \newlength{\courses@availheight}
 \newcommand{\courses@pic@column}[1]{%
 	\begin{column}{\courses@pic@width\textwidth}%
-		\centering\includegraphics[width=\linewidth,%
-			height=\courses@pic@height\textheight,keepaspectratio]{#1}%
+		\centering\courses@altgraphics{\courses@pic@alt}{width=\linewidth,%
+			height=\courses@pic@height\textheight,keepaspectratio}{#1}%
 	\end{column}}
 \newenvironment{picturecolumns}[2][]{%
 	\def\courses@pic@width{0.43}\def\courses@pic@gap{0.02}%
-	\def\courses@pic@height{0.80}\def\courses@pic@side{left}%
+	\def\courses@pic@height{0.80}\def\courses@pic@side{left}\def\courses@pic@alt{}%
 	\setkeys{picturecolumns}{#1}%
 	\def\courses@pic@file{#2}%
 	\begin{columns}[c,onlytextwidth,height=\courses@pic@height\textheight]%
@@ -68,14 +73,15 @@
 \define@key{creditedpicture}{width}{\def\courses@cpic@width{#1}}
 \define@key{creditedpicture}{height}{\def\courses@cpic@height{#1}}
 \define@key{creditedpicture}{credit}{\def\courses@cpic@credit{#1}}
+\define@key{creditedpicture}{alt}{\def\courses@cpic@alt{#1}}
 \newcommand{\creditedpicture}[3][]{%
 	\def\courses@cpic@width{1.00}\def\courses@cpic@height{0.70}%
-	\def\courses@cpic@credit{}%
+	\def\courses@cpic@credit{}\def\courses@cpic@alt{}%
 	\setkeys{creditedpicture}{#1}%
 	\ifcourses@inpiccolumn\else\setlength{\courses@availheight}{\textheight}\fi
 	\begingroup\centering
-		\includegraphics[width=\courses@cpic@width\textwidth,%
-			height=\courses@cpic@height\courses@availheight,keepaspectratio]{#2}%
+		\courses@altgraphics{\courses@cpic@alt}{width=\courses@cpic@width\textwidth,%
+			height=\courses@cpic@height\courses@availheight,keepaspectratio}{#2}%
 		\par\smallskip
 		\smaller\ifx\courses@cpic@credit\@empty\else\courses@cpic@credit~\fi\cite{#3}%
 	\par\endgroup}

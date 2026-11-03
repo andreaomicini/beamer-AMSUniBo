@@ -57,6 +57,8 @@ Every picture a deck places with `\includegraphics` gets a text alternative, `ro
 
 1. its `alt={…}` key: `\includegraphics[alt={…}]{…}`, always first (graphicx accepts the key and
    ignores it, so the PDF does not change);
+   `picturecolumns` and `\creditedpicture` take the same key and pass it on (since 2026-11-03):
+   `\begin{picturecolumns}[alt={…}]{…}`, `\creditedpicture[alt={…}]{…}{…}`;
 2. else the `\caption` of the `figure` it is in, the official description of the picture;
 3. else none, and the conversion names it at the end, `WARNING: no alt and no caption: page <n>, <file>`.
    Never left so: its text is written into the deck's source as `alt=`, after reading the frame (title

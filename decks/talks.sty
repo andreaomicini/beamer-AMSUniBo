@@ -35,19 +35,24 @@
 \define@key{picturecolumns}{gap}{\def\talks@pic@gap{#1}}
 \define@key{picturecolumns}{height}{\def\talks@pic@height{#1}}
 \define@key{picturecolumns}{side}{\def\talks@pic@side{#1}}
+\define@key{picturecolumns}{alt}{\def\talks@pic@alt{#1}}
 \def\talks@pic@rightname{right}
+%% \includegraphics with alt={<text>} added when <text> is not empty (html.sh reads it).
+\newcommand{\talks@altgraphics}[3]{\ifx#1\@empty\includegraphics[#2]{#3}%
+	\else\expandafter\talks@@altgraphics\expandafter{#1}{#2}{#3}\fi}
+\newcommand{\talks@@altgraphics}[3]{\includegraphics[alt={#1},#2]{#3}}
 %% How tall a picture may be here: the row's height inside picturecolumns'
 %% text column, the frame's anywhere else. Read by \creditedpicture.
 \newif\iftalks@inpiccolumn
 \newlength{\talks@availheight}
 \newcommand{\talks@pic@column}[1]{%
 	\begin{column}{\talks@pic@width\textwidth}%
-		\centering\includegraphics[width=\linewidth,%
-			height=\talks@pic@height\textheight,keepaspectratio]{#1}%
+		\centering\talks@altgraphics{\talks@pic@alt}{width=\linewidth,%
+			height=\talks@pic@height\textheight,keepaspectratio}{#1}%
 	\end{column}}
 \newenvironment{picturecolumns}[2][]{%
 	\def\talks@pic@width{0.43}\def\talks@pic@gap{0.02}%
-	\def\talks@pic@height{0.80}\def\talks@pic@side{left}%
+	\def\talks@pic@height{0.80}\def\talks@pic@side{left}\def\talks@pic@alt{}%
 	\setkeys{picturecolumns}{#1}%
 	\def\talks@pic@file{#2}%
 	\begin{columns}[c,onlytextwidth,height=\talks@pic@height\textheight]%
@@ -67,14 +72,15 @@
 \define@key{creditedpicture}{width}{\def\talks@cpic@width{#1}}
 \define@key{creditedpicture}{height}{\def\talks@cpic@height{#1}}
 \define@key{creditedpicture}{credit}{\def\talks@cpic@credit{#1}}
+\define@key{creditedpicture}{alt}{\def\talks@cpic@alt{#1}}
 \newcommand{\creditedpicture}[3][]{%
 	\def\talks@cpic@width{1.00}\def\talks@cpic@height{0.70}%
-	\def\talks@cpic@credit{}%
+	\def\talks@cpic@credit{}\def\talks@cpic@alt{}%
 	\setkeys{creditedpicture}{#1}%
 	\iftalks@inpiccolumn\else\setlength{\talks@availheight}{\textheight}\fi
 	\begingroup\centering
-		\includegraphics[width=\talks@cpic@width\textwidth,%
-			height=\talks@cpic@height\talks@availheight,keepaspectratio]{#2}%
+		\talks@altgraphics{\talks@cpic@alt}{width=\talks@cpic@width\textwidth,%
+			height=\talks@cpic@height\talks@availheight,keepaspectratio}{#2}%
 		\par\smallskip
 		\smaller\ifx\talks@cpic@credit\@empty\else\talks@cpic@credit~\fi\cite{#3}%
 	\par\endgroup}

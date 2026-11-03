@@ -75,6 +75,7 @@ and an itemized text on the other:
 | `gap` | `0.02` | the gutter between the two columns |
 | `height` | `0.80` | the row's share of `\textheight` |
 | `side` | `left` | which side the picture goes on |
+| `alt` | *(empty)* | the picture's text for `html.sh`, passed to `\includegraphics` as `alt={…}` |
 
 So `\begin{picturecolumns}[width=0.5,side=right]{img/foo}`. The text column takes whatever
 the other two leave; give the image name without its extension, as `\includegraphics`
@@ -119,6 +120,7 @@ dark `block` headers, and neither reads on the slide background.
 | `width` | `1.00` | the picture's share of the width available |
 | `height` | `0.70` | the picture's share of the height available |
 | `credit` | *(empty)* | wording put ahead of the citation marker |
+| `alt` | *(empty)* | the picture's text for `html.sh`, passed to `\includegraphics` as `alt={…}` |
 
 With no `credit`, the line is the citation marker alone — `[Sagan et al., 1980]` — which is
 all a picture needs when it already carries its own caption. Give the key to spell the credit
