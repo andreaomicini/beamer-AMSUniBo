@@ -46,6 +46,7 @@ def hexcolour(spec):
     return '#%02x%02x%02x' % tuple(round(255 * v) for v in (r, g, b))
 
 out, tags, colours = [], [], []   # tags: 'pic' | 'g' | a dict for a colour group; colours: dict | None
+picdepth = []   # per open picture: len(colours) when its 'pic' group opened (its own colour push is the last one)
 stats = {'colour': 0, 'closed': 0, 'unlock': 0}
 locks = []
 specials = [i for i, l in enumerate(lines) if SPEC.match(l)]
@@ -53,7 +54,7 @@ nxt = {a: b for a, b in zip(specials, specials[1:])}
 page = 0
 for i, l in enumerate(lines):
     if l.startswith('bop'):
-        tags, colours, locks, page = [], [], [], page + 1
+        tags, colours, locks, picdepth, page = [], [], [], [], page + 1
     if l.startswith('eop') and tags:
         out.append(make('dvisvgm:raw ' + '</g>' * len(tags)))
         stats['closed'] += len(tags); tags = []
@@ -97,7 +98,11 @@ for i, l in enumerate(lines):
     if not c.startswith('dvisvgm:raw '):
         out.append(l); continue
     raw = c[len('dvisvgm:raw '):]
-    is_endpic = raw == '</g>' and i in nxt and content(lines[nxt[i]]) == 'color pop'
+    # the picture's own end is a raw '</g>' followed by the 'color pop' of the colour pushed just before it
+    # opened; a '</g>' + 'color pop' inside the picture (\textcolor in a node: AMSCesena's \emph) is not, and
+    # taking it for the end closed every group of the picture there (SMA-LS 08·09 S1a p. 6, 2026-11-04)
+    is_endpic = (raw == '</g>' and i in nxt and content(lines[nxt[i]]) == 'color pop'
+                 and (not picdepth or len(colours) <= picdepth[-1]))
     if is_endpic and tags and tags[-1] != 'pic' and 'pic' in tags:
         extra = 0
         while tags and tags[-1] != 'pic':
@@ -117,9 +122,13 @@ for i, l in enumerate(lines):
                 tags.pop()['open'] = False
                 stats['colour_closed'] = stats.get('colour_closed', 0) + 1
             if tags:
-                tags.pop()
+                if tags.pop() == 'pic' and picdepth:
+                    picdepth.pop()
         elif not t.endswith('/>'):
-            tags.append('pic' if PIC in raw[m.start():m.start() + 120] else 'g')
+            ispic = PIC in raw[m.start():m.start() + 120]
+            tags.append('pic' if ispic else 'g')
+            if ispic:
+                picdepth.append(len(colours))
     parts.append(raw[pos:]); raw = ''.join(parts)
     out.append(make('dvisvgm:raw ' + raw))
 # a last, plain pass on the result: per page, recount the groups from the raw specials alone; a </g>

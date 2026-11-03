@@ -160,6 +160,12 @@ Find the smallest case (the frame), see what dvisvgm does with it, and fix it in
 way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
 then on two or three other decks where it could show.
 
+- **A coloured `\emph` in a TikZ node**, 2026-11-04: `fixdvi.py` took the colour pop after the node's `</g>` for the
+  end of the picture, and closed it early: the rest of the drawing came out flipped (SMA-LS 08·09 S1a p. 6, AMSCesena,
+  whose `\emph` is coloured). Each open picture now keeps the colour depth it began at, and ends only back there.
+- **A picture begun between paragraphs**, 2026-11-04: the empty marker before each `tikzpicture` (for its `alt=`) was
+  a `\special` on the vertical list, which changed the height `overprint` measured: the other slide's text came 18pt
+  lower (S1a p. 43, 4.8%). In vertical mode the marker is now written inside the picture: 1.2%, the alt texts kept.
 - **A picture with an overlay specification**, 2026-11-03: the step that drops `.pdf` from `\includegraphics{x.pdf}`
   did not allow `\includegraphics<1>[…]{x.pdf}`, so those pictures went through dvisvgm's own PDF route: black boxes
   where a PDF is rotated (SMA-LS 08·09 C7, pages at 27–32%), misplaced parts elsewhere, while the comparison read only

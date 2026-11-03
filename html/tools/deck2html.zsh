@@ -38,6 +38,7 @@ done
 # (AS S4, P1, IAG M2, 2026-11-01): dvips.def counts as loaded, and pict2e gets its two PostScript macros
 # every image and TikZ drawing (alt= on \\begin{tikzpicture}, a key TikZ ignores) preceded by an empty marker (a wrapping group broke frames that [shrink] scales), its alt= key and its figure's caption written to __dvi.alt for
 # altfix.py; what Beamer's background templates draw is marked as decoration
+# a picture begun between paragraphs gets its marker inside it: on the vertical list it moved what follows (SMA-LS 08·09 S1a p. 43, 2026-11-04)
 # \transparent (transparent.sty, pdfTeX only) would print its argument in DVI: harmless if undefined
 cat > tex/__dvi.tex <<EOF
 \\def\\pgfsysdriver{pgfsys-dvisvgm.def}
@@ -58,9 +59,10 @@ cat > tex/__dvi.tex <<EOF
 \\NewDocumentCommand\\dvialt@captionX{om}{\\protected@edef\\dvialt@t{#2}\\immediate\\write\\dvialt@out{C \\the\\dvialt@fig\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}\\IfValueTF{#1}{\\dvialt@caption[#1]{#2}}{\\dvialt@caption{#2}}}
 \\AddToHook{env/figure/begin}{\\global\\advance\\dvialt@figs\\@ne\\global\\dvialt@fig\\dvialt@figs}
 \\AddToHook{env/figure/end}{\\global\\dvialt@fig\\z@}
-\\AddToHook{env/tikzpicture/begin}{\\let\\dvialt@tk\\@empty\\global\\advance\\dvialt@n\\@ne\\edef\\dvialt@tn{\\the\\dvialt@n}\\special{dvisvgm:raw <g class='dvialt' data-alt='\\dvialt@tn'/>}}
+\\AddToHook{env/tikzpicture/begin}{\\let\\dvialt@tk\\@empty\\global\\advance\\dvialt@n\\@ne\\edef\\dvialt@tn{\\the\\dvialt@n}\\ifvmode\\gdef\\dvialt@pend{\\special{dvisvgm:raw <g class='dvialt' data-alt='\\dvialt@tn'/>}}\\else\\special{dvisvgm:raw <g class='dvialt' data-alt='\\dvialt@tn'/>}\\fi}
 \\AddToHook{env/tikzpicture/end}{\\protected@edef\\dvialt@t{\\dvialt@tk}\\immediate\\write\\dvialt@out{I \\dvialt@tn\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space tikzpicture\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}}
-\\AtBeginDocument{\\ifdefined\\tikzset\\tikzset{alt/.code={\\def\\dvialt@tk{#1}}}\\fi}
+\\global\\let\\dvialt@pend\\@empty
+\\AtBeginDocument{\\ifdefined\\tikzset\\tikzset{alt/.code={\\def\\dvialt@tk{#1}},every picture/.append style={execute at begin picture={\\dvialt@pend\\global\\let\\dvialt@pend\\@empty}}}\\fi}
 \\AtBeginDocument{\\let\\dvialt@setfile\\Gin@setfile\\let\\Gin@setfile\\dvialt@setfileX\\NewCommandCopy\\dvialt@caption\\caption\\let\\caption\\dvialt@captionX\\ifdefined\\addtobeamertemplate\\addtobeamertemplate{background}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\addtobeamertemplate{background canvas}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\fi}
 \\makeatother
 \\AtBeginDocument{\\providecommand\\transparent[1]{}\\providecommand\\texttransparent[2]{#2}}
