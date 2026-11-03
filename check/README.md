@@ -22,9 +22,10 @@ one canonical form. **No deck loads it.** Each repository's `sty/names.sty` is a
 lines it uses, copied as they are, and what is its own, marked `% local`.
 
 Consistency is bound late (Andrea, 2026-11-03): a change here is not propagated. `/course-check` and `/deck-check`
-report a name a repository defines otherwise (*align it when you next work there*) and a name neither here nor
-marked local (*promote it here, or mark it local*); the skills that work on a repository align its `names.sty` with
-this file and promote new names here. A name whose forms in use print differently is marked `% decision:`, its
+report a name a repository defines otherwise and a name neither here nor marked local, as `later`: never a gap to
+fix now. **A name is aligned only when the decks that use it are being rebuilt anyway**, never because one happens
+to work in the repository: aligning a name every deck uses would mean redoing them all (Andrea, 2026-11-03). A new
+name is copied from here, which changes no existing deck; a name new to the canon is promoted here. A name whose forms in use print differently is marked `% decision:`, its
 other forms listed, until Andrea chooses.
 
 The CI job `names` (`../.gitlab-ci.yml`) typesets every name once (`test/names-test.sh`): run it before a push.

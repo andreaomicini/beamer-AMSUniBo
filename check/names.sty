@@ -3,9 +3,10 @@
 %%
 %% Never loaded by a deck. Each repository's own sty/names.sty is a FILE (never a link) holding the
 %% lines of this file it uses, copied as they are, plus what is its own (marked `% local`).
-%% Late binding (Andrea, 2026-11-03): a change here is not propagated; a repository is aligned when it is
-%% next worked on. /course-check and /deck-check report a name defined otherwise than here (align it),
-%% and a name not here and not marked local (promote it here, or mark it local).
+%% Late binding (Andrea, 2026-11-03): a change here is not propagated. A name is aligned in a repository
+%% only when the decks using it are rebuilt anyway, never to redo them all; a new name is copied from here.
+%% /course-check and /deck-check list, as `later`, a name defined otherwise than here and a name neither
+%% here nor marked local (promote it here, or mark it local).
 %% One line per name. `% decision:` marks a name whose forms in use print differently: the line is the
 %% majority form until Andrea chooses; the other forms are listed.
 %%
