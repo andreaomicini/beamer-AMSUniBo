@@ -29,6 +29,11 @@ for fam, data in json.load(sys.stdin).items():
                 if base not in cmap:
                     cmap[base] = g
                     cps.append(cp)
+    # a drawn glyph of zero width (\\not's slash) is skipped by WebKit when alone in its <text>: one unit of width, harmless since every <text> has its own x
+    if 'glyf' in f:
+        for g, (w, lsb) in list(f['hmtx'].metrics.items()):
+            if w == 0 and f['glyf'][g].numberOfContours:
+                f['hmtx'][g] = (1, lsb)
     b = io.BytesIO(); f.flavor = 'woff2'; f.save(b)
     out[fam] = {'data': data.split(',', 1)[0] + ',' + base64.b64encode(b.getvalue()).decode(),
                 'cps': sorted(set(cps))}

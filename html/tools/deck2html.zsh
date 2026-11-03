@@ -25,8 +25,8 @@ find . -name '*.pdf' -not -path './out/*' | while read f; do
   timeout 60 pdftocairo -svg "$f" "${f%.pdf}.svg" 2>/dev/null || continue
   if grep -q -E 'filter-color-to-alpha|<feImage' "${f%.pdf}.svg"; then
     # soft masks and blend modes become SVG filters (feImage) that Firefox ignores: a transparent PNG instead
-    # (200 dpi, the PDF's own size); the PDF steps aside, in this copy only, so that the PNG is found
-    rm "${f%.pdf}.svg"; timeout 120 pdftocairo -cropbox -png -singlefile -transp -r 200 "$f" "${f%.pdf}" 2>/dev/null && mv "$f" "$f.aside" && pdfinfo -box "$f.aside" | LC_ALL=C awk '/^Page rot/{r=$3} /^CropBox/{w=$4-$2; h=$5-$3} END{if (r==90||r==270) {t=w; w=h; h=t}; printf "%%%%BoundingBox: 0 0 %d %d\n%%%%HiResBoundingBox: 0 0 %.2f %.2f\n", w+0.5, h+0.5, w, h}' > "${f%.pdf}.xbb"
+    # (200 dpi, the PDF's own size; Ghostscript, as pdftocairo draws soft-masked bitmaps in stripes); the PDF steps aside, in this copy only, so that the PNG is found
+    rm "${f%.pdf}.svg"; timeout 120 gs -q -dSAFER -dUseCropBox -sDEVICE=pngalpha -r200 -o "${f%.pdf}.png" "$f" 2>/dev/null && mv "$f" "$f.aside" && pdfinfo -box "$f.aside" | LC_ALL=C awk '/^Page rot/{r=$3} /^CropBox/{w=$4-$2; h=$5-$3} END{if (r==90||r==270) {t=w; w=h; h=t}; printf "%%%%BoundingBox: 0 0 %d %d\n%%%%HiResBoundingBox: 0 0 %.2f %.2f\n", w+0.5, h+0.5, w, h}' > "${f%.pdf}.xbb"
   else
     timeout 120 python3 -I "$H/svgjpeg.py" "${f%.pdf}.svg" > /dev/null || true
   fi
@@ -71,7 +71,8 @@ export TEXINPUTS="./img//:./sty//:./tex//:./code//:" BSTINPUTS="./bst//:./sty//:
 mkdir -p out
 timeout 600 latex -interaction=nonstopmode -output-directory=out tex/__dvi.tex > out/latex1.txt 2>&1 || true
 if grep -q '\\bibdata' out/__dvi.aux 2>/dev/null; then (cd out && BIBINPUTS="../bib//:" BSTINPUTS="../bst//:../sty//:" timeout 120 bibtex __dvi > bibtex.txt 2>&1 || true); fi
-for k in 1 2; do timeout 600 latex -interaction=nonstopmode -output-directory=out tex/__dvi.tex > out/latex2.txt 2>&1 || true; done
+# rerun until .aux and .nav settle: beamer's frame total changes them without asking for a rerun (DS M2, 64 for 66)
+for k in 1 2 3 4 5; do b=$(cat out/__dvi.aux out/__dvi.nav 2>/dev/null | cksum); timeout 600 latex -interaction=nonstopmode -output-directory=out tex/__dvi.tex > out/latex2.txt 2>&1 || true; [ $k -ge 2 ] && [ "$b" = "$(cat out/__dvi.aux out/__dvi.nav 2>/dev/null | cksum)" ] && break; done
 grep -E '^!' out/__dvi.log | sort | uniq -c | sed 's/^/latex: /' || true
 grep -qE 'Fatal error occurred|Emergency stop' out/__dvi.log && { echo "latex stopped on a fatal error: see $W/src/out/__dvi.log"; exit 1; }
 [ -s out/__dvi.dvi ] || { echo "no DVI"; exit 1; }

@@ -37,7 +37,7 @@ bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
 A deck takes 6–27 s for a talk, about 70 s for a 329-page course deck.
 
 Needs: TeX Live (`latex`, `bibtex`, `dvisvgm`, `dv2dt`, `dt2dv`), and from Homebrew `poppler`
-(`pdftocairo`, `pdfinfo`, `pdftoppm`), `imagemagick`, `fonttools` (its own interpreter, which
+(`pdftocairo`, `pdfinfo`, `pdftoppm`), `ghostscript`, `imagemagick`, `fonttools` (its own interpreter, which
 has brotli for WOFF2); for `--compare` also `playwright-cli` with WebKit, and Firefox.
 
 ## The page
@@ -83,8 +83,9 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    dvisvgm's own PDF route names images by object number, and two PDFs with an image 4 on one page
    swapped their pictures. A PDF whose SVG needs soft-mask or blend filters (`feImage`, which Firefox does not
    draw: ISE M1's IEEE pages, 2026-11-02) becomes a transparent 200-dpi PNG on
-   its crop box instead, with an `.xbb` of that box (pdflatex reads a PDF on its crop box). A rotated page (`/Rotate` 90 or 270) has its sides swapped in that
-   `.xbb`: `pdftocairo` draws it turned, and the picture came out squeezed into the unturned box (SMA-LS 06·07 C3a,
+   its crop box instead, drawn by Ghostscript (`pngalpha`): `pdftocairo` drew soft-masked bitmaps in horizontal
+   stripes (DS M2, M6, the shaded spheres, 2026-11-03), with an `.xbb` of that box (pdflatex reads a PDF on its crop box). A rotated page (`/Rotate` 90 or 270) has its sides swapped in that
+   `.xbb`: the page is drawn turned (by Ghostscript as by `pdftocairo`), and the picture came out squeezed into the unturned box (SMA-LS 06·07 C3a,
    *Tropos*, 2026-11-02). Large photo bitmaps inside the SVGs become JPEG when that halves them (`svgjpeg.py`); `\includegraphics{x.pdf}`
    loses its extension so that the choice applies.
 2. Bitmaps whose resolution has no unit get an `.xbb` at 72 dpi, pdflatex's reading (`imgbb.py`); so does a bitmap
@@ -102,7 +103,8 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    drawing's text and a nested drawing cleared it (SMA-LS 06·07 S4, its agents; S2 p. 9, two drawings in one). Until 2026-11-02 the picture was wrapped in an open and a close
    group: inside a frame that `[shrink]` really scales, `dvisvgm` then put everything after the picture outside the
    scaling, the frame enlarged and shifted (SMA-LS 06·07 C0, the aliCE logo in a block title); `dvips.def` counts as loaded and `\Gin@PS@raw`/`\Gin@PS@restored` are
-   given, for `pict2e` (below). A fatal latex error stops the conversion.
+   given, for `pict2e` (below). `latex` runs until `.aux` and `.nav` settle, as in `zip.sh`: beamer's frame total
+   asks for no rerun, and DS M2's footer read 64 for 66 after a fixed three passes (2026-11-03). A fatal latex error stops the conversion.
 5. The DVI is repaired in its text form (`dv2dt`/`dt2dv`): colour groups for Beamer's `\color` inside
    pictures, closed before PGF's own `</g>`, and balanced groups (`fixdvi.py`); word spaces marked
    (`spaces.py`); one more page with every character of the deck, font by font (`allglyphs.py`).
@@ -117,7 +119,9 @@ accessibility tree and read by VoiceOver, no page changed in WebKit or Firefox.
    bitmaps and SVGs embedded; the space marks become spaces; a `\videolink`'s MP4 found.
 2. `assemble.py`: one page; ids and classes prefixed per page; a repeated picture stored once; the
    extra page's fonts replace every per-page subset (one WOFF2 per font); private-use glyphs
-   (old-style figures) given their real characters too (`fontfix.py`); ligatures as plain letters;
+   (old-style figures) given their real characters too, and a drawn glyph of zero width one unit of width
+   (`fontfix.py`: WebKit skips a `<text>` whose only glyph has no width, and `\neq`'s slash vanished, ≠ read =,
+   DS M2 and M6, 2026-11-03; every `<text>` has its own `x`, so nothing moves); ligatures as plain letters;
    each video embedded once, laid over its poster and played on a click. Before it, `altfix.py` gives
    each marked picture its text (see *Text alternatives*), hides the background's, and makes each page
    `role="group"`.
