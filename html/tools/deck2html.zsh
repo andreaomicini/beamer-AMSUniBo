@@ -50,17 +50,17 @@ cat > tex/__dvi.tex <<EOF
 \\providecommand\\Gin@PS@restored[1]{\\special{" #1}}
 \\AddToHook{file/pgfsys-dvisvgm.def/after}{\\def\\pgfsys@imagesuffixlist{.svg:.pdf:.png:.jpg:.jpeg:.eps:}}
 \\newwrite\\dvialt@out\\immediate\\openout\\dvialt@out=\\jobname.alt
-\\newcount\\dvialt@n\\newcount\\dvialt@figs\\newcount\\dvialt@fig\\gdef\\dvialt@cur{}\\gdef\\dvialt@deco{0}
+\\newcount\\dvialt@n\\newcount\\dvialt@figs\\newcount\\dvialt@fig\\gdef\\dvialt@cur{}\\gdef\\dvialt@deco{0}\\global\\let\\dvialt@tk\\@empty
 \\AddToHook{package/graphicx/after}{\\define@key{Gin}{alt}{\\gdef\\dvialt@cur{#1}}}
 \\def\\dvialt@setfileX#1#2#3{\\global\\advance\\dvialt@n\\@ne\\protected@edef\\dvialt@t{\\dvialt@cur}%
-\\edef\\dvialt@f{#3}\\immediate\\write\\dvialt@out{I \\the\\dvialt@n\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space\\detokenize\\expandafter{\\dvialt@f}\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}%
+\\edef\\dvialt@f{#3}\\immediate\\write\\dvialt@out{I \\the\\dvialt@n\\space\\ifnum\\dvialt@deco=1 D\\else\\ifx\\dvialt@cur\\@empty\\ifx\\dvialt@tk\\@empty\\the\\dvialt@fig\\else D\\fi\\else\\the\\dvialt@fig\\fi\\fi\\space\\detokenize\\expandafter{\\dvialt@f}\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}%
 \\special{dvisvgm:raw <g class='dvialt' data-alt='\\the\\dvialt@n'/>}\\dvialt@setfile{#1}{#2}{#3}\\gdef\\dvialt@cur{}}
 \\NewDocumentCommand\\dvialt@captionX{om}{\\protected@edef\\dvialt@t{#2}\\immediate\\write\\dvialt@out{C \\the\\dvialt@fig\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}\\IfValueTF{#1}{\\dvialt@caption[#1]{#2}}{\\dvialt@caption{#2}}}
 \\AddToHook{env/figure/begin}{\\global\\advance\\dvialt@figs\\@ne\\global\\dvialt@fig\\dvialt@figs}
 \\AddToHook{env/figure/end}{\\global\\dvialt@fig\\z@}
-\\AddToHook{env/tikzpicture/begin}{\\global\\advance\\dvialt@n\\@ne\\edef\\dvialt@tn{\\the\\dvialt@n}\\special{dvisvgm:raw <g class='dvialt' data-alt='\\dvialt@tn'/>}}
-\\AddToHook{env/tikzpicture/end}{\\protected@edef\\dvialt@t{\\dvialt@cur}\\immediate\\write\\dvialt@out{I \\dvialt@tn\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space tikzpicture\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}\\gdef\\dvialt@cur{}}
-\\AtBeginDocument{\\ifdefined\\tikzset\\tikzset{alt/.code={\\gdef\\dvialt@cur{#1}}}\\fi}
+\\AddToHook{env/tikzpicture/begin}{\\let\\dvialt@tk\\@empty\\global\\advance\\dvialt@n\\@ne\\edef\\dvialt@tn{\\the\\dvialt@n}\\special{dvisvgm:raw <g class='dvialt' data-alt='\\dvialt@tn'/>}}
+\\AddToHook{env/tikzpicture/end}{\\protected@edef\\dvialt@t{\\dvialt@tk}\\immediate\\write\\dvialt@out{I \\dvialt@tn\\space\\ifnum\\dvialt@deco=1 D\\else\\the\\dvialt@fig\\fi\\space tikzpicture\\space|\\space\\detokenize\\expandafter{\\dvialt@t}}}
+\\AtBeginDocument{\\ifdefined\\tikzset\\tikzset{alt/.code={\\def\\dvialt@tk{#1}}}\\fi}
 \\AtBeginDocument{\\let\\dvialt@setfile\\Gin@setfile\\let\\Gin@setfile\\dvialt@setfileX\\NewCommandCopy\\dvialt@caption\\caption\\let\\caption\\dvialt@captionX\\ifdefined\\addtobeamertemplate\\addtobeamertemplate{background}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\addtobeamertemplate{background canvas}{\\gdef\\dvialt@deco{1}}{\\gdef\\dvialt@deco{0}}\\fi}
 \\makeatother
 \\AtBeginDocument{\\providecommand\\transparent[1]{}\\providecommand\\texttransparent[2]{#2}}
