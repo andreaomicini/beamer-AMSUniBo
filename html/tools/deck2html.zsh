@@ -96,5 +96,5 @@ lang=$(sed -n 's/^% *!TeX spellcheck *= *\([A-Za-z_]*\).*/\1/p' "$deck" | head -
 timeout 60 python3 -I "$H/altfix.py" out/__dvi.alt ../svgf $n $lang
 timeout 120 dvisvgm --page=$g --font-format=woff2 --bbox=papersize -o ../glyphs.svg out/fixed.dvi > /dev/null 2>&1 || { echo "dvisvgm failed on the glyph page ($g)"; exit 1; }
 timeout 300 python3 -I "$H/assemble.py" ../svgf $n "$name" "$out" ../glyphs.svg
-sed -i '' "s/<html lang=\"en\">/<html lang=\"$lang\">/" "$out"
+perl -pi -e "s/<html lang=\"en\">/<html lang=\"$lang\">/" "$out"   # not sed -i '': BSD only, and the CI runs on Linux
 echo "gzip: $(gzip -9 -c "$out" | wc -c | tr -d ' ') bytes"
