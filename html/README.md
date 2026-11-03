@@ -13,12 +13,11 @@ corrected by hand stay as they are; when such a deck changes, its page is made a
 
 ## Use
 
-From the root of a deck repository: an AMSUniBo deck has this repository as its `.style/` submodule,
-a deck of another style reaches it as the sibling clone `../beamer-AMSUniBo/`:
+From the root of a deck repository, of any style, through the sibling clone `../beamer-AMSUniBo/`
+(never an AMSUniBo deck's `.style/html/`: the pinned submodule lags behind, and `style-lag` ignores `html/`):
 
 ```bash
-bash .style/html/html.sh [<deck>] [--compare]               # AMSUniBo decks
-bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]   # any style
+bash ../beamer-AMSUniBo/html/html.sh [<deck>] [--compare]
 ```
 
 - `<deck>` is the jobname (`l2-lp`, or `tex/l2-lp.tex`); it may be omitted when `tex/` holds one
