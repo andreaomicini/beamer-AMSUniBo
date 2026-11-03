@@ -18,7 +18,7 @@ v=$(cat "$deck" $(find sty -name '*.sty' 2>/dev/null) 2>/dev/null | sed 's/%.*//
 # own PDF route (mutool) names a PDF's images by object number, and two PDFs with an image 4 on the
 # same page swap their pictures
 # a picture named with its .pdf extension would bypass the choice below: the extension goes, in this copy
-find tex sty -name '*.tex' -o -name '*.sty' 2>/dev/null | while read f; do perl -pi -e 's/(\\includegraphics(?:\[(?:[^\]{}]|\{[^{}]*\})*\])?\{[^}]*?)\.pdf\}/$1}/g' "$f"; done
+find tex sty -name '*.tex' -o -name '*.sty' 2>/dev/null | while read f; do perl -pi -e 's/(\\includegraphics(?:<[^>]*>)?\s*(?:\[(?:[^\]{}]|\{[^{}]*\})*\])?\{[^}]*?)\.pdf\}/$1}/g' "$f"; done
 # bitmaps whose resolution has no unit: the size pdflatex gives them (72 dpi), in an .xbb
 find . \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) -not -path './out/*' -print0 | xargs -0 python3 -I "$H/imgbb.py" || true
 find . -name '*.pdf' -not -path './out/*' | while read f; do

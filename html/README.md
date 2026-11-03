@@ -156,6 +156,10 @@ Find the smallest case (the frame), see what dvisvgm does with it, and fix it in
 way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
 then on two or three other decks where it could show.
 
+- **A picture with an overlay specification**, 2026-11-03: the step that drops `.pdf` from `\includegraphics{x.pdf}`
+  did not allow `\includegraphics<1>[…]{x.pdf}`, so those pictures went through dvisvgm's own PDF route: black boxes
+  where a PDF is rotated (SMA-LS 08·09 C7, pages at 27–32%), misplaced parts elsewhere, while the comparison read only
+  4.5% on such a page (*The SODA Meta-model*). The pattern now allows `<…>`: all pages of the four frames under 2%.
 - **Options with free text**, 2026-11-01: the step that drops `.pdf` from `\includegraphics{x.pdf}` read the
   options up to the first `]`, and an `alt={…}` holding `[10]` stopped it (AS T3 p. 55, a picture missing):
   options are now read with their braces.
