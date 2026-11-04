@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Give the private-use glyphs of dvisvgm's fonts their real characters too.
+"""Give the private-use glyphs of dvisvgm's fonts their real characters too, and TeX's ligatures a liga rule.
 
 dvisvgm cannot map some glyph names to Unicode (old-style figures 'two.osf', small caps …) and gives
 them U+E000 + their code in the font: the page looks right, but copied, searched or read aloud,
@@ -13,6 +13,7 @@ in: {"family": "data:...;base64,<woff2>"}; out: {"family": {"data": "...", "cps"
 """
 import base64, io, json, sys
 from fontTools.ttLib import TTFont
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 
 out = {}
 for fam, data in json.load(sys.stdin).items():
@@ -34,6 +35,14 @@ for fam, data in json.load(sys.stdin).items():
         for g, (w, lsb) in list(f['hmtx'].metrics.items()):
             if w == 0 and f['glyf'][g].numberOfContours:
                 f['hmtx'][g] = (1, lsb)
+    # the page writes TeX's ligatures as letters (assemble.py): a liga rule draws them again with TeX's own glyph
+    uni = f.getBestCmap() or {}
+    ligs = [(lig, seq) for lig, seq in ((0xFB03, 'ffi'), (0xFB04, 'ffl'), (0xFB00, 'ff'), (0xFB01, 'fi'), (0xFB02, 'fl'))
+            if lig in uni and all(ord(c) in uni for c in seq)]
+    if ligs:
+        fea = 'languagesystem DFLT dflt;\nlanguagesystem latn dflt;\nfeature liga {\n' + ''.join(
+            f"  sub {' '.join(chr(92) + uni[ord(c)] for c in seq)} by {chr(92)}{uni[lig]};\n" for lig, seq in ligs) + '} liga;\n'
+        addOpenTypeFeaturesFromString(f, fea)
     b = io.BytesIO(); f.flavor = 'woff2'; f.save(b)
     out[fam] = {'data': data.split(',', 1)[0] + ',' + base64.b64encode(b.getvalue()).decode(),
                 'cps': sorted(set(cps))}

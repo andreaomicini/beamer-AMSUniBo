@@ -160,6 +160,12 @@ Find the smallest case (the frame), see what dvisvgm does with it, and fix it in
 way out, generally (for Beamer or PGF, never for one deck), checked on that frame against the PDF and
 then on two or three other decks where it could show.
 
+- **A ligature with no letters in its font**, 2026-11-04: the page writes TeX's ligatures as letters (fi as f + i, so
+  that it searches), but a font that used *f* only inside *fi* had the ligature glyph and no plain *f*: the browser
+  took *f* from another font, and WebKit's overlapped (SMA-LS 08·09 C6 p. 66, *Identifier* in sans italic; every
+  italic *fi* of a test frame). `allglyphs.py` now adds f, i, l to a font that uses a ligature, and `fontfix.py`
+  gives each font a `liga` rule drawing the letters again with TeX's own glyph: as the PDF in both browsers,
+  test frame 2.2% → 1.2%, X1 unchanged on its 36 pages.
 - **A coloured `\emph` in a TikZ node**, 2026-11-04: `fixdvi.py` took the colour pop after the node's `</g>` for the
   end of the picture, and closed it early: the rest of the drawing came out flipped (SMA-LS 08·09 S1a p. 6, AMSCesena,
   whose `\emph` is coloured). Each open picture now keeps the colour depth it began at, and ends only back there.

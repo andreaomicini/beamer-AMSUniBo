@@ -40,6 +40,12 @@ for l in lines:
     if m:                                          # (T1: “ ” \10 \11, – — \15 \16, fi fl \1C \1D)
         used.setdefault(font, set()).add(int(m.group(1), 16))
 
+# a font using a ligature (OT1 ff fi fl ffi ffl \0B-\0F, T1 \1B-\1F) gets its letters f i l too: the page writes
+# ligatures as letters (assemble.py), which fontfix.py joins again (SMA-LS 08·09 C6 p. 66, 2026-11-04)
+for codes in used.values():
+    if codes & (set(range(0x0B, 0x10)) | set(range(0x1B, 0x20))):
+        codes.update((0x66, 0x69, 0x6C))
+
 page = [re.sub(r'^bop( -?\d+)', f'bop {pages + 1}', last_bop)]
 for f, codes in sorted(used.items()):
     page.append(f'fn{f}' if f < 64 else f'f1 {f}' if f < 256 else f'f2 {f}')   # fnt1 holds one byte
