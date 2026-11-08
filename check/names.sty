@@ -20,7 +20,7 @@
 \DeclareAcronym{aamas}{short = {AAMAS}, long = {Autonomous Agents and Multi-Agent Systems}, pdfstring = {AAMAS}}
 \DeclareAcronym{acl}{short = {\ensuremath{\mathcal{ACL}}}, long = {\ensuremath{\mathcal{A}}gent \ensuremath{\mathcal{C}}ommunication \ensuremath{\mathcal{L}}anguage}, pdfstring = {ACL}}
 \DeclareAcronym{adt}{short = {ADT}, long = {algebraic data type}, pdfstring = {ADT}}
-\DeclareAcronym{aea}{short = {\textsc{A\&A}}, long = {\textsc{A}gents \textsc{\&} \textsc{A}rtefacts}, pdfstring = {AeA}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [4]
+\DeclareAcronym{aea}{short = {\textsf{A\&A}}, long = {\textsf{A}gents \textsf{\&} \textsf{A}rtefacts}, pdfstring = {AeA}}  % decided (Andrea, 2026-11-08): \textsf, never \textsc; not {\sc A\&A}, \textsc{A\&A} [5]
 \DeclareAcronym{agot}{short = {AGoT}, long = {Agentic Graph of Thoughts}, pdfstring = {AGoT}}
 \DeclareAcronym{ai}{short = {AI}, long = {artificial intelligence}, pdfstring = {AI}}
 \DeclareAcronym{aixia}{short = {AIxIA}, long = {Italian Association for Artificial Intelligence}, pdfstring = {AIxIA}}
@@ -61,7 +61,7 @@
 \DeclareAcronym{icmas}{short = {ICMAS}, long = {International Conference on Multi-Agent Systems}, pdfstring = {ICMAS}}
 \DeclareAcronym{ide}{short = {IDE}, long = {integrated development environment}, pdfstring = {IDE}}
 \DeclareAcronym{iot}{short = {{I}o{T}}, long = {Internet of Things}, pdfstring = {IoT}}
-\DeclareAcronym{jade}{short = {\textsc{Jade}}, long = {\textsc{J}ava \textsc{A}gent \textsc{DE}velopment Framework}, pdfstring = {Jade}}  % decision: also short = {JADE}, pdfstring = {JADE} [2]; also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [8]
+\DeclareAcronym{jade}{short = {\textsc{Jade}}, long = {\textsc{J}ava \textsc{A}gent \textsc{DE}velopment Framework}, pdfstring = {Jade}}  % decided (Andrea, 2026-11-08): small caps Jade; not short = {JADE}, pdfstring = {JADE} [2]; also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [8]
 \DeclareAcronym{jvm}{short = {JVM}, long = {Java Virtual Machine}, pdfstring = {JVM}}
 \DeclareAcronym{llm}{short = {LLM}, long = {large language model}, pdfstring = {LLM}}
 \DeclareAcronym{lm}{short = {LM}, long = {language model}, pdfstring = {LM}}
@@ -94,12 +94,12 @@
 \DeclareAcronym{tot}{short = {ToT}, long = {Tree-of-Thoughts}, pdfstring = {ToT}}
 \DeclareAcronym{tsp}{short = {TSP}, long = {travelling salesperson problem}, pdfstring = {TSP}}
 \DeclareAcronym{tucson}{short = {\textsf{{T}u{CS}o{N}}}, long = {\textsf{Tu}ple \textsf{C}entres \textsf{S}pread \textsf{o}ver the \textsf{N}etwork}, pdfstring = {TuCSoN}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [2]
-\DeclareAcronym{vle}{short = {VLE}, long = {Virtual Learning Environment}}  % decision: also short = {Virtuale}, pdfstring = {Virtuale} [2]
+\DeclareAcronym{vle}{short = {VLE}, long = {Virtual Learning Environment}}  % decided (Andrea, 2026-11-08): VLE; Virtuale stays local in ds2425 and ds2526 [2]
 \DeclareAcronym{xai}{short = {XAI}, long = {explainable artificial intelligence}, pdfstring = {XAI}}
 \DeclareAcronym{zscot}{short = {Zero-Shot CoT}, long = {Zero-Shot Chain-of-Thought}, pdfstring = {Zero-Shot CoT}}
 
-\newcommand{\aea}{\mbox{A\&A}}  % also, printing the same: {A\&A} [3]
-\newcommand{\aearespect}{\aea{} \respect{}}  % decision: also \acs{aea} \acs{respect} [1]
+\newcommand{\aea}{\mbox{\textsf{A\&A}}}  % decided (Andrea, 2026-11-08): \textsf; not \mbox{A\&A}, {A\&A}
+\newcommand{\aearespect}{\acs{aea} \acs{respect}}  % decided (Andrea, 2026-11-08): the acronyms, now that the canon has them; not \aea{} \respect{}
 \newcommand{\agentspeak}{{A}gent{S}peak}
 \newcommand{\agentspeakl}{\agentspeak({L})}
 \newcommand{\amuse}{{AMUSE}}
@@ -135,7 +135,7 @@
 \newcommand{\erlang}{{E}rlang}
 \newcommand{\ethereum}{{E}thereum}
 \newcommand{\exat}{{eXAT}}
-\newcommand{\fipa}{{FIPA}}  % decision: also {\sf FIPA} [2]
+\newcommand{\fipa}{{FIPA}}  % decided (Andrea, 2026-11-08): plain; not {\sf FIPA} [2]
 \newcommand{\flatzinc}{{F}lat{Z}inc}
 \newcommand{\gammamodel}{Gamma}
 \newcommand{\gecode}{{Gecode}}
@@ -172,7 +172,7 @@
 \newcommand{\respect}{{\textsf{{R}e{S}pec{T}}}}  % also, printing the same: \mbox{\sf{{R}e{S}pec{T}}} [3] | {\sf{{R}e{S}pec{T}}} [11]
 \newcommand{\sapere}{{SAPERE}}
 \newcommand{\scala}{{Scala}}
-\newcommand{\sicstus}{{SICStus Prolog}}  % decision: also {SICStus \prolog} [3]
+\newcommand{\sicstus}{{SICStus \prolog}}  % decided (Andrea, 2026-11-08): through \prolog; also, printing the same: {SICStus Prolog}
 \newcommand{\simpa}{\mbox{simp{A}}}  % also, printing the same: {simp{A}} [1]
 \newcommand{\smartcontract}{smart contract}
 \newcommand{\SmartContract}{{S}mart {C}ontract}
@@ -188,12 +188,12 @@
 \newcommand{\swish}{{SWISH}}
 \newcommand{\sym}{{symbolic}}
 \newcommand{\Sym}{{Symbolic}}
-\newcommand{\tforj}{\tucson{}$4$\acs{jade}}  % decision: also \acs{tucson}$4$\acs{jade} [1]
-\newcommand{\tforjn}{\tucson{}$4$\jason{}}  % decision: also \acs{tucson}$4$\jason{} [1]
+\newcommand{\tforj}{\acs{tucson}$4$\acs{jade}}  % decided (Andrea, 2026-11-08): the acronyms; not \tucson{}$4$\acs{jade}
+\newcommand{\tforjn}{\acs{tucson}$4$\jason{}}  % decided (Andrea, 2026-11-08): the acronym; not \tucson{}$4$\jason{}
 \newcommand{\tota}{{TOTA}}
 \newcommand{\tpkt}{{{\textsf{2}P-\textsc{Kt}}}}
 \newcommand{\tucson}{\mbox{\textsf{{T}u{CS}o{N}}}}  % also, printing the same: {\sf{T}u{CS}o{N}} [3] | {\sf{{T}u{CS}o{N}}} [2] | {\textsf{{T}u{CS}o{N}}} [1] | \mbox{\sf{{T}u{CS}o{N}}} [7]
-\newcommand{\tuprolog}{{\textsf{tu}\textrm{{P}rolog}}}  % decision: also \mbox{{tu}\sf{{P}rolog}} [3] | {{tu}\sf{{P}rolog}} [2]
+\newcommand{\tuprolog}{{\textsf{tu}\prolog}}  % decided (Andrea, 2026-11-08): tu in sans serif, Prolog in the text font; not \textsf{tu}\textrm{{P}rolog}, \mbox{{tu}\sf{{P}rolog}} [3], {{tu}\sf{{P}rolog}} [2]
 \newcommand{\typeonedm}{Type~1 DM}
 \newcommand{\ulinda}{{\textsc{uLinda}}}  % also, printing the same: {\sc uLinda} [6]
 \newcommand{\wade}{{WADE}}
