@@ -49,7 +49,7 @@
 \DeclareAcronym{dsl}{short = {DSL}, long = {domain-specific language}, pdfstring = {DSL}}
 \DeclareAcronym{easss}{short = {EASSS}, long = {European Agent Systems Summer School}, pdfstring = {EASSS}}
 \DeclareAcronym{emas}{short = {EMAS}, long = {Engineering Multi-Agent Systems}, pdfstring = {EMAS}}
-\DeclareAcronym{fipa}{short = {FIPA}, long = {{F}oundation for {I}ntelligent {P}hysical {A}gents}, pdfstring = {FIPA}}
+\DeclareAcronym{fipa}{short = {FIPA}, long = {{F}oundation for {I}ntelligent {P}hysical {A}gents}, pdfstring = {FIPA}}  % decided (Andrea, 2026-11-08): plain; not {\sf FIPA} [2]
 \DeclareAcronym{fol}{short = {FOL}, long = {first-order logic}, pdfstring = {FOL}}
 \DeclareAcronym{fp}{short = {FP}, long = {functional programming}, pdfstring = {FP}}
 \DeclareAcronym{g25flash}{short = {2.5 Flash}, long = {Gemini-2.5-Flash}, pdfstring = {Gemini 2.5 Flash}}
@@ -98,18 +98,18 @@
 \DeclareAcronym{xai}{short = {XAI}, long = {explainable artificial intelligence}, pdfstring = {XAI}}
 \DeclareAcronym{zscot}{short = {Zero-Shot CoT}, long = {Zero-Shot Chain-of-Thought}, pdfstring = {Zero-Shot CoT}}
 
-\newcommand{\aea}{\mbox{\textsf{A\&A}}}  % decided (Andrea, 2026-11-08): \textsf; not \mbox{A\&A}, {A\&A}
-\newcommand{\aearespect}{\acs{aea} \acs{respect}}  % decided (Andrea, 2026-11-08): the acronyms, now that the canon has them; not \aea{} \respect{}
+\newcommand{\aea}{\acs*{aea}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was \mbox{\textsf{A\&A}}
+\newcommand{\aearespect}{\acs*{aea} \acs*{respect}}  % decided (Andrea, 2026-11-08): the acronyms, starred so as not to count as a first use; not \aea{} \respect{}
 \newcommand{\agentspeak}{{A}gent{S}peak}
 \newcommand{\agentspeakl}{\agentspeak({L})}
 \newcommand{\amuse}{{AMUSE}}
 \newcommand{\apicename}{{\textsf{APICe}}}  % also, printing the same: {\sf{APICe}} [5] | {\sf APICe} [10]
 \newcommand{\aurora}{{Aurora}}
-\newcommand{\bdi}{{BDI}}
+\newcommand{\bdi}{\acs*{bdi}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was {BDI}
 \newcommand{\biopepa}{{BioPEPA}}
 \newcommand{\blockchain}{blockchain}
 \newcommand{\Blockchain}{{B}lockchain}
-\newcommand{\cartago}{\mbox{\textsf{{CA}rt{A}g{O}}}}  % also, printing the same: {\sf {CA}rt{A}g{O}} [2] | {\sf CArtAgO} [1] | {\sf{{CA}rt{A}g{O}}} [1] | \mbox{\sf{{CA}rt{A}g{O}}} [7]
+\newcommand{\cartago}{\acs*{cartago}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was \mbox{\textsf{{CA}rt{A}g{O}}}
 \newcommand{\chatgpt}{ChatGPT}
 \newcommand{\chip}{{CHIP}}
 \newcommand{\choco}{{Choco}}
@@ -135,7 +135,7 @@
 \newcommand{\erlang}{{E}rlang}
 \newcommand{\ethereum}{{E}thereum}
 \newcommand{\exat}{{eXAT}}
-\newcommand{\fipa}{{FIPA}}  % decided (Andrea, 2026-11-08): plain; not {\sf FIPA} [2]
+\newcommand{\fipa}{\acs*{fipa}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was {FIPA}
 \newcommand{\flatzinc}{{F}lat{Z}inc}
 \newcommand{\gammamodel}{Gamma}
 \newcommand{\gecode}{{Gecode}}
@@ -149,9 +149,9 @@
 \newcommand{\klaim}{{\textsc{{K}laim}}}  % also, printing the same: {\sc{K}laim} [6]
 \newcommand{\lime}{{\textsc{{L}ime}}}  % also, printing the same: {\sc{{L}ime}} [2]
 \newcommand{\linda}{{\textsc{{L}inda}}}  % also, printing the same: {\sc{{L}inda}} [8]
-\newcommand{\lpaas}{{LPaaS}}
+\newcommand{\lpaas}{\acs*{lpaas}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was {LPaaS}
 \newcommand{\luce}{\mbox{\textsf{{L}u{C}e}}}  % also, printing the same: \mbox{\sf{{L}u{C}e}} [7]
-\newcommand{\mas}{{MAS}}
+\newcommand{\mas}{\acs*{mas}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was {MAS}
 \newcommand{\mathbench}{{\textsc{MATH}}}
 \newcommand{\mcintyre}{{MCINTYRE}}
 \newcommand{\minizinc}{{M}ini{Z}inc}
@@ -169,7 +169,7 @@
 \newcommand{\prolog}{{P}rolog}
 \newcommand{\prs}{{PRS}}
 \newcommand{\react}{{ReAct}}
-\newcommand{\respect}{{\textsf{{R}e{S}pec{T}}}}  % also, printing the same: \mbox{\sf{{R}e{S}pec{T}}} [3] | {\sf{{R}e{S}pec{T}}} [11]
+\newcommand{\respect}{\acs*{respect}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was {\textsf{{R}e{S}pec{T}}}
 \newcommand{\sapere}{{SAPERE}}
 \newcommand{\scala}{{Scala}}
 \newcommand{\sicstus}{{SICStus \prolog}}  % decided (Andrea, 2026-11-08): through \prolog; also, printing the same: {SICStus Prolog}
@@ -188,11 +188,11 @@
 \newcommand{\swish}{{SWISH}}
 \newcommand{\sym}{{symbolic}}
 \newcommand{\Sym}{{Symbolic}}
-\newcommand{\tforj}{\acs{tucson}$4$\acs{jade}}  % decided (Andrea, 2026-11-08): the acronyms; not \tucson{}$4$\acs{jade}
-\newcommand{\tforjn}{\acs{tucson}$4$\jason{}}  % decided (Andrea, 2026-11-08): the acronym; not \tucson{}$4$\jason{}
+\newcommand{\tforj}{\acs*{tucson}$4$\acs*{jade}}  % decided (Andrea, 2026-11-08): the acronyms, starred so as not to count as a first use; not \tucson{}$4$\acs{jade}
+\newcommand{\tforjn}{\acs*{tucson}$4$\jason{}}  % decided (Andrea, 2026-11-08): the acronym, starred so as not to count as a first use; not \tucson{}$4$\jason{}
 \newcommand{\tota}{{TOTA}}
 \newcommand{\tpkt}{{{\textsf{2}P-\textsc{Kt}}}}
-\newcommand{\tucson}{\mbox{\textsf{{T}u{CS}o{N}}}}  % also, printing the same: {\sf{T}u{CS}o{N}} [3] | {\sf{{T}u{CS}o{N}}} [2] | {\textsf{{T}u{CS}o{N}}} [1] | \mbox{\sf{{T}u{CS}o{N}}} [7]
+\newcommand{\tucson}{\acs*{tucson}}  % one definition, the acronym's short form, not counted as a first use (Andrea, 2026-11-08); was \mbox{\textsf{{T}u{CS}o{N}}}
 \newcommand{\tuprolog}{{\textsf{tu}\prolog}}  % decided (Andrea, 2026-11-08): tu in sans serif, Prolog in the text font; not \textsf{tu}\textrm{{P}rolog}, \mbox{{tu}\sf{{P}rolog}} [3], {{tu}\sf{{P}rolog}} [2]
 \newcommand{\typeonedm}{Type~1 DM}
 \newcommand{\ulinda}{{\textsc{uLinda}}}  % also, printing the same: {\sc uLinda} [6]
