@@ -7,8 +7,9 @@
 Run from a course repository's root, after the decks are built. Per deck, in its aux/<deck>.bbl order,
 each cited key's `apice` field in the one bib/<course>.bib, as Publication.<Name> or Talk.<Name> after
 the Publication and Talk XARs (~/APICe/publications/Publication.WebHome.xar, ~/APICe/talks/Talk.WebHome.xar;
-only their file lists are read). Labels as the house style: the deck's file prefix, first letter capital
-(c8a-soda -> C8a). On stderr, every key left out: no `apice` field, or a name in neither XAR.
+only their file lists are read). Labels as the deck declares them, \\decklabel{CX}; without one, the house
+style: the deck's file prefix, first letter capital (c8a-soda -> C8a; until 2026-11-08 always so, and DS's CX
+came out Cx). On stderr, every key left out: no `apice` field, or a name in neither XAR.
 
 The entries are split by bibimpact.parse, which counts braces. Written 2026-10-31: until then each run copied
 the last run's script, and DS 25·26's regex split some sa.bib entries wrongly and lost six `apice` fields.
@@ -41,7 +42,9 @@ def main(argv):
     known = {space: names(space) for space in XARS}
     pubs, left = {}, []
     for d in decks():
-        label = d.split('-')[0][:1].upper() + d.split('-')[0][1:]
+        tex = Path(f'tex/{d}.tex')   # the label the deck declares, \decklabel{CX}; else from its file name
+        m = re.search(r'\\decklabel\{([^}]*)\}', tex.read_text(encoding='utf-8')) if tex.exists() else None
+        label = m.group(1) if m else d.split('-')[0][:1].upper() + d.split('-')[0][1:]
         bbl = Path(f'aux/{d}.bbl')
         keys = re.findall(r'\\bibitem(?:\[[^\]]*\])?\{([^}]+)\}', bbl.read_text(encoding='utf-8'), re.S) if bbl.exists() else []
         pubs[label] = []
