@@ -126,6 +126,7 @@ Beyond the beamer furniture, the theme defines:
 | `\speaker` `\sspeaker` | marking the actual speaker among the authors, in the long and short forms, both in bold. Safe in `\author`: the name still reaches the PDF `/Author` field, only the markup is dropped |
 | `\ccite` | superscript citations; takes `\cite`'s optional note, as in `\ccite[p.~42]{key}`. `\cccite` is the same, kept for existing decks |
 | `\uurl` `\uuurl` | URLs, in two sizes; since 1.6.2 no character in the address needs escaping |
+| `\wwwurl` | a web page's URL, as `@webpage` prints it: the colour of a journal's name, at the size around it; since 1.8.5 |
 | `\ddoi` `\dddoi` | DOIs, linked, in two sizes; since 1.6.2 no character in the DOI needs escaping |
 | `\apicepubpar` | the APICe marker; defined either way, but expands to nothing unless the `apice` option is given |
 | `\apice` `\aapice` | an APICe object — publication, talk, course, event — by its kind and its page name, printed as its short address and linked; since 1.7 |
@@ -229,7 +230,7 @@ every deck would have to wrap them in `\texorpdfstring` by hand.
 * `\ccite`, `\cccite` say nothing in a bookmark, so they go entirely. Their
   replacement is expandable: an unexpandable one would have hyperref drop the
   name alone and leave `[p.~42]{key}` behind as literal text.
-* `\uurl`, `\uuurl` carry `\url`, whose catcode machinery does not survive
+* `\uurl`, `\uuurl`, `\wwwurl` carry `\url`, whose catcode machinery does not survive
   expansion at all — unhandled, a URL in `\title` turns the PDF `/Title` into
   mojibake. `\@firstofone` keeps the address and drops the styling.
 * `\ddoi`, `\dddoi` become `DOI:<doi>`: the number is worth having in the
@@ -467,6 +468,39 @@ number replaces `pages` whenever it is there, since such pages count from 1
 inside the article, and `numpages` follows it: *ACM Computing Surveys*, 47(3),
 article 42, 36 pages for an `article`, and article 42, 36 pages where the pages
 would go for any other type. Without `articleno`, `pages` print as before.
+
+### web pages
+
+Since 1.8.5 `apalike-AMS.bst` has a `webpage` entry type, also reached as
+`@online`, `@www` and `@electronic`, for a web page cited as such: a tool's site,
+a piece of documentation, a repository. Every field but a link may be missing,
+so a bare entry needs nothing invented:
+
+<!-- markdownlint-disable MD013 -->
+
+| BibTeX field | printed as |
+| --- | --- |
+| `title` | bold, in the title's colour, **as written**: no sentence case, since a web page's title is usually a name (*MetalLB*). With no author or organisation it opens the entry |
+| `url` | on its own line after the title, through `\wwwurl`: the colour of a journal's name, at the size of the references |
+| `author`, else `organization` | first, with the year, as everywhere; `organization` beside an author goes on the venue line |
+| `year`, else `date` | after the first item, `(2025)`, only when there is one |
+| `howpublished`, `note` | the venue line, after the URL |
+| `apice`, `doi` | the last line, as for every other type: the APICe marker, then the DOI |
+| `urldate` | not printed, as in every type |
+
+<!-- markdownlint-enable MD013 -->
+
+The label is the author's, else `key`, else the organisation, else the title,
+with `, <year>` only when there is a year; two equal labels with no year read
+`[Kubernetes, a]` and `[Kubernetes, b]`, the letter in the year's place. So
+`@webpage{docker, title = {Docker}, url = {https://www.docker.com/}}` reads
+*[Docker]* **Docker** and the address below it. BibTeX warns only when an entry has
+neither `url` nor `doi`. `@url` cannot be a type: `url` is a field, BibTeX refuses
+a function of that name, and an entry so typed silently prints as `misc`;
+`check/checkdeck.py` flags it.
+
+Since 1.8.5 the `.bst` is one file, byte for byte the same in all six AMS styles:
+its comments name no style.
 
 ### theses
 

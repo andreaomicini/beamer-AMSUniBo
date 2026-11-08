@@ -9,9 +9,11 @@
 % Differences between this style and `alpha' are generally heralded by a `%'.
 % The file btxbst.doc has the documentation for alpha.bst.
 %
-% AMSUniBo: renamed and modified. Titles are emboldened, so that an entry's
+% AMS: renamed and modified. Titles are emboldened, so that an entry's
 % title outweighs its citation key -- see `embolden' below, and README.md in
-% https://github.com/andreaomicini/beamer-AMSUniBo for why.
+% https://github.com/andreaomicini/beamer-AMSUniBo for why. One file, the
+% same in all six AMS Beamer styles: AMSUniBo, AMSBolognaFC, AMSCesena,
+% AMSPurpleAndGold, AMSRedGrey, AMSSilverBlue.
 %
 % This style should be used with the `apalike' LaTeX style (apalike.sty).
 % \cite's come out like "(Jones, 1986)" in the text but there are no labels
@@ -44,8 +46,8 @@
 %    8-dec-10  (OP)  Still version 0.99a, as the code itself was unchanged;
 %                    this release clarified the license.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Modified 2019-2023 by Andrea Omicini <andrea.omicini@unibo.it>
-% for AMSBolognaFC Beamer style
+% Modified 2019-2026 by Andrea Omicini <andrea.omicini@unibo.it>
+% for the AMS Beamer styles
 
 ENTRY
   { address
@@ -104,7 +106,7 @@ FUNCTION {output.nonnull}
   output.state mid.sentence =
     { ", " * write$ }
     { output.state after.block =
-        % AMSUniBo: no period where a block ends, since the next one starts on a
+        % AMS: no period where a block ends, since the next one starts on a
         % new line anyway -- the stop only ever trailed a title or a URL. The
         % add.period$ further down stays: that one separates items on one line
         { write$
@@ -222,7 +224,7 @@ FUNCTION {field.or.null}
   if$
 }
 
-% AMSUniBo: emphasize's counterpart, for titles only
+% AMS: emphasize's counterpart, for titles only
 FUNCTION {embolden}
 { duplicate$ empty$
     { pop$ "" }
@@ -268,7 +270,7 @@ FUNCTION {format.names}
   while$
 }
 
-FUNCTION {format.names.fl}                              % AMSUniBo: a name
+FUNCTION {format.names.fl}                              % AMS: a name
 { 's :=                                                 % as it is said,
   #1 'nameptr :=                                        % "A. Natali", for
   s num.names$ 'numnames :=                             % supervisors and
@@ -323,7 +325,7 @@ FUNCTION {format.editors}
   if$
 }
 
-FUNCTION {title.subtitle}                              % AMSUniBo: the title,
+FUNCTION {title.subtitle}                              % AMS: the title,
 { subtitle empty$                                       % then ": " and the
     { title }                                           % subtitle when there
     { crossref empty$ not                               % is one. A contained
@@ -342,7 +344,7 @@ FUNCTION {title.subtitle}                              % AMSUniBo: the title,
 FUNCTION {format.title}
 { title empty$
     { "" }
-    { title.subtitle "t" change.case$ embolden }   % AMSUniBo
+    { title.subtitle "t" change.case$ embolden }   % AMS
   if$
 }
 
@@ -372,7 +374,7 @@ FUNCTION {n.dashify}
 }
 
 FUNCTION {format.btitle}
-{ title.subtitle emphasize embolden   % AMSUniBo
+{ title.subtitle emphasize embolden   % AMS
 }
 
 FUNCTION {tie.or.space.connect}
@@ -537,7 +539,7 @@ FUNCTION {format.in.ed.booktitle}
   if$
 }
 
-FUNCTION {format.thesis.title}                         % AMSUniBo: a title
+FUNCTION {format.thesis.title}                         % AMS: a title
 { cycle empty$                                          % from APICe's Theses
     { format.title }                                    % is printed as it is
     { title empty$                                      % written, as a PhD
@@ -548,14 +550,14 @@ FUNCTION {format.thesis.title}                         % AMSUniBo: a title
   if$
 }
 
-FUNCTION {add.translatedtitle}                         % AMSUniBo: a thesis
+FUNCTION {add.translatedtitle}                         % AMS: a thesis
 { translatedtitle empty$                                % title, then its
     'skip$                                              % translation in
     { " [" * translatedtitle * "]" * }                  % brackets
   if$
 }
 
-FUNCTION {format.supervision}                           % AMSUniBo: who
+FUNCTION {format.supervision}                           % AMS: who
 { supervisor empty$                                     % supervised a thesis
     { "" }
     { supervisor num.names$ #1 >
@@ -581,7 +583,7 @@ FUNCTION {format.thesis.type}
 { type empty$
     'skip$
     { pop$
-      cycle empty$                                      % AMSUniBo: an APICe
+      cycle empty$                                      % AMS: an APICe
         { type "t" change.case$ }                       % thesis says "PhD
         { type }                                        % thesis": keep it
       if$
@@ -625,7 +627,7 @@ FUNCTION {format.incoll.inproc.crossref}
 % AMS style functions -- START 
 
 FUNCTION {format.apice}
-{ type$ "talk" =                                        % AMSUniBo: a talk,
+{ type$ "talk" =                                        % AMS: a talk,
     { "\apicetalkpar{" * apice * "}  " * "" }           % a thesis and a
     { cycle empty$                                      % publication each
         { "\apicepubpar{" * apice * "}  " * "" }        % link their own
@@ -653,7 +655,7 @@ FUNCTION {format.ams}
   if$
   doi empty$
   { url empty$
-    { amsphdeprint empty$                               % AMSUniBo: a thesis
+    { amsphdeprint empty$                               % AMS: a thesis
         { amseprint empty$                              % with neither DOI
             {}                                          % nor URL links its
             { "\uuurl{https://amslaurea.unibo.it/id/eprint/" * amseprint * "/}" * "" output }
@@ -972,19 +974,81 @@ FUNCTION {talk}
   fin.entry
 }
 
+% webpage: a web page, also as @online, @www, @electronic. Every field may be
+% missing but a link: who (author, else organization) and year first when
+% there, else the title, kept as written; the URL in red on its own line;
+% APICe and DOI last, as in every type. urldate is ignored, as everywhere
+FUNCTION {is.webpage}
+{ type$ "webpage" =
+  type$ "online" = or
+  type$ "www" = or
+  type$ "electronic" = or
+}
+
+FUNCTION {webpage.year}
+{ year empty$
+    { date empty$ { "" } { date #1 #4 substring$ } if$ }
+    { year }
+  if$
+}
+
+FUNCTION {webpage.who}
+{ author empty$
+    { organization field.or.null }
+    { author format.names }
+  if$
+}
+
+FUNCTION {webpage.title}
+{ title empty$
+    { "" }
+    { title.subtitle embolden }
+  if$
+}
+
+FUNCTION {webpage.year.out}
+{ webpage.year empty$
+    'skip$
+    { write$
+      " (" webpage.year * extra.label * ")" *
+      mid.sentence 'output.state :=
+    }
+  if$
+}
+
 FUNCTION {webpage}
 { output.bibitem
-  format.authors output
-  author format.key output                              % special for
-  output.year.check                                     % apalike
+  title empty$ { "empty title in " cite$ * warning$ } 'skip$ if$
+  url empty$ doi empty$ and { "no url nor doi in " cite$ * warning$ } 'skip$ if$
+  webpage.who empty$
+    { "{\usebeamercolor[fg]{bibliography entry title}" webpage.title * "}" *
+      output                                            % red, as every title
+      webpage.year.out
+    }
+    { webpage.who output
+      webpage.year.out
+      new.block
+      webpage.title output
+    }
+  if$
   new.block
-  format.title output
+  url empty$ 'skip$ { "\wwwurl{" url * "}" * output } if$
   new.block
-  url output
-  new.block
+  author empty$ 'skip$ { organization output } if$
+  howpublished output
   note output
+  new.block
+  "\newblock" *
+  apice empty$ 'skip$ { format.apice output } if$
+  doi empty$ 'skip$ { format.doi output } if$
   fin.entry
 }
+
+FUNCTION {online} { webpage }
+
+FUNCTION {www} { webpage }
+
+FUNCTION {electronic} { webpage }
 
 % AMS style entry -- END 
 
@@ -1222,7 +1286,7 @@ FUNCTION {editor.key.label}
   if$
 }
 
-FUNCTION {calc.label}
+FUNCTION {calc.label.apalike}
 { type$ "book" =
   type$ "inbook" =
   or
@@ -1240,6 +1304,30 @@ FUNCTION {calc.label}
   *
   'label :=
 }
+
+FUNCTION {webpage.label}
+{ author empty$
+    { key empty$
+        { organization empty$ { title field.or.null } 'organization if$ }
+        'key
+      if$
+    }
+    { author format.lab.names }
+  if$
+  webpage.year empty$
+    'skip$
+    { ", " * webpage.year purify$ #-1 #4 substring$ * }
+  if$
+  'label :=
+}
+
+FUNCTION {calc.label}
+{ is.webpage
+    'webpage.label
+    'calc.label.apalike
+  if$
+}
+
 
 FUNCTION {sort.format.names}
 { 's :=
@@ -1327,14 +1415,30 @@ FUNCTION {presort}
   label sortify
   "    "
   *
-  type$ "book" =
-  type$ "inbook" =
-  or
-    'author.editor.sort
-    { type$ "proceedings" =
-      type$ "issue" = or
-        'editor.sort
+  is.webpage
+    { author empty$
+        { key empty$
+            { organization empty$
+                { title field.or.null sort.format.title }
+                { organization sortify }
+              if$
+            }
+            { key sortify }
+          if$
+        }
         'author.sort
+      if$
+    }
+    { type$ "book" =
+      type$ "inbook" =
+      or
+        'author.editor.sort
+        { type$ "proceedings" =
+          type$ "issue" = or
+            'editor.sort
+            'author.sort
+          if$
+        }
       if$
     }
   if$
@@ -1382,7 +1486,10 @@ FUNCTION {reverse.pass}
     { "a" 'extra.label := }
     'skip$
   if$
-  label extra.label * 'label :=
+  is.webpage webpage.year empty$ and extra.label empty$ not and
+    { label ", " * extra.label * 'label := }
+    { label extra.label * 'label := }
+  if$
   extra.label 'next.extra :=
 }
 

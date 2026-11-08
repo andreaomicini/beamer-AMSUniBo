@@ -12,6 +12,10 @@ not one per repository; see `../../COURSE-DECKS.md`). Run from the deck reposito
 `checkdeck.py` reads the source without its comments (verbatim kept as it is): a commented-out frame is not in
 the PDF, and was reported as missing (AS L1 16 times, L4, T1, SA T0) until 2026-11-02.
 
+Since 2026-11-08 it also flags an `@url` entry in any `.bib` the deck reads: `url` is a field, so BibTeX
+cannot have a type of that name and prints the entry as `misc`; the type for a web page is `@webpage`
+(the `.bst`'s *web pages*, in the README).
+
 They need `pdftotext` (poppler) and `mutool` (mupdf), both from Homebrew. A change here counts for no
 deck's `style-lag` (it ignores `check/`, as `html/` and `ci/`).
 

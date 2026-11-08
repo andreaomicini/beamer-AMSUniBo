@@ -79,6 +79,18 @@ for title in re.findall(r'\\begin\{block\}\{(.*?)\}\s*(?:\n|$)', src):
         print(f'MISSING block: {title}')
         bad += 1
 
+# @url is no type BibTeX can have (url is a field): an entry so typed prints as misc.
+# Look in every .bib the deck reads, from the root as the build runs
+import os
+for name in re.findall(r'\\bibliography\{([^}]*)\}', src):
+    for b in name.split(','):
+        for path in (f'bib/{b.strip()}.bib', f'{b.strip()}.bib'):
+            if os.path.exists(path):
+                for key in re.findall(r'@url\s*\{\s*([^,\s]+)', open(path, encoding='utf-8').read(), re.I):
+                    print(f'@url entry {key} in {path}: write @webpage')
+                    bad += 1
+                break
+
 # a page carrying only the footline is a failed split
 for n, page in enumerate(pages[:-1], 1):
     body = [l for l in page.split('\n')

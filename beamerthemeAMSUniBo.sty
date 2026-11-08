@@ -20,7 +20,7 @@
 \newcommand{\stylemajor}{1}
 \newcommand{\styleminor}{8}
 %% \stylepatch is optional: comment the next line out to release as Major.Minor
-\newcommand{\stylepatch}{4}
+\newcommand{\stylepatch}{5}
 \ifdefined\stylepatch
   \newcommand{\styleversion}{\stylemajor.\styleminor.\stylepatch}
 \else
@@ -169,6 +169,9 @@
 %% URL: colour from the surface; doubled = smaller, and quiet on a light one
 \newcommand{\uurl}[1]{{\ams@link@string\ams@link@arg{#1}%
   \textcolor{\ams@onsurface{amsred}{amsgreybg}}{\scriptsize\expandafter\url\expandafter{\ams@link@arg}}}}
+% a web page's URL: the colour of a journal's name, at the size around it
+\newcommand{\wwwurl}[1]{{\ams@link@string\ams@link@arg{#1}%
+  \usebeamercolor[fg]{bibliography entry location}\expandafter\url\expandafter{\ams@link@arg}}}
 \newcommand{\uuurl}[1]{{\ams@link@string\ams@link@arg{#1}%
   \textcolor{\ams@onsurface{\ams@quiet}{amsgreybg}}{\tiny\expandafter\url\expandafter{\ams@link@arg}}}}
 %% DOI: likewise. https://doi.org is the current resolver; dx.doi.org is a
@@ -292,6 +295,7 @@
     \let\cccite\ams@nocite
     \let\uurl\@firstofone
     \let\uuurl\@firstofone
+    \let\wwwurl\@firstofone
     \let\ddoi\ams@nodoi
     \let\dddoi\ams@nodoi
     \let\apicepubpar\@gobble
