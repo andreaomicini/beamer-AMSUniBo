@@ -7,23 +7,109 @@
 %% only when the decks using it are rebuilt anyway, never to redo them all; a new name is copied from here.
 %% /course-check and /deck-check list, as `later`, a name defined otherwise than here and a name neither
 %% here nor marked local (promote it here, or mark it local).
-%% One line per name. `% decision:` marks a name whose forms in use print differently: the line is the
+%% One line per name, an acronym included (one \DeclareAcronym line, sorted by id). Every line is in the commands
+%% every class has, \textsf{…} \textsc{…} \texttt{…}, never {\sf …} {\sc …} {\tt …}, which KOMA's classes lack
+%% (Andrea, 2026-11-08). `% decision:` marks a name whose forms in use print differently: the line is the
 %% majority form until Andrea chooses; the other forms are listed.
 %%
-\ProvidesPackage{names}[2026/11/03 The canonical vocabulary -- beamer-AMSUniBo/check]
+\ProvidesPackage{names}[2026/11/08 The canonical vocabulary -- beamer-AMSUniBo/check]
+
+\RequirePackage{acro}
+\addtobeamertemplate{background}{\acresetall}{}  % Beamer only: first use expands once per frame
+
+\DeclareAcronym{aamas}{short = {AAMAS}, long = {Autonomous Agents and Multi-Agent Systems}, pdfstring = {AAMAS}}
+\DeclareAcronym{acl}{short = {\ensuremath{\mathcal{ACL}}}, long = {\ensuremath{\mathcal{A}}gent \ensuremath{\mathcal{C}}ommunication \ensuremath{\mathcal{L}}anguage}, pdfstring = {ACL}}
+\DeclareAcronym{adt}{short = {ADT}, long = {algebraic data type}, pdfstring = {ADT}}
+\DeclareAcronym{aea}{short = {\textsc{A\&A}}, long = {\textsc{A}gents \textsc{\&} \textsc{A}rtefacts}, pdfstring = {AeA}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [4]
+\DeclareAcronym{agot}{short = {AGoT}, long = {Agentic Graph of Thoughts}, pdfstring = {AGoT}}
+\DeclareAcronym{ai}{short = {AI}, long = {artificial intelligence}, pdfstring = {AI}}
+\DeclareAcronym{aixia}{short = {AIxIA}, long = {Italian Association for Artificial Intelligence}, pdfstring = {AIxIA}}
+\DeclareAcronym{aose}{short = {AOSE}, long = {agent-oriented software engineering}}
+\DeclareAcronym{api}{short = {API}, long = {application programming interface}, pdfstring = {API}}
+\DeclareAcronym{at}{short = {AT}, long = {Activity Theory}}
+\DeclareAcronym{atal}{short = {ATAL}, long = {Agent Theories, Architectures, and Languages}, pdfstring = {ATAL}}
+\DeclareAcronym{bct}{short = {BCT}, long = {blockchain technology}, pdfstring = {BCT}}
+\DeclareAcronym{bdd}{short = {BDD}, long = {binary decision diagram}, pdfstring = {BDD}}
+\DeclareAcronym{bdi}{short = {\textsc{BDI}}, long = {\textsc{B}elief, \textsc{D}esire, \textsc{I}ntention}, pdfstring = {BDI}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [2]
+\DeclareAcronym{bn}{short = {BN}, long = {Bayesian network}, pdfstring = {BN}}
+\DeclareAcronym{cartago}{short = {\textsf{CArtAgO}}, long = {\textsf{C}artesian \textsf{A}rtifacts for \textsf{A}gents \textsf{O}riented programming}, pdfstring = {CArtAgO}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [2]
+\DeclareAcronym{clp}{short = {CLP}, long = {constraint logic programming}, pdfstring = {CLP}}
+\DeclareAcronym{cnf}{short = {CNF}, long = {clausal normal form}, pdfstring = {CNF}}
+\DeclareAcronym{cop}{short = {COP}, long = {constraint optimisation problem}, pdfstring = {COP}}
+\DeclareAcronym{cot}{short = {CoT}, long = {Chain-of-Thought}, pdfstring = {CoT}}
+\DeclareAcronym{cp}{short = {CP}, long = {constraint programming}, pdfstring = {CP}}
+\DeclareAcronym{cscw}{short = {CSCW}, long = {Computer Supported Cooperative Work}}
+\DeclareAcronym{csp}{short = {CSP}, long = {constraint satisfaction problem}, pdfstring = {CSP}}
+\DeclareAcronym{dag}{short = {DAG}, long = {directed acyclic graph}, pdfstring = {DAG}}
+\DeclareAcronym{dai}{short = {DAI}, long = {distributed artificial intelligence}}
+\DeclareAcronym{db}{short = {DB}, long = {database}, pdfstring = {DB}}
+\DeclareAcronym{dlt}{short = {DLT}, long = {distributed ledger technology}, pdfstring = {DLT}}
+\DeclareAcronym{dry}{short = {DRY}, long = {Don't Repeat Yourself}, pdfstring = {DRY}}
+\DeclareAcronym{ds}{short = {DS}, long = {distribution semantics}, pdfstring = {DS}}
+\DeclareAcronym{dsl}{short = {DSL}, long = {domain-specific language}, pdfstring = {DSL}}
+\DeclareAcronym{easss}{short = {EASSS}, long = {European Agent Systems Summer School}, pdfstring = {EASSS}}
+\DeclareAcronym{emas}{short = {EMAS}, long = {Engineering Multi-Agent Systems}, pdfstring = {EMAS}}
+\DeclareAcronym{fipa}{short = {FIPA}, long = {{F}oundation for {I}ntelligent {P}hysical {A}gents}, pdfstring = {FIPA}}
+\DeclareAcronym{fol}{short = {FOL}, long = {first-order logic}, pdfstring = {FOL}}
+\DeclareAcronym{fp}{short = {FP}, long = {functional programming}, pdfstring = {FP}}
+\DeclareAcronym{g25flash}{short = {2.5 Flash}, long = {Gemini-2.5-Flash}, pdfstring = {Gemini 2.5 Flash}}
+\DeclareAcronym{g25flashlite}{short = {2.5 Flash-Lite}, long = {Gemini-2.5-Flash-Lite}, pdfstring = {Gemini 2.5 Flash-Lite}}
+\DeclareAcronym{g31flashlite}{short = {3.1 Flash-Lite}, long = {Gemini-3.1-Flash-Lite}, pdfstring = {Gemini 3.1 Flash-Lite}}
+\DeclareAcronym{got}{short = {GoT}, long = {Graph-of-Thoughts}, pdfstring = {GoT}}
+\DeclareAcronym{hci}{short = {HCI}, long = {Human Computer Interaction}}
+\DeclareAcronym{icl}{short = {ICL}, long = {independent choice logic}, pdfstring = {ICL}}
+\DeclareAcronym{icmas}{short = {ICMAS}, long = {International Conference on Multi-Agent Systems}, pdfstring = {ICMAS}}
+\DeclareAcronym{ide}{short = {IDE}, long = {integrated development environment}, pdfstring = {IDE}}
+\DeclareAcronym{iot}{short = {{I}o{T}}, long = {Internet of Things}, pdfstring = {IoT}}
+\DeclareAcronym{jade}{short = {\textsc{Jade}}, long = {\textsc{J}ava \textsc{A}gent \textsc{DE}velopment Framework}, pdfstring = {Jade}}  % decision: also short = {JADE}, pdfstring = {JADE} [2]; also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [8]
+\DeclareAcronym{jvm}{short = {JVM}, long = {Java Virtual Machine}, pdfstring = {JVM}}
+\DeclareAcronym{llm}{short = {LLM}, long = {large language model}, pdfstring = {LLM}}
+\DeclareAcronym{lm}{short = {LM}, long = {language model}, pdfstring = {LM}}
+\DeclareAcronym{lnai}{short = {LNAI}, long = {Lecture Notes in Artificial Intelligence}, pdfstring = {LNAI}}
+\DeclareAcronym{lncs}{short = {LNCS}, long = {Lecture Notes in Computer Science}, pdfstring = {LNCS}}
+\DeclareAcronym{lp}{short = {LP}, long = {logic programming}, pdfstring = {LP}}
+\DeclareAcronym{lpaas}{short = {LPaaS}, long = {Logic Programming as a Service}, pdfstring = {LPaaS}}
+\DeclareAcronym{lpad}{short = {LPAD}, long = {logic program with annotated disjunctions}, pdfstring = {LPAD}}
+\DeclareAcronym{maamaw}{short = {MAAMAW}, long = {Modelling Autonomous Agents in a Multi-Agent World}, pdfstring = {MAAMAW}}
+\DeclareAcronym{mas}{short = {MAS}, long = {multi-agent system}}
+\DeclareAcronym{mcmc}{short = {MCMC}, long = {Markov chain Monte Carlo}, pdfstring = {MCMC}}
+\DeclareAcronym{mcp}{short = {MCP}, long = {Model Context Protocol}, pdfstring = {MCP}}
+\DeclareAcronym{meu}{short = {MEU}, long = {maximum expected utility}, pdfstring = {MEU}}
+\DeclareAcronym{mgu}{short = {MGU}, long = {most general unifier}, pdfstring = {MGU}}
+\DeclareAcronym{ml}{short = {ML}, long = {machine learning}, pdfstring = {ML}}
+\DeclareAcronym{mok}{short = {\textsc{MoK}}, long = {\textsc{M}olecules \textsc{o}f \textsc{K}nowledge}, pdfstring = {MoK}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [6]
+\DeclareAcronym{nesy}{short = {NeSy}, long = {neurosymbolic}, pdfstring = {NeSy}}
+\DeclareAcronym{nlp}{short = {NLP}, long = {natural language processing}, pdfstring = {NLP}}
+\DeclareAcronym{oma}{short = {OMA}, long = {{O}bject {M}anagement {A}rchitecture}, pdfstring = {OMA}}
+\DeclareAcronym{omg}{short = {OMG}, long = {{O}bject {M}anagement {G}roup}, pdfstring = {OMG}}
+\DeclareAcronym{oop}{short = {OOP}, long = {object-oriented programming}, pdfstring = {OOP}}
+\DeclareAcronym{pddl}{short = {PDDL}, long = {Planning Domain Definition Language}}
+\DeclareAcronym{plp}{short = {PLP}, long = {probabilistic logic programming}, pdfstring = {PLP}}
+\DeclareAcronym{pomdp}{short = {POMDP}, long = {partially observable Markov decision process}, pdfstring = {POMDP}}
+\DeclareAcronym{rag}{short = {RAG}, long = {retrieval-augmented generation}, pdfstring = {RAG}}
+\DeclareAcronym{respect}{short = {\textsf{{R}e{S}pec{T}}}, long = {\textsf{R}eaction \textsf{Spec}ification \textsf{T}uples}, pdfstring = {ReSpecT}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [2]
+\DeclareAcronym{rest}{short = {ReST}, long = {{Re}presentational {S}tate {T}ransfer}, pdfstring = {ReST}}
+\DeclareAcronym{sld}{short = {SLD}, long = {Linear resolution for Definite clauses with Selection function}, pdfstring = {SLD}}
+\DeclareAcronym{strips}{short = {STRIPS}, long = {Stanford Research Institute Problem Solver}}
+\DeclareAcronym{tot}{short = {ToT}, long = {Tree-of-Thoughts}, pdfstring = {ToT}}
+\DeclareAcronym{tsp}{short = {TSP}, long = {travelling salesperson problem}, pdfstring = {TSP}}
+\DeclareAcronym{tucson}{short = {\textsf{{T}u{CS}o{N}}}, long = {\textsf{Tu}ple \textsf{C}entres \textsf{S}pread \textsf{o}ver the \textsf{N}etwork}, pdfstring = {TuCSoN}}  % also, printing the same: {\sc …}/{\sf …} for \textsc/\textsf [2]
+\DeclareAcronym{vle}{short = {VLE}, long = {Virtual Learning Environment}}  % decision: also short = {Virtuale}, pdfstring = {Virtuale} [2]
+\DeclareAcronym{xai}{short = {XAI}, long = {explainable artificial intelligence}, pdfstring = {XAI}}
+\DeclareAcronym{zscot}{short = {Zero-Shot CoT}, long = {Zero-Shot Chain-of-Thought}, pdfstring = {Zero-Shot CoT}}
 
 \newcommand{\aea}{\mbox{A\&A}}  % also, printing the same: {A\&A} [3]
 \newcommand{\aearespect}{\aea{} \respect{}}  % decision: also \acs{aea} \acs{respect} [1]
 \newcommand{\agentspeak}{{A}gent{S}peak}
 \newcommand{\agentspeakl}{\agentspeak({L})}
 \newcommand{\amuse}{{AMUSE}}
-\newcommand{\apicename}{{\sf APICe}}  % also, printing the same: {\sf{APICe}} [5]
+\newcommand{\apicename}{{\textsf{APICe}}}  % also, printing the same: {\sf{APICe}} [5] | {\sf APICe} [10]
 \newcommand{\aurora}{{Aurora}}
 \newcommand{\bdi}{{BDI}}
 \newcommand{\biopepa}{{BioPEPA}}
 \newcommand{\blockchain}{blockchain}
 \newcommand{\Blockchain}{{B}lockchain}
-\newcommand{\cartago}{\mbox{\sf{{CA}rt{A}g{O}}}}  % also, printing the same: {\sf {CA}rt{A}g{O}} [2] | {\sf CArtAgO} [1] | {\sf{{CA}rt{A}g{O}}} [1]
+\newcommand{\cartago}{\mbox{\textsf{{CA}rt{A}g{O}}}}  % also, printing the same: {\sf {CA}rt{A}g{O}} [2] | {\sf CArtAgO} [1] | {\sf{{CA}rt{A}g{O}}} [1] | \mbox{\sf{{CA}rt{A}g{O}}} [7]
 \newcommand{\chatgpt}{ChatGPT}
 \newcommand{\chip}{{CHIP}}
 \newcommand{\choco}{{Choco}}
@@ -53,25 +139,25 @@
 \newcommand{\flatzinc}{{F}lat{Z}inc}
 \newcommand{\gammamodel}{Gamma}
 \newcommand{\gecode}{{Gecode}}
-\newcommand{\geolinda}{{\sc GeoLinda}}
+\newcommand{\geolinda}{{\textsc{GeoLinda}}}  % also, printing the same: {\sc GeoLinda} [6]
 \newcommand{\gprolog}{{GNU} {P}rolog}
 \newcommand{\hedera}{{Hedera Hashgraph}}
 \newcommand{\iotadlt}{{IOTA}}
-\newcommand{\jacamo}{{\sf JaCaMo}}  % also, printing the same: {\textsf{JaCaMo}} [1]
+\newcommand{\jacamo}{{\textsf{JaCaMo}}}  % also, printing the same: {\sf JaCaMo} [9]
 \newcommand{\jason}{\textit{Jason}}  % decided (Andrea, 2026-11-03): plain italic, as {\bf\it {J}ason} [7] prints (its \bf is undone by \it); not \textbf{\textit{J}ason} [1]
 \newcommand{\jedi}{{JEDI}}
-\newcommand{\klaim}{{\sc{K}laim}}
-\newcommand{\lime}{{\sc{{L}ime}}}
-\newcommand{\linda}{{\sc{{L}inda}}}  % also, printing the same: {\textsc{{L}inda}} [1]
+\newcommand{\klaim}{{\textsc{{K}laim}}}  % also, printing the same: {\sc{K}laim} [6]
+\newcommand{\lime}{{\textsc{{L}ime}}}  % also, printing the same: {\sc{{L}ime}} [2]
+\newcommand{\linda}{{\textsc{{L}inda}}}  % also, printing the same: {\sc{{L}inda}} [8]
 \newcommand{\lpaas}{{LPaaS}}
-\newcommand{\luce}{\mbox{\sf{{L}u{C}e}}}
+\newcommand{\luce}{\mbox{\textsf{{L}u{C}e}}}  % also, printing the same: \mbox{\sf{{L}u{C}e}} [7]
 \newcommand{\mas}{{MAS}}
 \newcommand{\mathbench}{{\textsc{MATH}}}
 \newcommand{\mcintyre}{{MCINTYRE}}
 \newcommand{\minizinc}{{M}ini{Z}inc}
-\newcommand{\moise}{{\sc Moise}}  % also, printing the same: {\textsc{Moise}} [1]
+\newcommand{\moise}{{\textsc{Moise}}}  % also, printing the same: {\sc Moise} [9]
 \newcommand{\mokf}{$\mathcal{F}_{\mathcal{M}o\mathcal{K}}$}
-\newcommand{\moknews}{{\sc MoK}-{\tt News}}
+\newcommand{\moknews}{{\textsc{MoK}}-{\texttt{News}}}  % also, printing the same: {\sc MoK}-{\tt News} [2]
 \newcommand{\ortools}{{OR}-{T}ools}
 \newcommand{\pepa}{{PEPA}}
 \newcommand{\pita}{{PITA}}
@@ -83,7 +169,7 @@
 \newcommand{\prolog}{{P}rolog}
 \newcommand{\prs}{{PRS}}
 \newcommand{\react}{{ReAct}}
-\newcommand{\respect}{{\sf{{R}e{S}pec{T}}}}  % also, printing the same: \mbox{\sf{{R}e{S}pec{T}}} [3] | {\textsf{{R}e{S}pec{T}}} [1]
+\newcommand{\respect}{{\textsf{{R}e{S}pec{T}}}}  % also, printing the same: \mbox{\sf{{R}e{S}pec{T}}} [3] | {\sf{{R}e{S}pec{T}}} [11]
 \newcommand{\sapere}{{SAPERE}}
 \newcommand{\scala}{{Scala}}
 \newcommand{\sicstus}{{SICStus Prolog}}  % decision: also {SICStus \prolog} [3]
@@ -91,10 +177,10 @@
 \newcommand{\smartcontract}{smart contract}
 \newcommand{\SmartContract}{{S}mart {C}ontract}
 \newcommand{\Smartcontract}{Smart contract}
-\newcommand{\soda}{{\sf SODA}}  % also, printing the same: \mbox{\sf{SODA}} [2]
-\newcommand{\spatialrespect}{{S}patial {\sf {R}e{S}pec{T}}}
-\newcommand{\spatialtuples}{{\sf {S}patial {T}uples}}
-\newcommand{\stoklaim}{{\sc{S}to{K}laim}}
+\newcommand{\soda}{{\textsf{SODA}}}  % also, printing the same: \mbox{\sf{SODA}} [2] | {\sf SODA} [10]
+\newcommand{\spatialrespect}{{S}patial {\textsf{{R}e{S}pec{T}}}}  % also, printing the same: {S}patial {\sf {R}e{S}pec{T}} [2]
+\newcommand{\spatialtuples}{{\textsf{{S}patial {T}uples}}}  % also, printing the same: {\sf {S}patial {T}uples} [2]
+\newcommand{\stoklaim}{{\textsc{{S}to{K}laim}}}  % also, printing the same: {\sc{S}to{K}laim} [6]
 \newcommand{\subsym}{{subsymbolic}}
 \newcommand{\Subsym}{{Subsymbolic}}
 \newcommand{\swarmlinda}{{S}warm{L}inda}
@@ -106,8 +192,8 @@
 \newcommand{\tforjn}{\tucson{}$4$\jason{}}  % decision: also \acs{tucson}$4$\jason{} [1]
 \newcommand{\tota}{{TOTA}}
 \newcommand{\tpkt}{{{\textsf{2}P-\textsc{Kt}}}}
-\newcommand{\tucson}{\mbox{\sf{{T}u{CS}o{N}}}}  % also, printing the same: {\sf{T}u{CS}o{N}} [3] | {\sf{{T}u{CS}o{N}}} [2] | {\textsf{{T}u{CS}o{N}}} [1]
+\newcommand{\tucson}{\mbox{\textsf{{T}u{CS}o{N}}}}  % also, printing the same: {\sf{T}u{CS}o{N}} [3] | {\sf{{T}u{CS}o{N}}} [2] | {\textsf{{T}u{CS}o{N}}} [1] | \mbox{\sf{{T}u{CS}o{N}}} [7]
 \newcommand{\tuprolog}{{\textsf{tu}\textrm{{P}rolog}}}  % decision: also \mbox{{tu}\sf{{P}rolog}} [3] | {{tu}\sf{{P}rolog}} [2]
 \newcommand{\typeonedm}{Type~1 DM}
-\newcommand{\ulinda}{{\sc uLinda}}
+\newcommand{\ulinda}{{\textsc{uLinda}}}  % also, printing the same: {\sc uLinda} [6]
 \newcommand{\wade}{{WADE}}
